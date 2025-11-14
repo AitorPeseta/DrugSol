@@ -1,8 +1,10 @@
-# Directorios de trabajo / temporales
+# Nextflow / temporales
 work/
-bin_pruebas/
+.nextflow/
+.nextflow.log
 
-# Archivos grandes / de datos
+# Datos y modelos grandes
+bin_pruebas/
 *.parquet
-*.pkl
 *.csv
+*.pkl
