@@ -1,0 +1,87 @@
+2025-11-07 11:23:12	11s	boring_visvesvaraya	ERR	498c29daf63e53aeebf5a41806f095c6	cb30e15d-aec3-4ba8-bf07-cc715ebab683	nextflow run main.nf --mode research -resume
+2025-11-07 11:24:05	8s	crazy_perlman	ERR	498c29daf63e53aeebf5a41806f095c6	cb30e15d-aec3-4ba8-bf07-cc715ebab683	nextflow run main.nf --mode research -resume
+2025-11-07 11:24:36	7s	determined_bhaskara	ERR	498c29daf63e53aeebf5a41806f095c6	b29ca72f-6eea-416e-8782-ce6bd6d7bc78	nextflow run main.nf --mode research
+2025-11-07 11:27:08	8.1s	suspicious_sanger	ERR	498c29daf63e53aeebf5a41806f095c6	c425d3d1-5f21-4afe-b60a-d6ff4ce9f436	nextflow run main.nf --mode research
+2025-11-07 11:52:07	22m 9s	peaceful_celsius	OK	498c29daf63e53aeebf5a41806f095c6	4f103d0a-97f5-4a03-b8f6-be1f53bc6007	nextflow run main.nf --mode research
+2025-11-11 10:56:27	-	deadly_wegener	-	498c29daf63e53aeebf5a41806f095c6	4309ee6c-a50f-4db7-bb77-2791f3d68a83	nextflow run main.nf --mode research
+2025-11-11 10:57:11	-	serene_kalam	-	498c29daf63e53aeebf5a41806f095c6	262ceeb4-8f11-4994-a69b-5e4f8e09eb9d	nextflow run main.nf --mode research
+2025-11-11 10:57:43	-	nasty_galileo	-	498c29daf63e53aeebf5a41806f095c6	77f08394-0e40-449f-859c-d4ea055d57b2	nextflow run main.nf --mode research
+2025-11-11 10:58:27	26.1s	special_poincare	ERR	498c29daf63e53aeebf5a41806f095c6	64555aa5-0fe9-42a4-8af5-eeef58b91fc4	nextflow run main.nf --mode research
+2025-11-11 10:59:45	9.4s	hopeful_dalembert	ERR	498c29daf63e53aeebf5a41806f095c6	b7cf0c6b-4620-44ea-8e4e-ac831be8d9ad	nextflow run main.nf --mode research
+2025-11-11 11:00:09	2m 6s	mighty_marconi	ERR	498c29daf63e53aeebf5a41806f095c6	595bfab2-c8e9-4cec-9d38-c2908b374277	nextflow run main.nf --mode research
+2025-11-11 11:04:37	2.7s	big_turing	ERR	498c29daf63e53aeebf5a41806f095c6	e097f53a-bb5d-45c4-b846-b630f96ce7ad	nextflow run main.nf --mode research
+2025-11-11 11:04:53	2m 14s	distraught_hopper	ERR	498c29daf63e53aeebf5a41806f095c6	508e59c9-7c8d-49a7-a71a-9bd4328adf02	nextflow run main.nf --mode research
+2025-11-11 11:08:32	41.7s	wise_curry	ERR	498c29daf63e53aeebf5a41806f095c6	616f6c1d-99a5-4720-b88f-7ffc039d109b	nextflow run main.nf --mode research
+2025-11-11 11:11:35	20m 42s	chaotic_coulomb	OK	498c29daf63e53aeebf5a41806f095c6	2981aab2-d683-49c2-a325-1df97a320ee5	nextflow run main.nf --mode research
+2025-11-11 11:33:41	-	agitated_wescoff	-	498c29daf63e53aeebf5a41806f095c6	2c429d74-b075-4d3c-8fb3-de63b0885f31	nextflow run main.nf --mode execution --input ./bin_pruebas/TEST_Camp.csv
+2025-11-11 11:34:29	2.7s	nasty_brattain	ERR	498c29daf63e53aeebf5a41806f095c6	336dfd78-7bd5-4491-bc22-36c206854298	nextflow run main.nf --mode execution --input ./bin_pruebas/TEST_Camp.csv
+2025-11-11 11:44:11	-	modest_pare	-	498c29daf63e53aeebf5a41806f095c6	6b0dc6e8-6b75-4c26-a4d8-62b1a4c53f88	nextflow run main.nf --mode execution --input ./bin_pruebas/TEST_Camp.csv
+2025-11-11 11:46:47	47.7s	loving_yalow	ERR	498c29daf63e53aeebf5a41806f095c6	111b50d5-1bd0-4654-a3de-97f689ee04a5	nextflow run main.nf --mode execution --input ./bin_pruebas/TEST_Camp.csv
+2025-11-11 11:51:11	1m 5s	determined_magritte	ERR	498c29daf63e53aeebf5a41806f095c6	799b6f89-df1a-4ac5-983b-d0806bb22883	nextflow run main.nf --mode execution --input ./bin_pruebas/TEST_Camp.csv
+2025-11-11 11:57:29	21m 19s	pedantic_bohr	OK	498c29daf63e53aeebf5a41806f095c6	55eddbfb-c374-416d-83d7-bb04b85af884	nextflow run main.nf --mode research
+2025-11-11 12:19:06	1m 21s	mad_elion	ERR	498c29daf63e53aeebf5a41806f095c6	331ac2ef-4237-4498-9a11-b5604c09f340	nextflow run main.nf --mode execution --input ./bin_pruebas/TEST_Camp.csv
+2025-11-11 12:31:19	7.2s	wise_planck	ERR	498c29daf63e53aeebf5a41806f095c6	331ac2ef-4237-4498-9a11-b5604c09f340	nextflow run main.nf --mode execution --input ./bin_pruebas/TEST_Camp.csv -resume
+2025-11-11 12:39:41	3.1s	grave_avogadro	ERR	498c29daf63e53aeebf5a41806f095c6	331ac2ef-4237-4498-9a11-b5604c09f340	nextflow run main.nf --mode execution --input ./bin_pruebas/TEST_Camp.csv -resume
+2025-11-11 12:40:41	8.4s	prickly_ardinghelli	OK	498c29daf63e53aeebf5a41806f095c6	331ac2ef-4237-4498-9a11-b5604c09f340	nextflow run main.nf --mode execution --input ./bin_pruebas/TEST_Camp.csv -resume
+2025-11-11 13:13:29	57.7s	pensive_stonebraker	OK	498c29daf63e53aeebf5a41806f095c6	f4d2be91-2d3a-49e9-8beb-c8654bc058f7	nextflow run main.nf --mode execution --input ./bin_pruebas/TEST_Camp.csv
+2025-11-12 11:52:07	-	hungry_angela	-	498c29daf63e53aeebf5a41806f095c6	a226306f-9241-4603-87fa-65f027755b09	nextflow run main.nf --mode research
+2025-11-12 11:52:57	-	nauseous_moriondo	-	498c29daf63e53aeebf5a41806f095c6	38c44d1b-bf50-49f2-991b-adaa4c6824d8	nextflow run main.nf --mode research
+2025-11-12 11:53:28	6.2s	desperate_lalande	ERR	498c29daf63e53aeebf5a41806f095c6	eb4dc145-58eb-4d72-b3d7-540eb068043c	nextflow run main.nf --mode research
+2025-11-12 11:59:57	55s	happy_lorenz	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research
+2025-11-12 12:02:09	3m 53s	happy_lalande	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-12 12:06:07	4.7s	angry_engelbart	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-12 12:19:41	4.9s	curious_venter	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-12 12:20:55	4.4s	hopeful_ptolemy	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-12 12:31:51	4.2s	amazing_escher	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-12 12:34:00	4.9s	voluminous_kalman	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-12 12:39:39	4.3s	hungry_baekeland	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-12 12:43:16	4.7s	deadly_hopper	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-12 12:48:24	5s	elegant_moriondo	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-12 12:50:50	4.3s	voluminous_lagrange	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-12 12:51:41	4.3s	intergalactic_almeida	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-12 12:52:17	4.7s	desperate_kalman	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-12 12:53:30	2.8s	mad_lavoisier	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-12 12:55:42	3.2s	irreverent_kowalevski	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-12 13:13:23	12.2s	sick_curie	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 10:49:23	47.3s	sharp_sinoussi	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 10:54:51	6m 30s	voluminous_rosalind	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 11:03:14	6m 45s	friendly_kirch	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 11:11:19	5m 35s	distracted_plateau	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 12:12:04	-	deadly_cori	-	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 12:12:42	-	cranky_maxwell	-	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 12:15:14	3.3s	sad_banach	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 12:15:55	3.7s	special_hopper	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 12:24:15	-	prickly_kilby	-	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 12:24:47	10.5s	crazy_cray	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 12:25:53	44.5s	nostalgic_pasteur	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 12:30:49	19.7s	voluminous_marconi	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 12:32:34	23m 6s	elated_hopper	OK	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 12:56:59	6.4s	sleepy_varahamihira	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 13:04:32	5.8s	extravagant_feynman	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 13:08:51	6.3s	cheesy_kilby	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 13:19:10	6.3s	prickly_carlsson	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 13:26:13	3.9s	awesome_hamilton	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 13:30:43	5s	silly_ramanujan	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 13:35:04	4.5s	stupefied_heisenberg	OK	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 13:36:35	5s	astonishing_lorenz	OK	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 13:38:45	5.9s	special_hodgkin	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 13:43:16	8m 49s	exotic_baekeland	OK	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 13:59:03	4s	nostalgic_darwin	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 14:04:46	4.3s	high_goldberg	ERR	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 14:06:28	21.4s	jolly_gates	OK	498c29daf63e53aeebf5a41806f095c6	7da75965-31e8-4110-9243-2bf80c8fcf0d	nextflow run main.nf --mode research -resume
+2025-11-13 14:16:53	10.9s	berserk_franklin	ERR	498c29daf63e53aeebf5a41806f095c6	ae414606-a6b9-444b-8527-1ea21ed289dd	nextflow run main.nf --mode research
+2025-11-13 14:19:13	6.1s	agitated_spence	ERR	498c29daf63e53aeebf5a41806f095c6	754f76e6-af09-441e-af0f-7483522f0bb9	nextflow run main.nf --mode research
+2025-11-13 14:19:37	10.9s	thirsty_coulomb	ERR	498c29daf63e53aeebf5a41806f095c6	754f76e6-af09-441e-af0f-7483522f0bb9	nextflow run main.nf --mode research -resume
+2025-11-13 14:20:01	6.5s	intergalactic_shaw	ERR	498c29daf63e53aeebf5a41806f095c6	fa1329d1-e59a-4291-b7e0-016feeff2eba	nextflow run main.nf --mode research
+2025-11-13 14:20:41	10.9s	ridiculous_curie	ERR	498c29daf63e53aeebf5a41806f095c6	482a5621-fdf4-4484-b688-02a916338ab9	nextflow run main.nf --mode research
+2025-11-13 15:00:54	48m 55s	silly_meninsky	OK	498c29daf63e53aeebf5a41806f095c6	06685d81-603a-4455-b2a4-81699a1c0a88	nextflow run main.nf --mode research
+2025-11-13 16:56:12	-	hopeful_cajal	-	498c29daf63e53aeebf5a41806f095c6	f3d4b11d-b3ad-45fe-a570-6fa35ce5f76c	nextflow run main.nf --mode research
+2025-11-13 16:57:21	-	grave_kilby	-	498c29daf63e53aeebf5a41806f095c6	61cbf56c-13e7-40b7-9bdf-00205c09c782	nextflow run main.nf --mode research
+2025-11-13 16:57:40	-	confident_liskov	-	498c29daf63e53aeebf5a41806f095c6	2ea7f9f3-2da0-4bf2-8897-76397e40bea4	nextflow run main.nf --mode research
+2025-11-13 16:59:09	4m 12s	big_bartik	ERR	498c29daf63e53aeebf5a41806f095c6	6c1a1ba4-28d6-4a51-9453-464ef2567ffa	nextflow run main.nf --mode research
+2025-11-13 17:04:34	9m 51s	cheeky_lagrange	ERR	498c29daf63e53aeebf5a41806f095c6	6c1a1ba4-28d6-4a51-9453-464ef2567ffa	nextflow run main.nf --mode research -resume
+2025-11-14 08:16:01	3.2s	soggy_jones	ERR	498c29daf63e53aeebf5a41806f095c6	6c1a1ba4-28d6-4a51-9453-464ef2567ffa	nextflow run main.nf --mode research -resume
+2025-11-14 08:31:14	-	voluminous_banach	-	498c29daf63e53aeebf5a41806f095c6	6c1a1ba4-28d6-4a51-9453-464ef2567ffa	nextflow run main.nf --mode research -resume
+2025-11-14 08:37:59	-	kickass_minsky	-	498c29daf63e53aeebf5a41806f095c6	6c1a1ba4-28d6-4a51-9453-464ef2567ffa	nextflow run main.nf --mode research -resume
+2025-11-14 08:40:16	2.7s	furious_khorana	ERR	498c29daf63e53aeebf5a41806f095c6	6c1a1ba4-28d6-4a51-9453-464ef2567ffa	nextflow run main.nf --mode research -resume
+2025-11-14 08:40:57	8m 54s	small_perlman	ERR	498c29daf63e53aeebf5a41806f095c6	b5ee30e0-54c5-4600-8979-e5821c58fc4d	nextflow run main.nf --mode research

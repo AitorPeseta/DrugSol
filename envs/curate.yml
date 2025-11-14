@@ -1,0 +1,7 @@
+name: curate
+channels: [conda-forge]
+dependencies:
+  - python=3.11
+  - pandas
+  - pyarrow>=12
+  - rdkit=2023.09.1

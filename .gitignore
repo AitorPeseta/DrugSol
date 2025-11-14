@@ -1,0 +1,8 @@
+# Directorios de trabajo / temporales
+work/
+bin_pruebas/
+
+# Archivos grandes / de datos
+*.parquet
+*.pkl
+*.csv
