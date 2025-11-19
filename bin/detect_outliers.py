@@ -73,7 +73,7 @@ def main():
     ap.add_argument("--out", default="detect_outliers.parquet", help="Parquet de salida")
     ap.add_argument("--export-csv", action="store_true", help="Exporta también CSV")
     ap.add_argument("--log-col", default="logS", help="Columna de solubilidad (default: logS)")
-    ap.add_argument("--temp-col", default="temperature_K", help="Columna de temperatura (default: temperature_K)")
+    ap.add_argument("--temp-col", default="temp_C", help="Columna de temperatura (default: temp_C)")
     ap.add_argument("--binning", choices=["width", "quantile"], default="width",
                     help="Estrategia de binning: width (anchura fija o nº de bins iguales) o quantile")
     ap.add_argument("--bin-width", type=float, default=None, help="Anchura del bin si binning=width (ignorado si --bins)")

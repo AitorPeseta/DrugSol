@@ -10,7 +10,7 @@ from sklearn.model_selection import StratifiedShuffleSplit, GroupShuffleSplit
 
 # ---------------- utilidades ----------------
 
-def build_strat_label(df, solvent_col="solvent", temp_col="temperature_K", temp_step=5):
+def build_strat_label(df, solvent_col="solvent", temp_col="temp_C", temp_step=5):
     """
     Crea strat_label = '<solvent>|<temperature_bin>' redondeando temperatura a múltiplos de temp_step.
     """
@@ -54,7 +54,7 @@ def main():
     )
     ap.add_argument("--input", "-i", required=True, help="Entrada .parquet o .csv con la columna de grupo ya creada")
     ap.add_argument("--group-col", required=True, help="Columna de grupo YA EXISTENTE (cluster_ecfp4_0p7, InChIKey14, etc.)")
-    ap.add_argument("--temp-col", default="temperature_K")
+    ap.add_argument("--temp-col", default="temp_C")
     ap.add_argument("--temp-step", type=float, default=5.0, help="Paso de redondeo (K) para la estratificación")
     ap.add_argument("--test-size", "-t", type=float, default=0.2)
     ap.add_argument("--seed", "-s", type=int, default=42)

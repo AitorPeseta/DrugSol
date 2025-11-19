@@ -25,12 +25,10 @@ process train_full_tpsa {
 
   ${params.MAMBA} run -p "\$PREFIX" python "${train_full_py}" \
                                     --train "${train}" \
-                                    --smiles-col smiles_neutral \
                                     --target logS \
                                     --tpsa-col TPSA \
                                     --phenol-col n_phenol \
                                     --save-dir models_TPSA \
-                                    --fit-intercept
 
   """
 }

@@ -25,7 +25,6 @@ params.smiles        = params.smiles ?: null
 params.solvent       = params.solvent ?: null
 params.temperature_K_Min = params.temperature_K_Min ?: null
 params.temperature_K_Max = params.temperature_K_Max ?: null
-params.grid          = params.grid ?: null                // ej: "t-min=273,t-max=323,t-step=2"
 
 /************************************
  *           INCLUDES
@@ -37,10 +36,6 @@ include { execution }  from "${baseDir}/subworkflows/modes/execution/execution.n
 /************************************
  *        HELPERS & VALIDATION
  ************************************/
-def _die(msg) {
-    log.error "[DrugSol] ${msg}"
-    System.exit(1)
-}
 
 def _print_header() {
     log.info """\
@@ -77,24 +72,27 @@ workflow drugsol {
         def gnn = "${baseDir}/results/research/training/models_GNN"
         def gbm = "${baseDir}/results/research/training/models_GBM"
 
-        def hasPKLGNN = ( gnn &&
-                  java.nio.file.Files.isDirectory(
-                      (gnn instanceof java.nio.file.Path) ? gnn
-                                                               : java.nio.file.Paths.get(gnn.toString().trim())
-                  )
-                )
-        def hasPKLGBM = ( gbm &&
-                  java.nio.file.Files.isDirectory(
-                      (gbm instanceof java.nio.file.Path) ? gbm
-                                                               : java.nio.file.Paths.get(gbm.toString().trim())
-                  )
-                )
+        // Solo verificamos la existencia de estos directorios si estamos en 'execution'
+        def hasPKLGNN = (params.mode == 'execution' && gnn &&
+                        java.nio.file.Files.isDirectory(
+                            (gnn instanceof java.nio.file.Path) ? gnn
+                                                                    : java.nio.file.Paths.get(gnn.toString().trim())
+                        )
+                        )
+        def hasPKLGBM = (params.mode == 'execution' && gbm &&
+                        java.nio.file.Files.isDirectory(
+                            (gbm instanceof java.nio.file.Path) ? gbm
+                                                                    : java.nio.file.Paths.get(gbm.toString().trim())
+                        )
+                        )
 
-        if (!(params.model || (hasPKLGNN && hasPKLGBM))) _die("Para --mode execution debes proporcionar un modelo con --model o haber ejecutado antes --research.")
-        else 
-            if (!params.input) _die("Para --mode execution debes proporcionar --input las muestras a predecir.")
-            else 
-                execution(
+        if (!(params.model || (hasPKLGNN && hasPKLGBM))) {
+            if (params.mode == 'execution') {
+                _die("Para --mode execution debes proporcionar un modelo con --model o haber ejecutado antes --research.")
+            } else {
+                println "[INFO] Modo research: No se necesita modelo, continuando con investigación."
+            }
+        }else  execution(
                     Channel.value(params)
                 )
     }

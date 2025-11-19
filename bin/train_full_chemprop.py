@@ -52,10 +52,7 @@ def parse_args():
     ap.add_argument("--dropout", type=float, default=None)
     ap.add_argument("--ffn-num-layers", type=int, default=None)
     ap.add_argument("--batch-size", type=int, default=None)
-
-    # descriptores: lista explícita; por defecto solo temp_C para mantener consistencia
-    ap.add_argument("--desc-columns", nargs="*", default=["temp_C"],
-                    help="Columnas de descriptores a pasar a Chemprop (deben estar en el TRAIN).")
+    
     return ap.parse_args()
 
 def main():
@@ -67,16 +64,15 @@ def main():
     assert args.smiles_col in df.columns, f"Falta {args.smiles_col}"
     assert args.target in df.columns, f"Falta target {args.target}"
 
-    # Subconjunto limpio y barajado reproducible (¡¡IMPORTANTE!!)
+    # Subconjunto limpio y barajado reproducible
     df = df.dropna(subset=[args.smiles_col, args.target]).copy()
     df = df[df[args.smiles_col].astype(str).str.len() > 0]
     df = df.sample(frac=1.0, random_state=args.seed).reset_index(drop=True)
 
     # Filtrar descriptores explícitos a los que realmente existan y sean numéricos
-    present_desc = [c for c in (args.desc_columns or []) if c in df.columns]
-    for c in present_desc:
-        df[c] = pd.to_numeric(df[c], errors="coerce")
-    print(f"[INFO] Descriptores usados: {present_desc}")
+    present_desc = [c for c in ["temp_C","n_ionizable","n_acid","n_base",
+                                "TPSA","logP","HBD","HBA","FractionCSP3","MW"]
+                    if c in df.columns]
 
     n = len(df)
     if n < 2:

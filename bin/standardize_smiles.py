@@ -37,6 +37,12 @@ def _ensure_std():
 
 # ---------- Funciones atómicas ----------
 def _std_one(smi: str, do_tautomer: bool):
+    """
+    A partir de un SMILES:
+      - neutraliza y estandariza
+      - opcionalmente canoniza tautomeros
+      - devuelve (smiles_neutral, InChIKey_completo)
+    """
     if not smi or str(smi).lower() == 'nan':
         return (None, None)
     mol = Chem.MolFromSmiles(smi)
@@ -52,55 +58,48 @@ def _std_one(smi: str, do_tautomer: bool):
             mol = canonize(mol)
         Chem.SanitizeMol(mol)
         smi_neu = Chem.MolToSmiles(mol, canonical=True)
-        ik = inchi.MolToInchiKey(mol)
-        ik14 = ik[:14] if ik else None
-        return (smi_neu, ik14)
+        ik = inchi.MolToInchiKey(mol)  # InChIKey COMPLETO
+        return (smi_neu, ik)
     except Exception:
         return (None, None)
-
-def _ik14_from_smi(s):
-    if not s or str(s).lower()=="nan":
-        return None
-    m = Chem.MolFromSmiles(s)
-    return inchi.MolToInchiKey(m)[:14] if m else None
 
 
 # ---------- Ejecutores ----------
 def _process_chunk(idx_range, smi_series, do_tautomer):
     out_smi, out_ik = [], []
     for s in smi_series:
-        smi_neu, ik14 = _std_one(s, do_tautomer)
+        smi_neu, ik = _std_one(s, do_tautomer)
         out_smi.append(smi_neu)
-        out_ik.append(ik14)
+        out_ik.append(ik)
     return (idx_range, out_smi, out_ik)
 
-def _fill_inchikey14(df: pd.DataFrame, inchi14_vec, overwrite_inchi: bool):
+def _fill_inchikey(df: pd.DataFrame, inchikey_vec, overwrite_inchi: bool):
     """
-    Rellena/crea la columna InChIKey14 según la política:
-      - si no existe -> crea con inchi14_vec
+    Rellena/crea la columna InChIKey según la política:
+      - si no existe -> crea con inchikey_vec
       - si existe y overwrite -> reemplaza toda la columna
       - si existe y no overwrite -> rellena sólo nulos/vacíos
     """
-    if "InChIKey14" not in df.columns:
-        df["InChIKey14"] = pd.Series(inchi14_vec, dtype="string")
+    if "InChIKey" not in df.columns:
+        df["InChIKey"] = pd.Series(inchikey_vec, dtype="string")
         return df
 
     if overwrite_inchi:
-        df["InChIKey14"] = pd.Series(inchi14_vec, dtype="string")
+        df["InChIKey"] = pd.Series(inchikey_vec, dtype="string")
         return df
 
     # Rellena huecos (NaN, 'nan', vacío)
-    s = df["InChIKey14"].astype("string")
+    s = df["InChIKey"].astype("string")
     mask = s.isna() | s.str.lower().eq("nan") | s.str.len().fillna(0).eq(0)
-    df.loc[mask, "InChIKey14"] = pd.Series(inchi14_vec, dtype="string")
+    df.loc[mask, "InChIKey"] = pd.Series(inchikey_vec, dtype="string")
     return df
 
 def standardize_mp(df, src_col, do_tautomer, workers, chunksize, overwrite_inchi):
     n = len(df)
     if n == 0:
         df["smiles_neutral"] = pd.Series(dtype="string")
-        if "InChIKey14" not in df.columns:
-            df["InChIKey14"] = pd.Series(dtype="string")
+        if "InChIKey" not in df.columns:
+            df["InChIKey"] = pd.Series(dtype="string")
         return df
 
     if chunksize <= 0:
@@ -110,7 +109,7 @@ def standardize_mp(df, src_col, do_tautomer, workers, chunksize, overwrite_inchi
     ranges = [(start, min(start + chunksize, n)) for start in range(0, n, chunksize)]
 
     smiles_neu = [None] * n
-    inchi14    = [None] * n
+    inchikey   = [None] * n
 
     with ProcessPoolExecutor(max_workers=workers) as ex:
         futs = []
@@ -121,36 +120,48 @@ def standardize_mp(df, src_col, do_tautomer, workers, chunksize, overwrite_inchi
         for fut in as_completed(futs):
             (start, stop), smi_list, ik_list = fut.result()
             smiles_neu[start:stop] = smi_list
-            inchi14[start:stop]    = ik_list
+            inchikey[start:stop]   = ik_list
 
     df["smiles_neutral"] = pd.Series(smiles_neu, dtype="string")
-    df = _fill_inchikey14(df, inchi14, overwrite_inchi=overwrite_inchi)
+    df = _fill_inchikey(df, inchikey, overwrite_inchi=overwrite_inchi)
     return df
 
 def standardize_pandas(df, src_col, do_tautomer, overwrite_inchi):
     pairs = df[src_col].astype("string").apply(lambda s: _std_one(s, do_tautomer))
     df["smiles_neutral"] = pairs.map(lambda t: t[0]).astype("string")
-    inchi14_vec = pairs.map(lambda t: t[1]).astype("string")
-    df = _fill_inchikey14(df, inchi14_vec, overwrite_inchi=overwrite_inchi)
+    inchikey_vec = pairs.map(lambda t: t[1]).astype("string")
+    df = _fill_inchikey(df, inchikey_vec, overwrite_inchi=overwrite_inchi)
     return df
 
 
 # ---------- CLI ----------
 def main():
-    ap = argparse.ArgumentParser(description="Standardize SMILES → smiles_neutral (+ InChIKey14).")
+    ap = argparse.ArgumentParser(
+        description="Standardize SMILES → smiles_neutral (+ InChIKey completo)."
+    )
     ap.add_argument("--in",  dest="inp", required=True, help="Input Parquet file (curated.parquet)")
     ap.add_argument("--out", dest="out", required=True, help="Output Parquet file (curated.parquet)")
-    ap.add_argument("--overwrite-inchi14", action="store_true",
-                    help="Recompute/overwrite InChIKey14 desde la neutral (o rellena huecos si ya existe).")
+    ap.add_argument(
+        "--overwrite-inchikey", action="store_true",
+        help="Recompute/overwrite InChIKey desde la neutral (o rellena huecos si ya existe)."
+    )
     ap.add_argument("--no-tautomer", action="store_true", help="Disable tautomer canonicalization.")
-    ap.add_argument("--engine", choices=["auto","mp","pandas"], default="auto",
-                    help="Ejecución: 'mp' multiproceso, 'pandas' secuencial, 'auto' decide por tamaño.")
-    ap.add_argument("--workers", type=int, default=os.cpu_count() or 4,
-                    help="N procesos para --engine mp (por defecto CPUs).")
-    ap.add_argument("--chunksize", type=int, default=2000,
-                    help="Tamaño de chunk por proceso para --engine mp.")
-    ap.add_argument("--export-csv", action="store_true",
-                    help="Escribe también curated.csv junto al parquet.")
+    ap.add_argument(
+        "--engine", choices=["auto","mp","pandas"], default="auto",
+        help="Ejecución: 'mp' multiproceso, 'pandas' secuencial, 'auto' decide por tamaño."
+    )
+    ap.add_argument(
+        "--workers", type=int, default=os.cpu_count() or 4,
+        help="N procesos para --engine mp (por defecto CPUs)."
+    )
+    ap.add_argument(
+        "--chunksize", type=int, default=2000,
+        help="Tamaño de chunk por proceso para --engine mp."
+    )
+    ap.add_argument(
+        "--export-csv", action="store_true",
+        help="Escribe también curated.csv junto al parquet."
+    )
     args = ap.parse_args()
 
     df = pd.read_parquet(args.inp)
@@ -178,16 +189,16 @@ def main():
             df, src_col, do_taut,
             workers=max(1, args.workers),
             chunksize=args.chunksize,
-            overwrite_inchi=args.overwrite_inchi14
+            overwrite_inchi=args.overwrite_inchikey
         )
     else:
         df = standardize_pandas(
             df, src_col, do_taut,
-            overwrite_inchi=args.overwrite_inchi14
+            overwrite_inchi=args.overwrite_inchikey
         )
 
     # Tipos “bonitos”
-    for c in ["source","smiles_original","smiles_neutral","InChIKey14","solvent",
+    for c in ["source","smiles_original","smiles_neutral","InChIKey","solvent",
               "target_unit_raw","target_family","strat_label","method"]:
         if c in df.columns:
             df[c] = df[c].astype("string")
@@ -201,17 +212,17 @@ def main():
         return pd.to_numeric(s, errors="coerce")
 
     # Asegura existencia de columnas clave
-    if "InChIKey14" not in df.columns: df["InChIKey14"] = pd.NA
-    if "solvent" not in df.columns:    df["solvent"]    = pd.NA
-    if "temperature_K" not in df.columns: df["temperature_K"] = pd.NA
+    if "InChIKey" not in df.columns: df["InChIKey"] = pd.NA
+    if "solvent" not in df.columns:  df["solvent"]  = pd.NA
+    if "temp_C" not in df.columns: df["temp_C"] = pd.NA
 
-    ik14 = _norm_str(df["InChIKey14"])
+    ik   = _norm_str(df["InChIKey"])
     solv = _norm_str(df["solvent"])
-    temp = _norm_temp(df["temperature_K"])
+    temp = _norm_temp(df["temp_C"])
 
     # cond_uid = compuesto + solvente + temperatura (exacta)
     cond_uid = (
-        ik14.fillna("") + "|" +
+        ik.fillna("") + "|" +
         solv.fillna("") + "|" +
         temp.fillna(pd.NA).astype("string").fillna("")
     )

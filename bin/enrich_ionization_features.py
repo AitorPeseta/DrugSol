@@ -4,205 +4,196 @@
 import argparse
 import math
 from pathlib import Path
+import re  
+import requests  
 
 import numpy as np
 import pandas as pd
 
-# RDKit (solo para SMILES y SMARTS matching; no descriptores)
+# RDKit
 from rdkit import Chem
 from rdkit.Chem import AllChem
-import requests
 
+# === FUNCIONES DE IONIZACIÓN (Corregidas para la lógica de índices) ========================
 
-# ============== SMARTS helpers (tu código adaptado) ==============
-
-def split_acid_base_pattern(smarts_file: str):
-    df_smarts = pd.read_csv(smarts_file, sep="\t")
-    df_smarts_acid = df_smarts[df_smarts.Acid_or_base == "A"]
-    df_smarts_base = df_smarts[df_smarts.Acid_or_base == "B"]
+def split_acid_base_pattern(smarts_file):
+    """Carga y separa los patrones SMARTS ácidos (A) y básicos (B)."""
+    try:
+        df_smarts = pd.read_csv(smarts_file, sep="\t")
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Error: El archivo de patrones SMARTS '{smarts_file}' no se encontró."
+        )
+    df_smarts_acid = df_smarts[df_smarts.Acid_or_base == "A"].reset_index(drop=True)
+    df_smarts_base = df_smarts[df_smarts.Acid_or_base == "B"].reset_index(drop=True)
     return df_smarts_acid, df_smarts_base
 
+
 def unique_acid_match(matches):
+    """Lógica especial para manejar átomos compartidos en grupos ácidos."""
     single_matches = list(set([m[0] for m in matches if len(m) == 1]))
     double_matches = [m for m in matches if len(m) == 2]
     single_matches = [[j] for j in single_matches]
     double_matches.extend(single_matches)
     return double_matches
 
+
 def match_acid(df_smarts_acid, mol):
+    """Encuentra los índices atómicos únicos de los sitios ácidos."""
     matches = []
-    for _, name, smarts, index, _, acid_base in df_smarts_acid.itertuples():
+
+    # El DataFrame tiene las columnas:
+    # [0]=Index, [1]=Substructure, [2]=SMARTS, [3]=new_index, [4]=Index, [5]=Acid_or_base
+    for row in df_smarts_acid.itertuples():
+        # Acceso seguro a columnas (usa new_index, que es row[3])
         try:
-            pattern = Chem.MolFromSmarts(smarts)
-            if pattern is None:
+            smarts_str = row.SMARTS
+            index_str = row.new_index
+        except AttributeError:
+            try:
+                smarts_str = row[2]
+                index_str = row[3]
+            except IndexError:
                 continue
-            found = mol.GetSubstructMatches(pattern)
-            if len(found) == 0:
-                continue
-            if len(index) > 2:
-                idxs = [int(i) for i in index.split(",")]
-                for m in found:
-                    matches.append([m[idxs[0]], m[idxs[1]]])
-            else:
-                ii = int(index)
-                for m in found:
-                    matches.append([m[ii]])
-        except Exception:
+
+        pattern = Chem.MolFromSmarts(smarts_str)
+        if pattern is None:
             continue
+
+        match = mol.GetSubstructMatches(pattern)
+        if len(match) == 0:
+            continue
+
+        # Lógica de parsing de índice (usa el índice 0-base en la tupla 'match')
+        if isinstance(index_str, str) and "," in index_str:
+            index = [int(i) for i in index_str.split(",")]
+
+            for m in match:
+                # El Código A solo usa los dos primeros índices del patrón (index[0], index[1])
+                matches.append([m[index[0]], m[index[1]]])
+        else:
+            try:
+                index = int(index_str)
+            except (ValueError, TypeError):
+                continue
+
+            for m in match:
+                # La corrección incluye la verificación de rango para evitar IndexError
+                if index < len(m):
+                    matches.append([m[index]])
+
     matches = unique_acid_match(matches)
-    flat = []
+    matches_modify = []
     for i in matches:
         for j in i:
-            flat.append(j)
-    return list(set(flat))
+            matches_modify.append(j)
+
+    return list(set(matches_modify))
+
 
 def match_base(df_smarts_base, mol):
+    """Encuentra los índices atómicos únicos de los sitios básicos."""
     matches = []
-    for _, name, smarts, index, _, acid_base in df_smarts_base.itertuples():
-        try:
-            pattern = Chem.MolFromSmarts(smarts)
-            if pattern is None:
-                continue
-            found = mol.GetSubstructMatches(pattern)
-            if len(found) == 0:
-                continue
-            if len(index) > 2:
-                idxs = [int(i) for i in index.split(",")]
-                for m in found:
-                    matches.append([m[idxs[0]], m[idxs[1]]])
-            else:
-                ii = int(index)
-                for m in found:
-                    matches.append([m[ii]])
-        except Exception:
-            continue
-    matches = unique_acid_match(matches)
-    flat = []
-    for i in matches:
-        for j in i:
-            flat.append(j)
-    return list(set(flat))
 
-def get_ionization_aid(mol, smarts_file: str):
-    try:
-        df_smarts_acid, df_smarts_base = split_acid_base_pattern(smarts_file)
-        acid_idx = match_acid(df_smarts_acid, mol)
-        base_idx = match_base(df_smarts_base, mol)
-        return acid_idx, base_idx
-    except Exception:
+    for row in df_smarts_base.itertuples():
+        # Acceso seguro a columnas (usa new_index, que es row[3])
+        try:
+            smarts_str = row.SMARTS
+            index_str = row.new_index
+        except AttributeError:
+            try:
+                smarts_str = row[2]
+                index_str = row[3]
+            except IndexError:
+                continue
+
+        pattern = Chem.MolFromSmarts(smarts_str)
+        if pattern is None:
+            continue
+
+        match = mol.GetSubstructMatches(pattern)
+        if len(match) == 0:
+            continue
+
+        # Lógica de parsing de índice (usa el índice 0-base en la tupla 'match')
+        if isinstance(index_str, str) and "," in index_str:
+            index = [int(i) for i in index_str.split(",")]
+            for m in match:
+                matches.append([m[index[0]], m[index[1]]])
+        else:
+            try:
+                index = int(index_str)
+            except (ValueError, TypeError):
+                continue
+
+            for m in match:
+                if index < len(m):
+                    matches.append([m[index]])
+
+    unique_matches_tuples = unique_acid_match(matches)
+    matches_modify = []
+    for i in unique_matches_tuples:
+        for j in i:
+            matches_modify.append(j)
+
+    return list(set(matches_modify))
+
+
+def get_ionization_aid(mol, df_smarts_acid, df_smarts_base):
+    if mol is None:
         return [], []
 
+    mol = AllChem.AddHs(mol)
 
-# ============== pKa API opcional ==============
+    acid_matches = match_acid(df_smarts_acid, mol)
+    base_matches = match_base(df_smarts_base, mol)
 
-def predict_pka_api(smi: str, url: str, token: str):
-    param = {"Smiles": ("tmg", smi)}
-    headers = {"token": token} if token else {}
-    r = requests.post(url=url, files=param, headers=headers)
-    jsonbool = int(r.headers.get('ifjson', 0))
-    if jsonbool == 1:
-        res_json = r.json()
-        if res_json.get('status') == 200:
-            pka_datas = res_json.get('gen_datas', {})
-            return pka_datas
-        else:
-            raise RuntimeError("Error for pKa prediction")
-    else:
-        raise RuntimeError("Error for pKa prediction")
-
-def pka_stats_from_maps(acid_map: dict, base_map: dict):
-    def to_floats(d):
-        arr = []
-        for _, v in (d or {}).items():
-            try:
-                arr.append(float(v))
-            except Exception:
-                continue
-        return arr
-
-    acids = to_floats(acid_map)
-    bases = to_floats(base_map)
-
-    def stats(xs):
-        if not xs:
-            return np.nan, np.nan, np.nan
-        xs = sorted(xs)
-        return xs[0], float(np.median(xs)), xs[-1]
-
-    pKa_min_acid, pKa_med_acid, pKa_max_acid = stats(acids)
-    pKa_min_base, pKa_med_base, pKa_max_base = stats(bases)
-
-    # flags
-    has_strong_acid = int(bool(acids) and (min(acids) < 3.0))
-    has_strong_base = int(bool(bases) and (max(bases) > 9.0))
-    has_near_neutral = int(
-        any(6.0 <= x <= 8.0 for x in acids) or any(6.0 <= x <= 8.0 for x in bases)
-    )
-
-    # NUEVO: recuento de sitios fuertes por tipo
-    num_strong_acid = int(sum(x < 3.0 for x in acids))
-    num_strong_basic = int(sum(x > 9.0 for x in bases))
-
-    pKa_gap = np.nan
-    if acids and bases:
-        pKa_gap = float(max(bases) - min(acids))
-
-    return {
-        "pKa_min_acid": pKa_min_acid,
-        "pKa_med_acid": pKa_med_acid,
-        "pKa_max_acid": pKa_max_acid,
-        "pKa_min_base": pKa_min_base,
-        "pKa_med_base": pKa_med_base,
-        "pKa_max_base": pKa_max_base,
-        "pKa_gap": pKa_gap,
-        "has_strong_acid": has_strong_acid,
-        "has_strong_base": has_strong_base,
-        "has_near_neutral": has_near_neutral,
-        "num_strong_acid": num_strong_acid,
-        "num_strong_basic": num_strong_basic,
-    }
+    return acid_matches, base_matches
 
 
-# ============== core helpers ==============
+def calculate_ionization_features(smiles, df_smarts_acid, df_smarts_base):
+    mol = Chem.MolFromSmiles(smiles)
 
-def safe_mol_from_smiles(smi: str):
-    try:
-        if smi is None or (isinstance(smi, float) and math.isnan(smi)):
-            return None
-        smi = str(smi).strip()
-        if not smi:
-            return None
-        return Chem.MolFromSmiles(smi)
-    except Exception:
-        return None
+    if mol is None:
+        return pd.Series({"n_ionizable": 0, "n_acid": 0, "n_base": 0})
 
-# === FENOLES (nuevo) =========================================================
-_PHENOL_SMARTS_STRICT = Chem.MolFromSmarts("c[OX2H]")  # O-H en carbono aromático (bencénico)
-_PHENOL_SMARTS_LOOSE  = Chem.MolFromSmarts("a[OX2H]")  # O-H en átomo aromático genérico (incluye heteroaromáticos)
+    acid_idx, base_idx = get_ionization_aid(mol, df_smarts_acid, df_smarts_base)
+
+    # El conteo es simplemente la longitud de las listas de índices únicos devueltas
+    n_acid = len(acid_idx)
+    n_base = len(base_idx)
+    n_ionizable = n_acid + n_base
+
+    return pd.Series({
+        "n_ionizable": int(n_ionizable),
+        "n_acid": int(n_acid),
+        "n_base": int(n_base),
+    })
+
+
+# ----------------------------------------------------------------------------
+# === FENOLES (Corregido para incluir enoles) ===================
+
+_PHENOL_SMARTS_STRICT = Chem.MolFromSmarts("c[OX2H]")
+_PHENOL_SMARTS_LOOSE = Chem.MolFromSmarts("[CX3,cX3][OX2H]")
+
 
 def phenol_features(mol: Chem.Mol):
-    """
-    Devuelve:
-      - n_phenol / has_phenol usando patrón 'c[OX2H]' (estricto)
-      - n_phenol_like / phenol_like usando 'a[OX2H]' (laxo)
-    El conteo se hace por átomos de oxígeno únicos.
-    """
     if mol is None:
         return dict(n_phenol=0, has_phenol=0, n_phenol_like=0, phenol_like=0)
 
     def count_unique_O(smarts):
         if smarts is None:
             return 0
-        matches = mol.GetSubstructMatches(smarts)  # tuplas de índices
+        matches = mol.GetSubstructMatches(smarts)
         if not matches:
             return 0
-        # localizar el índice del átomo O en el patrón; en ambos patrones está en la segunda posición
-        # (c/a)[OX2H] -> índice 1 del match
+        # El átomo de Oxígeno siempre está en el índice 1 del match para X[OX2H]
         o_idxs = {m[1] for m in matches if len(m) > 1}
         return len(o_idxs)
 
     n_strict = count_unique_O(_PHENOL_SMARTS_STRICT)
-    n_loose  = count_unique_O(_PHENOL_SMARTS_LOOSE)
+    n_loose = count_unique_O(_PHENOL_SMARTS_LOOSE)
 
     return dict(
         n_phenol=int(n_strict),
@@ -210,61 +201,103 @@ def phenol_features(mol: Chem.Mol):
         n_phenol_like=int(n_loose),
         phenol_like=int(n_loose > 0),
     )
-# =============================================================================
-
-def build_features_for_smiles(smi: str, smarts_file: str, pka_url: str = None, pka_token: str = None):
-    mol = safe_mol_from_smiles(smi)
-
-    # sitios ácidos/básicos por SMARTS
-    if mol is not None:
-        try:
-            molH = AllChem.AddHs(mol)
-        except Exception:
-            molH = mol
-        acid_idx, base_idx = get_ionization_aid(molH, smarts_file=smarts_file)
-    else:
-        acid_idx, base_idx = [], []
-
-    n_acid = int(len(acid_idx))
-    n_base = int(len(base_idx))
-    n_ionizable = int(n_acid + n_base)
-    acid_base_balance = int(n_acid - n_base)
-
-    # pKa por tipo (si se ha configurado la API)
-    acid_map, base_map = {}, {}
-    if pka_url and (n_ionizable > 0) and (mol is not None):
-        try:
-            out = predict_pka_api(Chem.MolToSmiles(mol), url=pka_url, token=pka_token)
-            if "Acid" in out or "Base" in out:
-                acid_map = out.get("Acid", {}) or {}
-                base_map = out.get("Base", {}) or {}
-            elif "Acidic" in out or "Basic" in out:
-                acid_map = out.get("Acidic", {}) or {}
-                base_map = out.get("Basic", {}) or {}
-            else:
-                gd = out.get("gen_datas", {}) if isinstance(out, dict) else {}
-                acid_map = (gd or {}).get("Acid", {}) or {}
-                base_map = (gd or {}).get("Base", {}) or {}
-        except Exception:
-            acid_map, base_map = {}, {}
-
-    pka_stats = pka_stats_from_maps(acid_map, base_map)
-
-    # === Añadir fenoles ===
-    phen = phenol_features(mol)
-
-    out = {
-        "n_ionizable": n_ionizable,
-        "n_acid": n_acid,
-        "n_base": n_base,
-        "acid_base_balance": acid_base_balance,
-    }
-    out.update(pka_stats)
-    out.update(phen)
-    return out
 
 
-# ============== I/O ==============
+# ----------------------------------------------------------------------------
+# === PubChem: Melting Point por InChIKey (añadido) =========================
+
+def _get_pubchem_cid_from_inchikey(inchikey: str):
+    """
+    Devuelve el primer CID asociado al InChIKey en PubChem.
+    Si algo falla, devuelve None.
+    """
+    if not inchikey:
+        return None
+    inchikey = str(inchikey).strip()
+    if not inchikey:
+        return None
+
+    try:
+        url_cid = (
+            "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/"
+            f"inchikey/{inchikey}/cids/JSON"
+        )
+        r = requests.get(url_cid, timeout=10)
+        r.raise_for_status()
+        data = r.json()
+        cids = data.get("IdentifierList", {}).get("CID", [])
+        if not cids:
+            return None
+        return int(cids[0])
+    except Exception:
+        return None
+
+
+def _parse_mp_string_to_celsius(mp_str: str):
+    if not mp_str:
+        return 0
+    s = str(mp_str)
+    nums = re.findall(r"(-?\d+\.?\d*)", s)
+    if not nums:
+        return 0
+    vals = [float(x) for x in nums]
+    if not vals:
+        return 0
+    val = sum(vals) / len(vals)
+    if re.search(r"\bK\b|kelvin", s, flags=re.IGNORECASE):
+        val = val - 273.15
+    return float(val)
+
+
+
+def get_pubchem_melting_point_from_inchikey(inchikey: str):
+    """
+    Devuelve el melting point (ºC) desde PubChem para un InChIKey dado.
+    Si no encuentra nada o hay error, devuelve Nan.
+    """
+    cid = _get_pubchem_cid_from_inchikey(inchikey)
+    if cid is None:
+        return np.nan
+
+    try:
+        url_view = (
+            "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/"
+            f"compound/{cid}/JSON"
+        )
+        r = requests.get(url_view, timeout=10)
+        r.raise_for_status()
+        data = r.json()
+    except Exception:
+        return np.nan
+
+    melting_points_strings = []
+
+    def walk(section):
+        if isinstance(section, dict):
+            if section.get("TOCHeading") == "Experimental Properties":
+                for s in section.get("Section", []):
+                    if s.get("TOCHeading") == "Melting Point":
+                        for info in s.get("Information", []):
+                            val = info.get("Value", {}) or {}
+                            for swm in val.get("StringWithMarkup", []):
+                                melting_points_strings.append(swm.get("String", ""))
+            for v in section.values():
+                if isinstance(v, (dict, list)):
+                    walk(v)
+        elif isinstance(section, list):
+            for x in section:
+                walk(x)
+
+    walk(data)
+
+    if not melting_points_strings:
+        return np.nan
+
+    mp_val = _parse_mp_string_to_celsius(melting_points_strings[0])
+    return mp_val
+
+
+# ============== I/O Y MAIN (Funciones auxiliares) ==============
 
 def read_any(path: str) -> pd.DataFrame:
     p = Path(path)
@@ -274,6 +307,7 @@ def read_any(path: str) -> pd.DataFrame:
         return pd.read_csv(p)
     else:
         raise SystemExit(f"Formato no soportado: {p.suffix}")
+
 
 def write_like_input(df: pd.DataFrame, out_path: str):
     p = Path(out_path)
@@ -285,57 +319,73 @@ def write_like_input(df: pd.DataFrame, out_path: str):
     else:
         raise SystemExit(f"Formato de salida no soportado: {p.suffix}")
 
+
 def main():
-    ap = argparse.ArgumentParser("Añade SOLO features de ionización+pKa + fenoles (numéricos) al dataset")
-    ap.add_argument("--in", dest="inp", required=True)
-    ap.add_argument("--out", dest="out", required=True)
-    ap.add_argument("--smiles-col", default="smiles_neutral")
-    ap.add_argument("--smarts", required=True)
-    ap.add_argument("--pka-api-url", default=None)
-    ap.add_argument("--pka-token", default=None)
+    ap = argparse.ArgumentParser("Añade features de ionización+pKa + fenoles (numéricos) al dataset")
+    ap.add_argument("--in", dest="inp", required=True, help="Ruta al archivo de entrada (CSV, TXT, Parquet).")
+    ap.add_argument("--out", dest="out", required=True, help="Ruta al archivo de salida.")
+    ap.add_argument("--smiles-col", default="smiles_neutral", help="Nombre de la columna que contiene los SMILES.")
+    ap.add_argument("--smarts", required=True, help="Ruta al archivo 'smarts_pattern_ionized.txt'.")
+    ap.add_argument("--pka-api-url", default=None, help="URL de la API de pKa (opcional).")
+    ap.add_argument("--pka-token", default=None, help="Token para la API de pKa (opcional).")
+    # NUEVO: columna con InChIKey para poder bajar mp de PubChem
+    ap.add_argument("--inchikey-col", default=None, help="Nombre de la columna con InChIKey (para bajar mp de PubChem).")
     args = ap.parse_args()
 
     df = read_any(args.inp).copy()
     if args.smiles_col not in df.columns:
         raise SystemExit(f"Falta columna {args.smiles_col}")
 
-    # temp_C desde temperature_K (útil para tu pipeline, no depende de RDKit)
-    if "temperature_K" in df.columns and "temp_C" not in df.columns:
-        try:
-            df["temp_C"] = df["temperature_K"].astype(float) - 273.15
-        except Exception:
-            df["temp_C"] = np.nan
+    # --- Pre-carga de patrones SMARTS ---
+    print("Cargando patrones SMARTS.")
+    df_smarts_acid, df_smarts_base = split_acid_base_pattern(args.smarts)
 
-    new_cols = [
-        "n_ionizable","n_acid","n_base","acid_base_balance",
-        "pKa_min_acid","pKa_med_acid","pKa_max_acid",
-        "pKa_min_base","pKa_med_base","pKa_max_base",
-        "pKa_gap","has_strong_acid","has_strong_base","has_near_neutral",
-        "num_strong_acid","num_strong_basic",
-        "n_phenol","has_phenol","n_phenol_like","phenol_like",
-    ]
-    for c in new_cols:
-        if c not in df.columns:
-            df[c] = np.nan
+    # --- Cálculo de Features de Ionización ---
+    print("Calculando features de ionización (n_ionizable, n_acid, n_base).")
 
-    for idx, smi in enumerate(df[args.smiles_col].values):
-        try:
-            feats = build_features_for_smiles(
-                smi,
-                smarts_file=args.smarts,
-                pka_url=args.pka_api_url,
-                pka_token=args.pka_token,
-            )
-            for k, v in feats.items():
-                if k in df.columns:
-                    df.at[idx, k] = v
-                else:
-                    df[k] = np.nan
-                    df.at[idx, k] = v
-        except Exception:
-            continue
+    new_features = df[args.smiles_col].apply(
+        lambda x: calculate_ionization_features(x, df_smarts_acid, df_smarts_base)
+    )
+    df = pd.concat([df, new_features], axis=1)
 
+    df["n_ionizable"] = df["n_ionizable"].astype(int)
+    df["n_acid"] = df["n_acid"].astype(int)
+    df["n_base"] = df["n_base"].astype(int)
+
+    # --- Cálculo de Features de Fenoles ---
+    print("Calculando features de fenoles.")
+    df["Mol"] = df[args.smiles_col].apply(Chem.MolFromSmiles)
+
+    phenol_results = df["Mol"].apply(phenol_features).apply(pd.Series)
+    df = pd.concat([df, phenol_results], axis=1)
+
+    df = df.drop(columns=["Mol"])
+
+    # --- Cálculo de Melting Point (mp) desde PubChem ---
+    inchikey_col = args.inchikey_col
+    has_inchikey = bool(inchikey_col) and (inchikey_col in df.columns)
+
+    if has_inchikey:
+        print("Calculando puntos de fusión (mp) desde PubChem.")
+        def _safe_mp(val):
+            if val is None:
+                return np.nan
+            if isinstance(val, float) and math.isnan(val):
+                return np.nan
+            try:
+                return float(get_pubchem_melting_point_from_inchikey(str(val)))
+            except Exception:
+                return np.nan
+
+        df["mp"] = df[inchikey_col].apply(_safe_mp)
+    else:
+        # Si no hay columna de InChIKey, no hacemos nada; por si acaso no pisamos una 'mp' existente
+        print("No se ha proporcionado --inchikey-col o la columna no existe en el dataframe. No se calculará mp.")
+
+    # --- Guardar el resultado ---
     write_like_input(df, args.out)
+    print(f"Proceso completado. Resultados guardados en {args.out}")
+
 
 if __name__ == "__main__":
     main()

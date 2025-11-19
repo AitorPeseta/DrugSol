@@ -23,7 +23,7 @@ process outliers_scatter_mahalanobis {
   fi
 
   ${params.MAMBA} run -p "\$PREFIX" python "${out_scatter_py}" --train "${train}" --test "${test}" \
-                                    --only_cols logS temperature_K \
+                                    --only_cols logS temp_C \
                                     --exclude id target \
                                     --basis combined \
                                     --outlier_col is_outlier \

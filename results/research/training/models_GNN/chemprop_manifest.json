@@ -1,0 +1,26 @@
+{
+  "epochs": 40,
+  "hidden_size": 1680,
+  "depth": 3,
+  "dropout": 0.06561541981897138,
+  "ffn_num_layers": 2,
+  "batch_size": 32,
+  "target": "logS",
+  "smiles_col": "smiles_neutral",
+  "val_fraction_effective": 0.05,
+  "used_gpu": true,
+  "best_params_source": "chemprop_best_params.json",
+  "descriptors_used": [
+    "temp_C",
+    "n_ionizable",
+    "n_acid",
+    "n_base",
+    "TPSA",
+    "logP",
+    "HBD",
+    "HBA",
+    "FractionCSP3",
+    "MW"
+  ],
+  "seed": 42
+}

@@ -1,0 +1,23 @@
+{
+  "xgb": {
+    "rmse": 1.0782772690070508,
+    "r2": 0.6200581899473542
+  },
+  "lgbm": {
+    "rmse": 1.1023559819837434,
+    "r2": 0.6028999756636133
+  },
+  "n_samples": 561,
+  "n_features_num": 2857,
+  "target": "logS",
+  "used_gpu": true,
+  "n_folds": 5,
+  "tune_trials": 35,
+  "inner_splits": 3,
+  "pruner": "asha",
+  "asha": {
+    "min_resource": 1,
+    "reduction_factor": 3,
+    "min_early_stopping_rate": 0
+  }
+}

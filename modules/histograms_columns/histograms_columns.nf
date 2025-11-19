@@ -23,7 +23,7 @@ process histograms_columns {
   fi
 
   ${params.MAMBA} run -p "\$PREFIX" python "${histogram_py}" --train "${train}" --test "${test}" \
-                                    --cols logS temperature_K is_drug mordred__MW \
+                                    --cols logS temp_C is_drug mordred__MW \
                                     --round-step 0.5 \
                                     --outdir hist_out
   """

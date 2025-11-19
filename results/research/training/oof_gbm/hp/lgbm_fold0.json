@@ -1,0 +1,9 @@
+{
+  "num_leaves": 217,
+  "feature_fraction": 0.7686217700720525,
+  "bagging_fraction": 0.6255878676248451,
+  "min_data_in_leaf": 35,
+  "lgbm_reg_alpha": 2.875560745911445e-07,
+  "lgbm_reg_lambda": 0.0013658322357601989,
+  "lgbm_lr": 0.05680161337744358
+}

@@ -25,6 +25,6 @@ process standardize_smiles {
   fi
 
   ${params.MAMBA} run -p "\$PREFIX" \
-    python ${std_py} --in ${curated_parquet} --out standardize.parquet --export-csv
+    python ${std_py} --in ${curated_parquet} --out standardize.parquet --overwrite-inchikey
   """
 }

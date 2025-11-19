@@ -10,7 +10,7 @@ process train_oof_tpsa {
     path folds
 
   output:
-    path "oof_tpsa/tpsa.parquet", emit: OFF_TPSA
+    path "oof_tpsa/oof_tpsa.parquet", emit: OFF_TPSA
     path "oof_tpsa/tpsa_oof_manifest.json", emit: MANI_GNN
     path "oof_tpsa/metrics_oof_tpsa.json", emit: META_GNN
 
@@ -22,17 +22,16 @@ process train_oof_tpsa {
   YAML="${baseDir}/envs/train_methods.yml"
 
   if [[ ! -d "\$PREFIX" ]]; then
-    rm -rf  "\$PREFIX"
+    rm -rf "\$PREFIX"
     ${params.MAMBA} clean --all -y
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority --always-copy
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${train_o_tpsa_py}" --train "${train}" --folds "${folds}" \
-                                    --smiles-col smiles_neutral \
-                                    --id-col row_uid \
-                                    --target logS \          
-                                    --kfolds 5 \
-                                    --save-dir oof_tpsa
+  ${params.MAMBA} run -p "\$PREFIX" python "${train_o_tpsa_py}" \
+      --train "${train}" \
+      --folds-file "${folds}" \
+      --id-col row_uid \
+      --target logS \
+      --save-dir oof_tpsa
   """
 }
-  

@@ -309,7 +309,7 @@ def main():
     print(f"[INFO] Mejor método por {args.metric}: {better} "
           f"(stack={stack_score:.5f}, blend={blend_score:.5f})")
 
-    # 6) Guardados
+    # 6) Guardados OOF combinados
     if merged_df is not None:
         oof_df = merged_df.copy()
         for j, lab in enumerate(labels):
@@ -326,9 +326,27 @@ def main():
     oof_path = outdir / f"oof_predictions{args.suffix}.parquet"
     oof_df.to_parquet(oof_path, index=False)
 
-    with open(outdir / f"stack/meta_ridge{args.suffix}.pkl", "wb") as f:
-        pickle.dump({"labels": labels, "model": meta_full}, f)
+    # 7) Guardar modelo de STACK en formato que entiende final_infer_master
+    #    Mapeamos nombres de modelos -> columnas de nivel 0 (y_xgb, y_lgbm, y_chemprop, y_tpsa, …)
+    alias = {
+        "xgb": "y_xgb",
+        "lgbm": "y_lgbm",
+        "gnn": "y_chemprop",
+        "chemprop": "y_chemprop",
+        "tpsa": "y_tpsa",
+    }
+    feature_names = [alias.get(lab, f"y_{lab}") for lab in labels]
+    stack_obj = {
+        "labels": labels,
+        "feature_names": feature_names,
+        "coef": [float(c) for c in np.asarray(meta_full.coef_, dtype=float).ravel()],
+        "intercept": float(meta_full.intercept_),
+    }
 
+    with open(outdir / f"stack/meta_ridge{args.suffix}.pkl", "wb") as f:
+        pickle.dump(stack_obj, f)
+
+    # 8) Guardar pesos de BLEND
     with open(outdir / f"blend/weights{args.suffix}.json", "w") as f:
         json.dump(blend_summary["weights_full"], f, indent=2)
 

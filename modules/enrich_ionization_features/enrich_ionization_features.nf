@@ -26,10 +26,7 @@ process enrich_ionization_features {
                                     --in "${file}" \
                                     --out ionization.parquet \
                                     --smiles-col smiles_neutral \
-                                    --smarts ${baseDir}/resources/smarts_pattern_ionized.txt \
-                                    --pka-api-url "http://xundrug.cn:5001/modules/upload0/" \
-                                    --pka-token "O05DriqqQLlry9kmpCwms2IJLC0MuLQ7"
+                                    --smarts "${baseDir}/resources/smarts_pattern_ionized.txt" \
+                                    --inchikey-col InChIKey
   """
 }
-
-  

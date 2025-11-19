@@ -57,11 +57,7 @@ def _chemprop_train(train_csv, val_csv, out_dir, hp, use_gpu, epochs, seed, batc
     splits_json.write_text(json.dumps(splits))
 
     # Desc columns disponibles dentro de combined.csv (sin --descriptors-path)
-    present_cols = [c for c in ["temp_C","n_ionizable","n_acid","n_base","acid_base_balance",
-                                "pKa_min_acid","pKa_med_acid","pKa_max_acid",
-                                "pKa_min_base","pKa_med_base","pKa_max_base","pKa_gap",
-                                "num_strong_acid","num_strong_basic",
-                                "has_strong_acid","has_strong_base","has_near_neutral",
+    present_cols = [c for c in ["temp_C","n_ionizable","n_acid","n_base",
                                 "TPSA","logP","HBD","HBA","FractionCSP3","MW"]
                     if c in df_comb.columns]
 
@@ -101,11 +97,7 @@ def _chemprop_predict(val_in_csv: Path, model_path: Path, out_csv: Path, gpu: bo
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # Solo columnas presentes en el MISMO CSV de entrada
-    present_cols = [c for c in ["temp_C","n_ionizable","n_acid","n_base","acid_base_balance",
-                                "pKa_min_acid","pKa_med_acid","pKa_max_acid",
-                                "pKa_min_base","pKa_med_base","pKa_max_base","pKa_gap",
-                                "num_strong_acid","num_strong_basic",
-                                "has_strong_acid","has_strong_base","has_near_neutral",
+    present_cols = [c for c in ["temp_C","n_ionizable","n_acid","n_base",
                                 "TPSA","logP","HBD","HBA","FractionCSP3","MW"]
                     if c in df_val.columns]
 

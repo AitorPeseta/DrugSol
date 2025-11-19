@@ -25,7 +25,7 @@ process stratified_split {
 
   ${params.MAMBA} run -p "\$PREFIX" python "${strat_py}" --input "${source}" \
                                     --group-col cluster_ecfp4_0p7 \
-                                    --temp-col temperature_K \
+                                    --temp-col temp_C \
                                     --temp-step 2 \
                                     --test-size 0.2 \
                                     --seed 42 \

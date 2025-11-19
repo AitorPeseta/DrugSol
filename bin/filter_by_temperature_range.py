@@ -21,7 +21,7 @@ def main():
     ap = argparse.ArgumentParser(description="Filtra filas por rango de temperatura (K).")
     ap.add_argument("--input", required=True, help="Archivo de entrada (.parquet o .csv)")
     ap.add_argument("--out", required=True, help="Archivo de salida (.parquet o .csv)")
-    ap.add_argument("--temp-col", default="temperature_K", help="Nombre de la columna de temperatura (default: temperature_K)")
+    ap.add_argument("--temp-col", default="temp_C", help="Nombre de la columna de temperatura (default: temp_C)")
     ap.add_argument("--min-k", type=float, default=None, help="Temperatura mínima en K (inclusiva). Si no se indica, -inf.")
     ap.add_argument("--max-k", type=float, default=None, help="Temperatura máxima en K (inclusiva). Si no se indica, +inf.")
     ap.add_argument("--strict", action="store_true", help="Usar límites estrictos (min,max) en lugar de inclusivos [min,max].")

@@ -40,12 +40,11 @@ workflow train_methods {
     def TOC_PY = Channel.value( file("${baseDir}/bin/train_oof_chemprop.py") )
     train_oof_chemprop( FINAL_TRAIN_SMILE, OUTDIR_VAL, TOC_PY, FOL_MERGE )
     def OOF_GNN  = train_oof_chemprop.out.OFF_GNN
-    def BEST_GNN = train_oof_chemprop.out.MANI_GNN
+    def BEST_GNN = train_oof_chemprop.out.BEST_GNN
 
     def TOT_PY = Channel.value( file("${baseDir}/bin/train_oof_tpsa.py") )
     train_oof_tpsa( FINAL_TRAIN_SMILE, OUTDIR_VAL, TOT_PY, FOL_MERGE )
     def OOF_TPSA  = train_oof_tpsa.out.OFF_TPSA
-    def BEST_TPSA = train_oof_tpsa.out.BEST_TPSA
 
     def MSB_PY = Channel.value( file("${baseDir}/bin/meta_stack_blend.py") )
     def META_OOF = OOF_LGBM

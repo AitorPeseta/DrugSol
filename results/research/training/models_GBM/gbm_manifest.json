@@ -1,0 +1,53 @@
+{
+  "target": "logS",
+  "n_samples": 561,
+  "n_features_used": 2857,
+  "id_col": "row_uid",
+  "val_fraction": 0.0,
+  "xgb_params": {
+    "objective": "reg:squarederror",
+    "colsample_bytree": 0.8283381063179645,
+    "enable_categorical": false,
+    "learning_rate": 0.00844088772632534,
+    "max_depth": 8,
+    "min_child_weight": 12.0,
+    "n_estimators": 2000,
+    "n_jobs": -1,
+    "random_state": 42,
+    "reg_alpha": 0.00020218326444998766,
+    "reg_lambda": 0.0019954243622141666,
+    "subsample": 0.7470133801806439,
+    "tree_method": "gpu_hist",
+    "verbosity": 0
+  },
+  "lgbm_params": {
+    "boosting_type": "gbdt",
+    "colsample_bytree": 0.7016728009116497,
+    "importance_type": "split",
+    "learning_rate": 0.03,
+    "max_depth": -1,
+    "min_child_samples": 20,
+    "min_child_weight": 0.001,
+    "min_split_gain": 0.0,
+    "n_estimators": 3000,
+    "n_jobs": -1,
+    "num_leaves": 259,
+    "objective": "regression",
+    "random_state": 42,
+    "reg_alpha": 0.0,
+    "reg_lambda": 1.5,
+    "subsample": 0.8226339525407393,
+    "subsample_for_bin": 200000,
+    "subsample_freq": 0,
+    "verbose": -1,
+    "metric": "rmse",
+    "device_type": "gpu"
+  },
+  "ignored_text_cols": [
+    "smiles_neutral",
+    "smiles_original",
+    "smiles",
+    "fold",
+    "row_uid"
+  ]
+}

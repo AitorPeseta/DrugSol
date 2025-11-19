@@ -1,0 +1,30 @@
+{
+  "id_col": "row_uid",
+  "target": "logS",
+  "X_cols": [
+    "logP",
+    "TPSA",
+    "mp_m25",
+    "aroOHdel"
+  ],
+  "alphas_grid": [
+    0.001,
+    0.01,
+    0.1,
+    1,
+    3,
+    10,
+    30,
+    100
+  ],
+  "alpha_by_fold": {
+    "0": 3.0,
+    "1": 3.0,
+    "2": 3.0,
+    "3": 3.0,
+    "4": 3.0
+  },
+  "phenol_col_used": "aroOHdel",
+  "has_mp": true,
+  "n_rows_valid": 255
+}

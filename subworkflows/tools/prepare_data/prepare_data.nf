@@ -48,7 +48,7 @@ workflow prepare_data {
     def FINAL_TRAIN_GBM   = Channel.empty()
     def FINAL_TEST_GBM    = Channel.empty()
     def FINAL_TRAIN_SMILE = Channel.empty()
-    def FINAL_TEST_SMILE  = Channel.empty()
+    def FINAL_TEST_SMILE  = Channel.empty() 
     
     // --- Estandarizar SMILES / InChIKey ---
     standardize_smiles( FILTER_O, OUTDIR_VAL, STD_PY )

@@ -28,7 +28,7 @@ process make_folds {
                                     --id-col row_uid \
                                     --group-col cluster_ecfp4_0p7 \
                                     --strat-mode both \
-                                    --temp-col temperature_K \
+                                    --temp-col temp_C \
                                     --temp-step 2 \
                                     --temp-unit auto \
                                     --target logS --bins 2 \
