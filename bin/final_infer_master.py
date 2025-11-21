@@ -535,6 +535,19 @@ def _maybe_add_tpsa_pred(out_df: pd.DataFrame,
                         + (nlike if hasattr(nlike, "__array__") else 0)
                     )
                     continue
+                    
+            if feat == "inv_temp":
+                # Buscamos temp_C o temp_K
+                if "temp_C" in tab.columns:
+                    t_c = pd.to_numeric(tab["temp_C"], errors="coerce").fillna(25.0)
+                    tab["inv_temp"] = 1000.0 / (t_c + 273.15)
+                elif "temp_K" in tab.columns:
+                    t_k = pd.to_numeric(tab["temp_K"], errors="coerce").fillna(298.15)
+                    tab["inv_temp"] = 1000.0 / t_k
+                else:
+                    # Fallback por defecto
+                    tab["inv_temp"] = 1000.0 / (25.0 + 273.15)
+                continue
 
         # Comprobamos que ya están todas las features
         missing = [f for f in features if f not in tab.columns]
@@ -689,9 +702,9 @@ def main():
 
         chem_col = _pick_smiles_col(test_smi, args.chemprop_smiles_col, args.smiles_col)
 
-        # columnas de descriptores usadas en el entrenamiento de Chemprop
+        # AÑADIDO: inv_temp es obligatorio ahora
         desc_cols_all = [
-            "temp_C", "n_ionizable", "n_acid", "n_base",
+            "temp_C", "inv_temp", "n_ionizable", "n_acid", "n_base",
             "TPSA", "logP", "HBD", "HBA", "FractionCSP3", "MW",
         ]
 
@@ -701,26 +714,41 @@ def main():
             chem_col: _norm_smiles(test_smi[chem_col]),
         })
 
-        # Intentamos añadir cada descriptor desde test_smi o test_tab
+        # 1. Intentar traer temp_C primero si existe, para poder calcular inv_temp
+        if "temp_C" in test_smi.columns:
+            tmp["temp_C"] = pd.to_numeric(test_smi["temp_C"], errors="coerce").values
+        elif "temp_C" in test_tab.columns:
+             # Traer desde test_tab
+             aux = test_tab[[args.id_col, "temp_C"]].drop_duplicates(args.id_col)
+             tmp = tmp.merge(aux, on=args.id_col, how="left")
+
+        # 2. Calcular inv_temp si tenemos temp_C
+        if "temp_C" in tmp.columns:
+            # Rellenar con 25 si es nulo (igual que en train)
+            t_vals = tmp["temp_C"].fillna(25.0)
+            tmp["inv_temp"] = 1000.0 / (t_vals + 273.15)
+        else:
+            # Si no hay temperatura, asumimos 25 grados para inv_temp
+            tmp["inv_temp"] = 1000.0 / (25.0 + 273.15)
+
+        # 3. Rellenar el resto de descriptores
         missing = []
         for col in desc_cols_all:
+            if col in tmp.columns: continue # Ya lo tenemos (temp_C o inv_temp)
+
             if col in test_smi.columns:
                 tmp[col] = pd.to_numeric(test_smi[col], errors="coerce").values
             elif col in test_tab.columns:
-                # merge por id_col para traer el descriptor desde el tabular
                 tmp = tmp.merge(
                     test_tab[[args.id_col, col]].drop_duplicates(args.id_col),
-                    on=args.id_col,
-                    how="left",
-                    suffixes=("", "_from_tab"),
+                    on=args.id_col, how="left", suffixes=("", "_from_tab"),
                 )
-                # si viene con sufijo, lo renombramos al nombre canónico
-                if f"{col}_from_tab" in tmp.columns and col not in tmp.columns:
+                if f"{col}_from_tab" in tmp.columns:
                     tmp[col] = tmp[f"{col}_from_tab"]
                     tmp.drop(columns=[f"{col}_from_tab"], inplace=True)
             else:
                 missing.append(col)
-
+        
         if missing:
             raise ValueError(
                 f"[FATAL] Faltan columnas de descriptores para Chemprop en test_tab/test_smi: {missing}"
