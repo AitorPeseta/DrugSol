@@ -15,16 +15,18 @@ process fetch_chembl {
   set -euo pipefail
 
   ENV_PREFIX="\$HOME/.conda_nf/common_ingest"
+  
+  # 1. Creamos el entorno si no existe (esto se mantiene igual)
   if [[ ! -d "\$ENV_PREFIX" ]]; then
     ${params.MAMBA} create -y -p "\$ENV_PREFIX" -f ${baseDir}/envs/common_ingest.yml
   fi
 
-  ${params.MAMBA} run -p "\$ENV_PREFIX" \\
-    python ${dl_py} --out chembl_drugs.csv --max 3000 --pagesize 1000 --sleep 0.2 --only-approved
+  # 2. EJECUCIÓN DIRECTA (Bypass de micromamba run)
+  # Usamos la ruta absoluta al python del entorno
+  "\$ENV_PREFIX/bin/python" ${dl_py} --out chembl_drugs.csv --max 3000 --pagesize 1000 --sleep 0.2 --only-approved
 
-  # normaliza CSV (SIN línea en blanco y SIN sangría)
-  ${params.MAMBA} run -p "\$ENV_PREFIX" \\
-  python - <<'PY'
+  # 3. NORMALIZACIÓN (También con ejecución directa)
+  "\$ENV_PREFIX/bin/python" - <<'PY'
   import pandas as pd, os, sys
   f = "chembl_drugs.csv"
   try:

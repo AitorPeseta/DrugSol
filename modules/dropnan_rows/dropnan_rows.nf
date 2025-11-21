@@ -25,7 +25,8 @@ process dropnan_rows {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${drop_py}" \
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${drop_py}" \
     --input "${source}" \
     --output "${name_out}_dropnan.parquet" \
     --save_csv \

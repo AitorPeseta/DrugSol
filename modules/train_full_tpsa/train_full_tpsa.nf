@@ -23,13 +23,13 @@ process train_full_tpsa {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${train_full_py}" \
-                                    --train "${train}" \
-                                    --target logS \
-                                    --tpsa-col TPSA \
-                                    --phenol-col n_phenol \
-                                    --save-dir models_TPSA \
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${train_full_py}" \\
+                                    --train "${train}" \\
+                                    --target logS \\
+                                    --tpsa-col TPSA \\
+                                    --phenol-col n_phenol \\
+                                    --save-dir models_TPSA \\
 
   """
 }
-  

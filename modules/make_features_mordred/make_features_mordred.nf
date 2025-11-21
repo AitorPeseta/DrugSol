@@ -23,19 +23,20 @@ process make_features_mordred {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${features_py}" --input "${file}" \
-                                    --out_parquet "${name_out}_mordred_featured.parquet" \
-                                    --smiles_source neutral \
-                                    --keep-smiles \
-                                    --include_3d \
-                                    --ff uff \
-                                    --seed_3d 42 \
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${features_py}" --input "${file}" \\
+                                    --out_parquet "${name_out}_mordred_featured.parquet" \\
+                                    --smiles_source neutral \\
+                                    --keep-smiles \\
+                                    --include_3d \\
+                                    --ff uff \\
+                                    --seed_3d 42 \\
                                     --max_atoms_3d 200 \
-                                    --max_iters_3d 200 \
-                                    --nproc 4 \
-                                    --inchikey_col cluster_ecfp4_0p7 \
-                                    --ik14_hash_bins 128 \
-                                    --keep_inchikey_as_group \
+                                    --max_iters_3d 200 \\
+                                    --nproc 4 \\
+                                    --inchikey_col cluster_ecfp4_0p7 \\
+                                    --ik14_hash_bins 128 \\
+                                    --keep_inchikey_as_group \\
                                     --save_csv 
 
   cp -v "${name_out}_mordred_featured.parquet" "${baseDir}/resources"                               

@@ -23,11 +23,11 @@ process make_features_rdkit {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${features_py}" --in "${file}" \
-                                    --out "${name_out}_rdkit_featured.parquet" \
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${features_py}" --in "${file}" \\
+                                    --out "${name_out}_rdkit_featured.parquet" \\
                                     --smiles-col smiles_neutral
 
-  cp -v "${name_out}_rdkit_featured.parquet" "${baseDir}/resources"                               
+  cp -v "${name_out}_rdkit_featured.parquet" "${baseDir}/resources"                        
   """
 }
-

@@ -1,25 +1,23 @@
 {
-  "intercept": 0.5778528277934347,
+  "intercept": -0.1269124333951126,
   "coef": {
-    "logP": -0.7641116939995741,
-    "TPSA": -0.017283125619289505,
-    "mp_m25": -0.0001877134609511033,
-    "n_phenol": -0.26081227875087476
+    "logP": -0.6227783601531596,
+    "TPSA": -0.010570006385830645,
+    "n_phenol": -0.216512486519675
   },
   "features": [
     "logP",
     "TPSA",
-    "mp_m25",
     "n_phenol"
   ],
   "standardized_training": true,
-  "alpha_selected": 3.0,
+  "alpha_selected": 10.0,
   "meta": {
     "target": "logS",
     "logp_col": "logP",
     "tpsa_col": "TPSA",
     "phenol_col": "n_phenol",
-    "used_mp": true,
-    "n_train": 255
+    "used_mp": false,
+    "n_train": 2935
   }
 }

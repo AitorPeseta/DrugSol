@@ -40,16 +40,16 @@ process final_infer_master {
     STACK_OPT="--stack-pkl ${stack_model}"
   fi
 
-
-  ${params.MAMBA} run -p "\$PREFIX" python "${fim_py}" \
-      --test-tabular "${test_tabular}" \
-      --test-smiles  "${test_smiles}"  \
-      --models-dir   "${models_dir}"   \
-      --id-col row_uid \
-      --chemprop-model-dir "${chemprop_dir}" \
-      --chemprop-smiles-col smiles \
-      --tpsa-json "${tpsa_model}" --tpsa-col TPSA --phenol-col phenol_count \
-      --smiles-col smiles_neutral --target logS \
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${fim_py}" \\
+      --test-tabular "${test_tabular}" \\
+      --test-smiles  "${test_smiles}"  \\
+      --models-dir   "${models_dir}"   \\
+      --id-col row_uid \\
+      --chemprop-model-dir "${chemprop_dir}" \\
+      --chemprop-smiles-col smiles \\
+      --tpsa-json "${tpsa_model}" --tpsa-col TPSA --phenol-col phenol_count \\
+      --smiles-col smiles_neutral --target logS \\
       --save-dir pred \$WEIGHTS_OPT \$STACK_OPT
   """
 }

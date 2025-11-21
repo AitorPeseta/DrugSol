@@ -22,6 +22,7 @@ process unify_datasets {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${unify_py}" --sources "${source}" --export-csv
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${unify_py}" --sources "${source}" --export-csv
   """
 }

@@ -49,6 +49,8 @@ def parse_args():
     ap.add_argument("--save-dir", dest="save_dir", default="./oof_gbm")
     ap.add_argument("--use-gpu", dest="use_gpu", action="store_true",
                     help="XGB/LGBM en GPU si disponible (XGB usa gpu_hist)")
+    ap.add_argument("--sample-weight-col", default=None,
+                    help="Columna numérica de TRAIN a usar como sample_weight (opcional)")
 
     # hiperparámetros base si no hay tuning
     ap.add_argument("--xgb-n-estimators", dest="xgb_n_estimators", type=int, default=2000)
@@ -80,7 +82,7 @@ def parse_args():
 def rmse(y, yhat): return float(np.sqrt(mean_squared_error(y, yhat)))
 def r2(y, yhat):   return float(r2_score(y, yhat))
 
-def load_and_merge(train_path, folds_path, id_col, target):
+def load_and_merge(train_path, folds_path, id_col, target, sample_weight_col=None):
     tr = pd.read_parquet(train_path) if str(train_path).endswith(".parquet") else pd.read_csv(train_path)
     folds = pd.read_parquet(folds_path) if str(folds_path).endswith(".parquet") else pd.read_csv(folds_path)
 
@@ -100,6 +102,17 @@ def load_and_merge(train_path, folds_path, id_col, target):
     ids = df[id_col].to_numpy()
     folds_values = df["fold"].to_numpy()
 
+    # -------- sample_weight opcional --------
+    sample_weight = None
+    if sample_weight_col is not None:
+        if sample_weight_col not in df.columns:
+            raise ValueError(f"Falta columna de sample_weight '{sample_weight_col}' en TRAIN.")
+        w = pd.to_numeric(df[sample_weight_col], errors="coerce").to_numpy(dtype=float)
+        if np.isnan(w).any():
+            print("[WARN] sample_weight contenía NaNs; se reemplazan por 1.0")
+            w = np.where(np.isnan(w), 1.0, w)
+        sample_weight = w
+
     # solo numéricas
     num = df.select_dtypes(include=[np.number]).copy()
     drop_cols = [c for c in [target, id_col, "fold"] if c in num.columns]
@@ -108,7 +121,8 @@ def load_and_merge(train_path, folds_path, id_col, target):
     if num.shape[1] == 0:
         raise ValueError("No quedan columnas numéricas válidas tras filtrar.")
 
-    return df, num, y, ids, folds_values, num.columns.tolist()
+    return df, num, y, ids, folds_values, num.columns.tolist(), sample_weight
+
 
 def make_preproc(num_cols):
     return ColumnTransformer(
@@ -125,7 +139,16 @@ def make_preproc(num_cols):
 
 # -------- XGBoost (API nativa con ES) --------
 
-def _xgb_fit_predict_booster(X_tr, y_tr, X_va, y_va, params, use_gpu: bool, seed: int, esr: int = 100):
+def _xgb_fit_predict_booster(
+    X_tr, y_tr,
+    X_va, y_va,
+    params,
+    use_gpu: bool,
+    seed: int,
+    esr: int = 100,
+    sample_weight_tr=None,
+    sample_weight_va=None,
+):
     """
     Entrena XGBoost con xgb.train + early stopping y devuelve (booster, preds_val).
     Compatible con XGB 2.x (sin ntree_limit).
@@ -151,8 +174,8 @@ def _xgb_fit_predict_booster(X_tr, y_tr, X_va, y_va, params, use_gpu: bool, seed
 
     num_round = int(params.get("n_estimators", 2000))
 
-    dtrain = xgb.DMatrix(X_tr, label=y_tr)
-    dvalid = xgb.DMatrix(X_va, label=y_va)
+    dtrain = xgb.DMatrix(X_tr, label=y_tr, weight=sample_weight_tr)
+    dvalid = xgb.DMatrix(X_va, label=y_va, weight=sample_weight_va)
 
     booster = xgb.train(
         booster_params,
@@ -217,7 +240,7 @@ def get_lgbm_model(use_gpu: bool, seed: int):
 
 # -------------------- CV helpers --------------------
 
-def inner_cv_score(model_name, base_params, params, X_raw, y, inner_splits, num_cols, seed, use_gpu, trial=None):
+def inner_cv_score(model_name, base_params, params, X_raw, y, inner_splits, num_cols, seed, use_gpu, trial=None, sample_weight=None):
     """
     RMSE medio en inner-CV (menor mejor).
     Si 'trial' no es None, reporta métricas por fold y permite pruning ASHA.
@@ -228,17 +251,37 @@ def inner_cv_score(model_name, base_params, params, X_raw, y, inner_splits, num_
     for fold_idx, (tr_idx, va_idx) in enumerate(kf.split(X_raw), start=1):
         X_tr_raw, X_va_raw = X_raw.iloc[tr_idx], X_raw.iloc[va_idx]
         y_tr, y_va = y[tr_idx], y[va_idx]
+        if sample_weight is not None:
+            w_tr = sample_weight[tr_idx]
+            w_va = sample_weight[va_idx]
+        else:
+            w_tr = None
+            w_va = None
         pre, X_tr, X_va = _preprocess_train_val(X_tr_raw, X_va_raw, y_tr, num_cols)
 
         if model_name == "xgb":
             p = dict(base_params); p.update(params)
-            _, y_hat = _xgb_fit_predict_booster(X_tr, y_tr, X_va, y_va, p, use_gpu, seed, esr=100)
+            _, y_hat = _xgb_fit_predict_booster(
+                X_tr, y_tr, X_va, y_va, p, use_gpu, seed, esr=100,
+                sample_weight_tr=w_tr,
+                sample_weight_va=w_va,
+            )
         elif model_name == "lgbm":
             est = get_lgbm_model(use_gpu, seed)
             est.set_params(**params)
-            est.fit(X_tr, y_tr, eval_set=[(X_va, y_va)], eval_metric="rmse",
-                    callbacks=[lgb.early_stopping(100, verbose=False)])
+            fit_kwargs = {}
+            if w_tr is not None:
+                fit_kwargs["sample_weight"] = w_tr
+
+            est.fit(
+                X_tr, y_tr,
+                eval_set=[(X_va, y_va)],
+                eval_metric="rmse",
+                callbacks=[lgb.early_stopping(100, verbose=False)],
+                **fit_kwargs,
+            )
             y_hat = est.predict(X_va, num_iteration=getattr(est, "best_iteration_", None))
+
         else:
             raise ValueError("model_name debe ser 'xgb' o 'lgbm'")
 
@@ -253,18 +296,28 @@ def inner_cv_score(model_name, base_params, params, X_raw, y, inner_splits, num_
 
     return float(np.mean(rmses))
 
-def fit_predict_one_fold(model_name, base_params, X_raw, y, folds_values, fold_k, num_cols, use_gpu, seed):
+def fit_predict_one_fold(model_name, base_params, X_raw, y, folds_values, fold_k, num_cols, use_gpu, seed, sample_weight=None):
     """Entrena en ~k y predice en k (sin Optuna)."""
     va_mask = (folds_values == fold_k)
     tr_mask = ~va_mask
     X_tr_raw, X_va_raw = X_raw.loc[tr_mask, :], X_raw.loc[va_mask, :]
     y_tr, y_va = y[tr_mask], y[va_mask]
+    if sample_weight is not None:
+        w_tr = sample_weight[tr_mask]
+        w_va = sample_weight[va_mask]
+    else:
+        w_tr = None
+        w_va = None
     pre, X_tr, X_va = _preprocess_train_val(X_tr_raw, X_va_raw, y_tr, num_cols)
 
     if model_name == "xgb":
-        _, y_hat = _xgb_fit_predict_booster(X_tr, y_tr, X_va, y_va, base_params, use_gpu, seed, esr=100)
+        _, y_hat = _xgb_fit_predict_booster(
+            X_tr, y_tr, X_va, y_va,
+            base_params, use_gpu, seed, esr=100,
+            sample_weight_tr=w_tr,
+            sample_weight_va=w_va,
+        )
         return y_hat
-
     elif model_name == "lgbm":
         est = get_lgbm_model(use_gpu, seed)
         est.set_params(
@@ -273,9 +326,19 @@ def fit_predict_one_fold(model_name, base_params, X_raw, y, folds_values, fold_k
             feature_fraction=0.8, bagging_fraction=0.8, bagging_freq=1,
             lambda_l1=0.0, lambda_l2=1.0,
         )
-        est.fit(X_tr, y_tr, eval_set=[(X_va, y_va)], eval_metric="rmse",
-                callbacks=[lgb.early_stopping(100, verbose=False)])
+        fit_kwargs = {}
+        if w_tr is not None:
+            fit_kwargs["sample_weight"] = w_tr
+
+        est.fit(
+            X_tr, y_tr,
+            eval_set=[(X_va, y_va)],
+            eval_metric="rmse",
+            callbacks=[lgb.early_stopping(100, verbose=False)],
+            **fit_kwargs,
+        )
         return est.predict(X_va, num_iteration=getattr(est, "best_iteration_", None))
+
 
     else:
         raise ValueError("model_name debe ser 'xgb' o 'lgbm'")
@@ -318,7 +381,7 @@ def suggest_space_lgbm(trial):
 
 def tune_one_fold(model_name, base_params, X_raw, y, folds_values, fold_k, num_cols,
                   trials, inner_splits, seed, use_gpu, hp_outdir,
-                  pruner_kind="asha", asha_min_resource=1, asha_reduction=3, asha_min_esr=0):
+                  pruner_kind="asha", asha_min_resource=1, asha_reduction=3, asha_min_esr=0, sample_weight=None):
     """Tunea en train_k con inner-CV+ASHA, reentrena en train_k y predice val_k."""
     if optuna is None:
         raise SystemExit("[ERROR] Optuna no está instalado y --tune-trials>0.")
@@ -327,6 +390,13 @@ def tune_one_fold(model_name, base_params, X_raw, y, folds_values, fold_k, num_c
     tr_mask = ~va_mask
     X_tr_raw, y_tr = X_raw.loc[tr_mask, :], y[tr_mask]
     X_va_raw, y_va = X_raw.loc[va_mask, :], y[va_mask]
+    if sample_weight is not None:
+        w_tr_outer = sample_weight[tr_mask]
+        w_va_outer = sample_weight[va_mask]
+    else:
+        w_tr_outer = None
+        w_va_outer = None
+
 
     # Pruner
     if pruner_kind == "asha":
@@ -343,8 +413,11 @@ def tune_one_fold(model_name, base_params, X_raw, y, folds_values, fold_k, num_c
         # Inner-CV con reporte incremental (step = fold index)
         return inner_cv_score(
             model_name, base_params, params,
-            X_tr_raw, y_tr, inner_splits, num_cols, seed, use_gpu, trial=trial
+            X_tr_raw, y_tr, inner_splits, num_cols, seed, use_gpu,
+            trial=trial,
+            sample_weight=w_tr_outer,
         )
+
 
     study = optuna.create_study(
         direction="minimize",
@@ -358,13 +431,28 @@ def tune_one_fold(model_name, base_params, X_raw, y, folds_values, fold_k, num_c
     pre, X_tr, X_va = _preprocess_train_val(X_tr_raw, X_va_raw, y_tr, num_cols)
     if model_name == "xgb":
         p = dict(base_params); p.update(best_params)
-        _, y_hat = _xgb_fit_predict_booster(X_tr, y_tr, X_va, y_va, p, use_gpu, seed, esr=100)
+        _, y_hat = _xgb_fit_predict_booster(
+            X_tr, y_tr, X_va, y_va,
+            p, use_gpu, seed, esr=100,
+            sample_weight_tr=w_tr_outer,
+            sample_weight_va=w_va_outer,
+        )
     else:
         est = get_lgbm_model(use_gpu, seed)
         est.set_params(**best_params)
-        est.fit(X_tr, y_tr, eval_set=[(X_va, y_va)], eval_metric="rmse",
-                callbacks=[lgb.early_stopping(100, verbose=False)])
+        fit_kwargs = {}
+        if w_tr_outer is not None:
+            fit_kwargs["sample_weight"] = w_tr_outer
+
+        est.fit(
+            X_tr, y_tr,
+            eval_set=[(X_va, y_va)],
+            eval_metric="rmse",
+            callbacks=[lgb.early_stopping(100, verbose=False)],
+            **fit_kwargs,
+        )
         y_hat = est.predict(X_va, num_iteration=getattr(est, "best_iteration_", None))
+
 
     hp_outdir.mkdir(parents=True, exist_ok=True)
     with open(hp_outdir / f"{model_name}_fold{fold_k}.json", "w") as f:
@@ -380,9 +468,10 @@ def main():
     (outdir / "oof").mkdir(parents=True, exist_ok=True)
     hp_outdir = outdir / "hp"
 
-    df, Xnum, y, ids, folds_values, num_cols = load_and_merge(
-        args.train, args.folds, args.id_col, args.target
+    df, Xnum, y, ids, folds_values, num_cols, sample_weight = load_and_merge(
+        args.train, args.folds, args.id_col, args.target, args.sample_weight_col
     )
+
     unique_folds = sorted(np.unique(folds_values).tolist())
 
     # ===== XGB (API nativa) =====
@@ -398,12 +487,17 @@ def main():
                 asha_min_resource=args.asha_min_resource,
                 asha_reduction=args.asha_reduction_factor,
                 asha_min_esr=args.asha_min_early_stopping_rate,
+                sample_weight=sample_weight,
             )
             xgb_oof[folds_values == k] = y_hat
     else:
         for k in unique_folds:
-            y_hat = fit_predict_one_fold("xgb", xgb_base, Xnum, y, folds_values, k, num_cols, args.use_gpu, args.seed)
+            y_hat = fit_predict_one_fold(
+                "xgb", xgb_base, Xnum, y, folds_values, k, num_cols, args.use_gpu, args.seed,
+                sample_weight=sample_weight,
+            )
             xgb_oof[folds_values == k] = y_hat
+
 
     xgb_rmse, xgb_r2 = rmse(y, xgb_oof), float(r2(y, xgb_oof))
     oof_xgb_df = pd.DataFrame({

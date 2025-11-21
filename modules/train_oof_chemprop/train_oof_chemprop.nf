@@ -27,14 +27,12 @@ process train_oof_chemprop {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority --always-copy
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${train_o_gnn_py}" --train "${train}" --folds "${folds}" \
-                                    --smiles-col smiles_neutral \
-                                    --id-col row_uid \
-                                    --target logS --tune-trials 10 --epochs 40 \
-                                    --tune-pruner asha --asha-rungs 5\
-                                    --gpu --save-dir ./oof_gnn \
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${train_o_gnn_py}" --train "${train}" --folds "${folds}" \\
+                                    --smiles-col smiles_neutral \\
+                                    --id-col row_uid \\
+                                    --target logS --tune-trials 20 --epochs 40 \\
+                                    --tune-pruner asha --asha-rungs 5 10 15\\
+                                    --gpu --save-dir ./oof_gnn \\
   """
 }
-
-/* --target logS --tune-trials 35 --epochs 40 \
-                                    --tune-pruner asha --asha-rungs 5 10 15 20 25 30 \*/

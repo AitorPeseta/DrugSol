@@ -1,3 +1,4 @@
+
 process merge_drug_flag {
   tag "merge_drug_flag"
   label 'cpu_small'
@@ -26,6 +27,7 @@ process merge_drug_flag {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${merge_py}" --in "${curated_in}" --chembl "${chembl_csv}" --out "merged_drup.parquet" --export-csv
+  # [cite_start]Ejecución directa (Bypass micromamba run) [cite: 9]
+  "\$PREFIX/bin/python" "${merge_py}" --in "${curated_in}" --chembl "${chembl_csv}" --out "merged_drup.parquet" --export-csv
   """
 }

@@ -19,15 +19,17 @@ process fetch_bigsoldb {
   PREFIX="\$HOME/.conda_nf/common_ingest"
   YAML="${baseDir}/envs/common_ingest.yml"
 
+  # 1. Creación del entorno (se mantiene igual)
   if [[ ! -d "\$PREFIX" ]]; then
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" \
-    python ${dl_py} --record ${record_id} --kind main --out bigsoldb.csv
+  # 2. EJECUCIÓN DIRECTA: Descarga
+  "\$PREFIX/bin/python" ${dl_py} --record ${record_id} --kind main --out bigsoldb.csv
 
+  # 3. EJECUCIÓN DIRECTA: Normalización
   # normaliza a CSV LF/UTF-8
-  ${params.MAMBA} run -p "\$PREFIX" python - <<'PY'
+  "\$PREFIX/bin/python" - <<'PY'
   import pandas as pd, os
   f="bigsoldb.csv"
   df=pd.read_csv(f)

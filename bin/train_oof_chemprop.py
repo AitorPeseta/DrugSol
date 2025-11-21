@@ -36,18 +36,35 @@ def _run(cmd, check=True):
         raise
 
 def _chemprop_train(train_csv, val_csv, out_dir, hp, use_gpu, epochs, seed, batch_size):
-    # Chemprop v2: no soporta --separate-val-path. Construimos combined.csv + splits.json
     out_dir = Path(out_dir); out_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Archivos de salida
     comb_csv = out_dir / "combined.csv"
+    weights_csv = out_dir / "weights.csv"  # <--- NUEVO ARCHIVO PARA PESOS
     splits_json = out_dir / "splits.json"
 
     # Cargar y combinar
     df_tr = pd.read_csv(train_csv)
     df_va = pd.read_csv(val_csv)
+    
+    # 1. ASEGURARSE DE QUE EXISTE LA COLUMNA DE PESOS
+    # Si por alguna razón no existe, rellenamos con 1.0
+    if "sw_temp37" not in df_tr.columns:
+        df_tr["sw_temp37"] = 1.0
+    if "sw_temp37" not in df_va.columns:
+        df_va["sw_temp37"] = 1.0 # En validación el peso no afecta al entrenamiento, pero Chemprop pide que cuadren las filas
+        
     df_comb = pd.concat([df_tr, df_va], ignore_index=True)
+    
+    # 2. GUARDAR LOS DATOS (SMILES + TARGET)
     df_comb.to_csv(comb_csv, index=False)
 
-    # Índices de train/val consecutivos (listas de índices)
+    # 3. GUARDAR LOS PESOS EN UN CSV APARTE
+    # Chemprop espera un CSV donde cada fila i corresponde a la fila i del input
+    # Puede tener cabecera o no, pero mejor ponerle una simple.
+    df_comb[["sw_temp37"]].to_csv(weights_csv, index=False)
+
+    # Índices de train/val
     n_tr = len(df_tr); n_va = len(df_va)
     splits = [{
         "train": list(range(0, n_tr)),
@@ -56,15 +73,20 @@ def _chemprop_train(train_csv, val_csv, out_dir, hp, use_gpu, epochs, seed, batc
     }]
     splits_json.write_text(json.dumps(splits))
 
-    # Desc columns disponibles dentro de combined.csv (sin --descriptors-path)
+    # Detectar columnas extra
     present_cols = [c for c in ["temp_C","n_ionizable","n_acid","n_base",
-                                "TPSA","logP","HBD","HBA","FractionCSP3","MW"]
+                                "TPSA","logP","HBD","HBA","FractionCSP3","MW", 
+                                "inv_temp"] # <--- No olvides inv_temp si la tienes
                     if c in df_comb.columns]
 
+    # Construir comando
+    chemprop_bin = Path(sys.executable).parent / "chemprop"
+    
     base = [
-        "chemprop","train",
+        str(chemprop_bin), "train",
         "-i", str(comb_csv),
         "--splits-file", str(splits_json),
+        "--data-weights-path", str(weights_csv),  # <--- AQUÍ ESTÁ LA MAGIA
         "--smiles-columns","smiles_neutral",
         "--target-columns","logS",
         "-o", str(out_dir),
@@ -101,7 +123,8 @@ def _chemprop_predict(val_in_csv: Path, model_path: Path, out_csv: Path, gpu: bo
                                 "TPSA","logP","HBD","HBA","FractionCSP3","MW"]
                     if c in df_val.columns]
 
-    cmd = ["chemprop","predict",
+    chemprop_bin = Path(sys.executable).parent / "chemprop"
+    cmd = [str(chemprop_bin), "predict",
            "-i", str(val_in_csv),
            "-o", str(out_csv),
            "--model-paths", str(model_path),

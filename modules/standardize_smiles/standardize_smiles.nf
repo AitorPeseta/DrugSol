@@ -24,7 +24,7 @@ process standardize_smiles {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" \
-    python ${std_py} --in ${curated_parquet} --out standardize.parquet --overwrite-inchikey
+  # [cite_start]Ejecución directa (Bypass micromamba run) [cite: 11]
+  "\$PREFIX/bin/python" ${std_py} --in ${curated_parquet} --out standardize.parquet --overwrite-inchikey
   """
 }

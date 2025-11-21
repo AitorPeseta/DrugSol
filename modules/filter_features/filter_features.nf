@@ -23,11 +23,11 @@ process filter_features {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${features_py}" \
-                                    -i "${file}" \
-                                    -o ${name_out}_features_mordred_filtered.parquet \
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${features_py}" \\
+                                    -i "${file}" \\
+                                    -o ${name_out}_features_mordred_filtered.parquet \\
                                     --target logS
 
   """
 }
-

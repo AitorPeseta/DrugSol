@@ -5,3 +5,4 @@ dependencies:
   - requests
   - pandas
   - pyarrow>=12
+  - numpy=1.26.*

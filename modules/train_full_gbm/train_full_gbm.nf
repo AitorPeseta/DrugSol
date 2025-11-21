@@ -24,11 +24,13 @@ process train_full_gbm {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${train_full_py}" \
-                                    --train "${train}" \
-                                    --target logS \
-                                    --hp-dir "${hp_dir}" \
-                                    --use-gpu \
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${train_full_py}" \\
+                                    --train "${train}" \\
+                                    --target logS \\
+                                    --hp-dir "${hp_dir}" \\
+                                    --use-gpu \\
+                                    --sample-weight-col sw_temp37 \\
                                     --save-dir models_GBM
   """
 }

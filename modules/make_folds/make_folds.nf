@@ -23,16 +23,16 @@ process make_folds {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority --always-copy
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${folds_py}" --input "${train}" \
-                                    --out folds.parquet \
-                                    --id-col row_uid \
-                                    --group-col cluster_ecfp4_0p7 \
-                                    --strat-mode both \
-                                    --temp-col temp_C \
-                                    --temp-step 2 \
-                                    --temp-unit auto \
-                                    --target logS --bins 2 \
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${folds_py}" --input "${train}" \\
+                                    --out folds.parquet \\
+                                    --id-col row_uid \\
+                                    --group-col cluster_ecfp4_0p7 \\
+                                    --strat-mode both \\
+                                    --temp-col temp_C \\
+                                    --temp-step 2 \\
+                                    --temp-unit auto \\
+                                    --target logS --bins 2 \\
                                     --n-splits 5 --seed 42
   """
 }
-

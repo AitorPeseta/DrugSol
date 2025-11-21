@@ -27,19 +27,17 @@ process train_oof_gbm {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${train_o_gbm_py}" --train "${train}" --folds "${folds}" \
-                                    --target logS \
-                                    --target logS \
-                                    --use-gpu \
-                                    --id-col row_uid \
-                                    --tune-trials 35 \
-                                    --inner-splits 3 \
-                                    --pruner asha --asha-min-resource 1 \
-                                    --asha-reduction-factor 3 \
-                                    --asha-min-early-stopping-rate 0 \
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${train_o_gbm_py}" --train "${train}" --folds "${folds}" \\
+                                    --target logS \\
+                                    --use-gpu \\
+                                    --sample-weight-col sw_temp37 \\
+                                    --id-col row_uid \\
+                                    --tune-trials 60 \\
+                                    --inner-splits 3 \\
+                                    --pruner asha --asha-min-resource 1 \\
+                                    --asha-reduction-factor 3 \\
+                                    --asha-min-early-stopping-rate 0 \\
                                     --save-dir ./oof_gbm
-
-
   """
 }
-//                                     --tune-trials 125 \

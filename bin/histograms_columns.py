@@ -17,11 +17,10 @@ def pick_columns(df, cols_cli, cols_file, cols_regex, exclude):
         pat = re.compile(cols_regex)
         wanted.update([c for c in df.columns if pat.search(c)])
 
-    # --- alias rápido: si pides 'mordred__MW', incluye también columnas 'MW' afines ---
-    if "mordred__MW" in wanted:
+    if "MW" in wanted:
         mw_like = {
             c for c in df.columns
-            if c == "MW" or c.lower() == "mw" or c.endswith("_MW") or c.endswith("__MW")
+            if c == "mordred__MW" or c.lower() == "mw" or c.endswith("_MW") or c.endswith("__MW")
         }
         wanted.update(mw_like)
 

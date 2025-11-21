@@ -23,9 +23,10 @@ process align_feature_columns {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${align_py}" \
-    "${train}" \
-    "${test}" \
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${align_py}" \\
+    "${train}" \\
+    "${test}" \\
     "features_test_aligned.parquet"
   """
 }

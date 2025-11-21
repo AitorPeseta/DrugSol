@@ -25,13 +25,14 @@ process train_full_chemprop {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${train_full_py}" \
-                                    --train "${train}" \
-                                    --smiles-col smiles_neutral \
-                                    --target logS \
-                                    --gpu \
-                                    --epochs 40 \
-                                    --best-params "${best_params}" \
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${train_full_py}" \\
+                                    --train "${train}" \\
+                                    --smiles-col smiles_neutral \\
+                                    --target logS \\
+                                    --gpu \\
+                                    --epochs 40 \\
+                                    --best-params "${best_params}" \\
                                     --save-dir models_GNN
   """
 }

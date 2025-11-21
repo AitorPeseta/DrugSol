@@ -23,12 +23,13 @@ process stratified_split {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${strat_py}" --input "${source}" \
-                                    --group-col cluster_ecfp4_0p7 \
-                                    --temp-col temp_C \
-                                    --temp-step 2 \
-                                    --test-size 0.2 \
-                                    --seed 42 \
+  # [cite_start]Ejecución directa (Bypass micromamba run) [cite: 2]
+  "\$PREFIX/bin/python" "${strat_py}" --input "${source}" \\
+                                    --group-col cluster_ecfp4_0p7 \\
+                                    --temp-col temp_C \\
+                                    --temp-step 2 \\
+                                    --test-size 0.2 \\
+                                    --seed 42 \\
                                     --min-groups-per-class 2
   """
 }

@@ -22,11 +22,11 @@ process detect_outliers {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${outlier_py}"  --input ${source} \
-                                    --out detect_outliers.parquet \
-                                    --binning width --bins 10 \
-                                    --z-method robust --z-thresh 3.0 \
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${outlier_py}"  --input ${source} \\
+                                    --out detect_outliers.parquet \\
+                                    --binning width --bins 10 \\
+                                    --z-method robust --z-thresh 3.0 \\
                                     --export-csv
-
   """
 }

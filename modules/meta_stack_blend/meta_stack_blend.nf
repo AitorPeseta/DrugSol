@@ -25,15 +25,16 @@ process meta_stack_blend {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${meta_s_b}" \
-                                    --oof-common \
-                                      "${train_lgbm}" \
-                                      "${train_xgb}" \
-                                      "${train_gnn}" \
-                                      "${train_tpsa}" \
-                                    --labels lgbm xgb gnn tpsa \
-                                    --metric rmse \
-                                    --suffix ${suffix} \
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${meta_s_b}" \\
+                                    --oof-common \\
+                                      "${train_lgbm}" \\
+                                      "${train_xgb}" \\
+                                      "${train_gnn}" \\
+                                      "${train_tpsa}" \\
+                                    --labels lgbm xgb gnn tpsa \\
+                                    --metric rmse \\
+                                    --suffix ${suffix} \\
                                     --save-dir meta_results
 
   """

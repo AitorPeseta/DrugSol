@@ -234,14 +234,28 @@ def _apply_stack_object(stack_obj, level0_out: pd.DataFrame, pred_cols: list) ->
 
 
 def _pick_smiles_col(df: pd.DataFrame, preferred: Optional[str], default_hint: str) -> str:
-    candidates = [preferred, default_hint, "smiles", "smiles_neutral", "SMILES", "Smiles"]
+    """
+    Elige la columna de SMILES a usar.
+
+    Priorizamos 'smiles_neutral' si existe, porque en tu flujo actual
+    'smiles' puede ser otra cosa (InChIKey|solvente|T#idx).
+    """
+
+    # 1) Si existe smiles_neutral, es la buena
+    if "smiles_neutral" in df.columns:
+        return "smiles_neutral"
+
+    # 2) Si no, probamos las pistas que nos pasan
+    candidates = [preferred, default_hint, "smiles", "SMILES", "Smiles"]
     for c in candidates:
         if c and c in df.columns:
             return c
+
     raise KeyError(
         "No se encontró ninguna columna de SMILES. "
         f"Probadas: {candidates}. Disponibles: {list(df.columns)}"
     )
+
 
 
 def _smiles_cumkey(df: pd.DataFrame, smiles_col: str, key_name: str = "_cum") -> pd.DataFrame:
@@ -272,32 +286,59 @@ def _find_pred_col(df_or_path, target: Optional[str] = None) -> str:
 
 
 def _chemprop_models(chem_dir: Path) -> List[Path]:
-    paths: List[Path] = []
-    m0 = chem_dir / "model_0"
-    if (m0 / "best.pt").exists():
-        paths.append(m0 / "best.pt")
-    ck = m0 / "checkpoints"
-    if ck.exists():
-        paths += sorted(ck.glob("*.ckpt"))
-    if not paths:
-        paths = sorted(list(chem_dir.rglob("*.pt")) + list(chem_dir.rglob("*.ckpt")))
-    if not paths:
-        raise FileNotFoundError(f"No hay checkpoints .pt/.ckpt en {chem_dir}")
-    return paths
+    """
+    Devuelve la lista de modelos Chemprop a usar en inferencia.
+    Para evitar problemas de dimensiones, aquí devolvemos UN SOLO checkpoint
+    coherente (normalmente best.pt del run_full/model_0).
+    """
+    # 1) Preferimos run_full/model_0/best.pt
+    m_full = chem_dir / "run_full" / "model_0"
+    best_full = m_full / "best.pt"
+    if best_full.exists():
+        return [best_full]
 
+    # 2) Si no existe, probamos con model_0/best.pt
+    m0 = chem_dir / "model_0"
+    best_m0 = m0 / "best.pt"
+    if best_m0.exists():
+        return [best_m0]
+
+    # 3) Si tampoco, probamos con best.pt en la raíz
+    best_root = chem_dir / "best.pt"
+    if best_root.exists():
+        return [best_root]
+
+    # 4) Último recurso: cogemos el primer .pt/.ckpt que encontremos
+    all_paths = sorted(list(chem_dir.rglob("*.pt")) + list(chem_dir.rglob("*.ckpt")))
+    if not all_paths:
+        raise FileNotFoundError(f"No hay checkpoints .pt/.ckpt en {chem_dir}")
+
+    # Devuelve solo el primero para evitar mezclar arquitecturas
+    return [all_paths[0]]
 
 def _chemprop_predict_legacy(model_paths: List[Path], test_csv: Path, preds_csv: Path):
     """
-    Invocación “vieja”: usamos SOLO SMILES, sin descriptores extra.
-    Debe coincidir con cómo se entrenó el modelo GNN (como en tu script original).
+    Llamada a chemprop predict replicando el entrenamiento del GNN:
+    - SMILES como columna principal
+    - descriptores extra en columnas del CSV
     """
-    present_cols = ["temp_C","n_ionizable","n_acid","n_base",
-                                "TPSA","logP","HBD","HBA","FractionCSP3","MW"]
-    cmd = ["chemprop", "predict", "-i", str(test_csv), "-o", str(preds_csv), "--model-paths"]
-    cmd += ["--descriptors-columns", *present_cols]
-    cmd += [str(p) for p in model_paths]
+    present_cols = [
+        "temp_C", "n_ionizable", "n_acid", "n_base",
+        "TPSA", "logP", "HBD", "HBA", "FractionCSP3", "MW",
+    ]
+
+    cmd = [
+        "chemprop", "predict",
+        "-i", str(test_csv),
+        "-o", str(preds_csv),
+        "--model-paths", *[str(p) for p in model_paths],
+        "--descriptors-columns", *present_cols,
+    ]
     print("[INFO] Ejecutando:", " ".join(cmd))
     subprocess.run(cmd, check=True)
+
+
+
 
 
 # ============================== blend / stack =================================
@@ -648,16 +689,61 @@ def main():
 
         chem_col = _pick_smiles_col(test_smi, args.chemprop_smiles_col, args.smiles_col)
 
-        # Sólo pasamos SMILES a chemprop; mismo esquema que en entrenamiento
-        tmp_rows = test_smi[[chem_col]].copy()
-        tmp_rows[chem_col] = _norm_smiles(tmp_rows[chem_col])
-        tmp_keyed = _smiles_cumkey(tmp_rows, chem_col, "_cum").rename(columns={chem_col: "smiles"})
+        # columnas de descriptores usadas en el entrenamiento de Chemprop
+        desc_cols_all = [
+            "temp_C", "n_ionizable", "n_acid", "n_base",
+            "TPSA", "logP", "HBD", "HBA", "FractionCSP3", "MW",
+        ]
+
+        # Base: id + smiles
+        tmp = pd.DataFrame({
+            args.id_col: _norm_id(test_smi[args.id_col]) if args.id_col in test_smi.columns else _norm_id(test_tab[args.id_col]),
+            chem_col: _norm_smiles(test_smi[chem_col]),
+        })
+
+        # Intentamos añadir cada descriptor desde test_smi o test_tab
+        missing = []
+        for col in desc_cols_all:
+            if col in test_smi.columns:
+                tmp[col] = pd.to_numeric(test_smi[col], errors="coerce").values
+            elif col in test_tab.columns:
+                # merge por id_col para traer el descriptor desde el tabular
+                tmp = tmp.merge(
+                    test_tab[[args.id_col, col]].drop_duplicates(args.id_col),
+                    on=args.id_col,
+                    how="left",
+                    suffixes=("", "_from_tab"),
+                )
+                # si viene con sufijo, lo renombramos al nombre canónico
+                if f"{col}_from_tab" in tmp.columns and col not in tmp.columns:
+                    tmp[col] = tmp[f"{col}_from_tab"]
+                    tmp.drop(columns=[f"{col}_from_tab"], inplace=True)
+            else:
+                missing.append(col)
+
+        if missing:
+            raise ValueError(
+                f"[FATAL] Faltan columnas de descriptores para Chemprop en test_tab/test_smi: {missing}"
+            )
+
+        tmp_keyed = _smiles_cumkey(tmp, chem_col, "_cum").rename(columns={chem_col: "smiles"})
 
         tmp_test_csv = Path(args.save_dir) / "chemprop_test_input.csv"
-        tmp_keyed[["smiles"]].to_csv(tmp_test_csv, index=False)
+
+        # Chemprop necesita que la columna de SMILES sea la primera.
+        df_out = tmp_keyed.drop(columns=["_cum"])
+
+        cols = list(df_out.columns)
+        if "smiles" in cols:
+            cols = ["smiles"] + [c for c in cols if c != "smiles"]
+        df_out = df_out[cols]
+
+        df_out.to_csv(tmp_test_csv, index=False)
+
 
         preds_path = Path(args.save_dir) / "chemprop_test_rows.csv"
         _chemprop_predict_legacy(model_paths, tmp_test_csv, preds_path)
+
 
         preds_df = pd.read_csv(preds_path)
         pred_col = _find_pred_col(preds_df, target=args.target)
@@ -777,13 +863,57 @@ def main():
     y_true_col = args.target or "target"
     has_y = y_true_col in test_tab.columns
     if has_y:
+        # y_true
         test_tab[y_true_col] = pd.to_numeric(test_tab[y_true_col], errors="coerce")
 
-        merged_eval = test_tab[[args.id_col, y_true_col]].merge(level0_out, on=args.id_col, how="left")
-        base_mask = merged_eval[
-            [c for c in ["y_xgb", "y_lgbm", "y_tpsa"] if c in merged_eval.columns]
-        ].notna().any(axis=1) if set(["y_xgb", "y_lgbm", "y_tpsa"]).intersection(merged_eval.columns) else pd.Series(False, index=merged_eval.index)
-        cp_mask = merged_eval["y_chemprop"].notna() if "y_chemprop" in merged_eval.columns else pd.Series(False, index=merged_eval.index)
+        # Predicciones + y_true
+        merged_eval = test_tab[[args.id_col, y_true_col]].merge(
+            level0_out, on=args.id_col, how="left"
+        )
+
+        # ----------------- detectar columna de temperatura -------------------
+        temp_col_eval = None
+        if "temp_C" in test_tab.columns:
+            temp_col_eval = "temp_C"
+        elif "temperature_C" in test_tab.columns:
+            temp_col_eval = "temperature_C"
+        elif "temperature_K" in test_tab.columns:
+            temp_col_eval = "temperature_K"
+
+        if temp_col_eval is not None:
+            tmp_temp = test_tab[[args.id_col, temp_col_eval]].copy()
+            tmp_temp[temp_col_eval] = pd.to_numeric(
+                tmp_temp[temp_col_eval], errors="coerce"
+            )
+            # Si viene en Kelvin, lo pasamos a °C
+            if temp_col_eval == "temperature_K":
+                tmp_temp["_temp_C_eval"] = tmp_temp[temp_col_eval] - 273.15
+                use_temp_col = "_temp_C_eval"
+            else:
+                use_temp_col = temp_col_eval
+
+            merged_eval = merged_eval.merge(
+                tmp_temp[[args.id_col, use_temp_col]].rename(
+                    columns={use_temp_col: "_temp_C_eval"}
+                ),
+                on=args.id_col,
+                how="left",
+            )
+
+        # ----------------- cohorts globales ---------------------------------
+        base_cols_for_mask = [
+            c for c in ["y_xgb", "y_lgbm", "y_tpsa"] if c in merged_eval.columns
+        ]
+        if base_cols_for_mask:
+            base_mask = merged_eval[base_cols_for_mask].notna().any(axis=1)
+        else:
+            base_mask = pd.Series(False, index=merged_eval.index)
+
+        cp_mask = (
+            merged_eval["y_chemprop"].notna()
+            if "y_chemprop" in merged_eval.columns
+            else pd.Series(False, index=merged_eval.index)
+        )
         inner_mask = base_mask & cp_mask
         union_mask = base_mask | cp_mask
 
@@ -796,49 +926,144 @@ def main():
         metrics["cohorts"] = cohorts
 
         def _eval_mask(m, col):
-            df = merged_eval.loc[m & merged_eval[col].notna() & merged_eval[y_true_col].notna(), [y_true_col, col]]
+            df = merged_eval.loc[
+                m & merged_eval[col].notna() & merged_eval[y_true_col].notna(),
+                [y_true_col, col],
+            ]
             if len(df) == 0:
                 return None
             return _metrics(df[y_true_col].values, df[col].values)
 
-        for cohort_name, m in [("base_all", base_mask), ("chemprop", cp_mask),
-                               ("inner", inner_mask), ("union", union_mask)]:
-            for col in [c for c in ["y_xgb", "y_lgbm", "y_chemprop", "y_tpsa"] if c in merged_eval.columns]:
+        # --------- métricas globales por cohort/modelo base -----------------
+        for cohort_name, m in [
+            ("base_all", base_mask),
+            ("chemprop", cp_mask),
+            ("inner", inner_mask),
+            ("union", union_mask),
+        ]:
+            for col in [
+                c
+                for c in ["y_xgb", "y_lgbm", "y_chemprop", "y_tpsa"]
+                if c in merged_eval.columns
+            ]:
                 res = _eval_mask(m, col)
                 if res is not None:
                     metrics.setdefault(cohort_name, {})[col] = res
 
+        # --------- métricas globales de blend/stack/stack_model -------------
         df_union = merged_eval[[args.id_col, y_true_col]].copy()
 
         tb = Path(args.save_dir) / "test_blend.parquet"
         if tb.exists():
             b = pd.read_parquet(tb)
             df = df_union.merge(b, on=args.id_col, how="left")
-            mm = df[union_mask & df["y_pred_blend"].notna() & df[y_true_col].notna()]
+            mm = df[
+                union_mask
+                & df["y_pred_blend"].notna()
+                & df[y_true_col].notna()
+            ]
             if len(mm):
-                metrics.setdefault("union", {})["blend"] = _metrics(mm[y_true_col].values, mm["y_pred_blend"].values)
+                metrics.setdefault("union", {})["blend"] = _metrics(
+                    mm[y_true_col].values, mm["y_pred_blend"].values
+                )
 
         ts = Path(args.save_dir) / "test_stack.parquet"
         if ts.exists():
             s = pd.read_parquet(ts)
             df = df_union.merge(s, on=args.id_col, how="left")
-            mm = df[union_mask & df["y_pred_stack"].notna() & df[y_true_col].notna()]
+            mm = df[
+                union_mask
+                & df["y_pred_stack"].notna()
+                & df[y_true_col].notna()
+            ]
             if len(mm):
-                metrics.setdefault("union", {})["stack"] = _metrics(mm[y_true_col].values, mm["y_pred_stack"].values)
+                metrics.setdefault("union", {})["stack"] = _metrics(
+                    mm[y_true_col].values, mm["y_pred_stack"].values
+                )
 
         tsm = Path(args.save_dir) / "test_stack_model.parquet"
         if tsm.exists():
             sm = pd.read_parquet(tsm)
             df = df_union.merge(sm, on=args.id_col, how="left")
-            mm = df[union_mask & df["y_pred_stack_model"].notna() & df[y_true_col].notna()]
+            mm = df[
+                union_mask
+                & df["y_pred_stack_model"].notna()
+                & df[y_true_col].notna()
+            ]
             if len(mm):
-                metrics.setdefault("union", {})["stack_model"] = _metrics(mm[y_true_col].values, mm["y_pred_stack_model"].values)
+                metrics.setdefault("union", {})["stack_model"] = _metrics(
+                    mm[y_true_col].values, mm["y_pred_stack_model"].values
+                )
+
+        # --------- métricas en rango fisiológico 35–38 °C -------------------
+        # Sólo si hemos conseguido tener temperatura en °C
+        if "_temp_C_eval" in merged_eval.columns:
+            physio_mask = (
+                union_mask
+                & merged_eval["_temp_C_eval"].notna()
+                & merged_eval["_temp_C_eval"].between(35.0, 38.0)
+            )
+
+            metrics["cohorts_physio"] = {
+                "union": int(physio_mask.sum()),
+            }
+
+            # Modelos base en rango fisiológico
+            for col in [
+                c
+                for c in ["y_xgb", "y_lgbm", "y_chemprop", "y_tpsa"]
+                if c in merged_eval.columns
+            ]:
+                res = _eval_mask(physio_mask, col)
+                if res is not None:
+                    metrics.setdefault("physio_union", {})[col] = res
+
+            # Blend / stack / stack_model en rango fisiológico
+            if tb.exists():
+                b = pd.read_parquet(tb)
+                df = df_union.merge(b, on=args.id_col, how="left")
+                mm = df[
+                    physio_mask
+                    & df["y_pred_blend"].notna()
+                    & df[y_true_col].notna()
+                ]
+                if len(mm):
+                    metrics.setdefault("physio_union", {})["blend"] = _metrics(
+                        mm[y_true_col].values, mm["y_pred_blend"].values
+                    )
+
+            if ts.exists():
+                s = pd.read_parquet(ts)
+                df = df_union.merge(s, on=args.id_col, how="left")
+                mm = df[
+                    physio_mask
+                    & df["y_pred_stack"].notna()
+                    & df[y_true_col].notna()
+                ]
+                if len(mm):
+                    metrics.setdefault("physio_union", {})["stack"] = _metrics(
+                        mm[y_true_col].values, mm["y_pred_stack"].values
+                    )
+
+            if tsm.exists():
+                sm = pd.read_parquet(tsm)
+                df = df_union.merge(sm, on=args.id_col, how="left")
+                mm = df[
+                    physio_mask
+                    & df["y_pred_stack_model"].notna()
+                    & df[y_true_col].notna()
+                ]
+                if len(mm):
+                    metrics.setdefault("physio_union", {})["stack_model"] = _metrics(
+                        mm[y_true_col].values, mm["y_pred_stack_model"].values
+                    )
 
     if metrics:
-        (Path(args.save_dir) / "metrics_test.json").write_text(json.dumps(metrics, indent=2))
+        (Path(args.save_dir) / "metrics_test.json").write_text(
+            json.dumps(metrics, indent=2)
+        )
         print("[OK] Guardado:", (Path(args.save_dir) / "metrics_test.json").resolve())
 
-    print("[OK] Guardado:")
     print(" -", (Path(args.save_dir) / "test_level0.parquet").resolve())
     print(" -", (Path(args.save_dir) / "test_blend.parquet").resolve())
     if (Path(args.save_dir) / "test_stack.parquet").exists():

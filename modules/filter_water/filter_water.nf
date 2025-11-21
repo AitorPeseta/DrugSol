@@ -22,6 +22,7 @@ process filter_water {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${filter_py}" "${source}"
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${filter_py}" "${source}"
   """
 }

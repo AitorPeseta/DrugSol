@@ -22,6 +22,7 @@ process filter_outlier {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${outlier_py}" -i "${source}" --save_csv
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${outlier_py}" -i "${source}" --save_csv
   """
 }

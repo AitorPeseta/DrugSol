@@ -22,9 +22,10 @@ process histograms_columns {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${histogram_py}" --train "${train}" --test "${test}" \
-                                    --cols logS temp_C is_drug mordred__MW \
-                                    --round-step 0.5 \
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${histogram_py}" --train "${train}" --test "${test}" \\
+                                    --cols logS temp_C is_drug mordred__MW \\
+                                    --round-step 0.5 \\
                                     --outdir hist_out
   """
 }

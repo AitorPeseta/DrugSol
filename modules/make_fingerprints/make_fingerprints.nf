@@ -23,11 +23,12 @@ process make_fingerprints {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${fingerprint_py}" \
-                                    -i "${file}" \
-                                    --out-parquet "${name_out}_fingerprint.parquet" \
-                                    --smiles-col smiles_neutral \
-                                    --n-bits 2048 --radius 2 --cluster-cutoff 0.7 \
+  # [cite_start]Ejecución directa (Bypass micromamba run) [cite: 20]
+  "\$PREFIX/bin/python" "${fingerprint_py}" \\
+                                    -i "${file}" \\
+                                    --out-parquet "${name_out}_fingerprint.parquet" \\
+                                    --smiles-col smiles_neutral \\
+                                    --n-bits 2048 --radius 2 --cluster-cutoff 0.7 \\
                                     --save-csv
   """
 }

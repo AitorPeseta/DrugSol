@@ -22,9 +22,10 @@ process measurement_counts_histogram {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${counts_py}" --input "${file}" \
-                                    --id_col smiles_original \
-                                    --xminor 0.5 --grid-alpha 0.4\
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${counts_py}" --input "${file}" \\
+                                    --id_col smiles_original \\
+                                    --xminor 0.5 --grid-alpha 0.4\\
                                     --outdir meas_dual_combined
 
   """

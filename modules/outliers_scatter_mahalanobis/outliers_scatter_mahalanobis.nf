@@ -22,12 +22,13 @@ process outliers_scatter_mahalanobis {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${out_scatter_py}" --train "${train}" --test "${test}" \
-                                    --only_cols logS temp_C \
-                                    --exclude id target \
-                                    --basis combined \
-                                    --outlier_col is_outlier \
-                                    --y-mode jitter --jitter-amp 0.12 --thresh 3.0 \
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${out_scatter_py}" --train "${train}" --test "${test}" \\
+                                    --only_cols logS temp_C \\
+                                    --exclude id target \\
+                                    --basis combined \\
+                                    --outlier_col is_outlier \\
+                                    --y-mode jitter --jitter-amp 0.12 --thresh 3.0 \\
                                     --outdir out_viz
   """
 }

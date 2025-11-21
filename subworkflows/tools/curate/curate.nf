@@ -29,7 +29,7 @@ workflow curate {
     filter_water( UNIFIED_CH, OUTDIR_VAL, FW_PY )
     def FILTER_W = filter_water.out
 
-    filter_by_temperature_range(FILTER_W, OUTDIR_VAL, FT_PY, '35', '38')
+    filter_by_temperature_range(FILTER_W, OUTDIR_VAL, FT_PY, '25', '49')
     def FILTER_T = filter_by_temperature_range.out
 
     // --- 2) Outliers (detección + filtrado) ---

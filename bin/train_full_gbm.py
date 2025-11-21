@@ -36,6 +36,8 @@ def parse_args():
     ap.add_argument("--id-col", default="row_uid")        
     ap.add_argument("--save-dir", default="models")
     ap.add_argument("--use-gpu", action="store_true")
+    ap.add_argument("--sample-weight-col", default=None,
+            help="Columna numérica de TRAIN para usar como sample_weight (opcional)")
 
     # Opcional: fracción valida para ES (0.0 = entreno full puro)
     ap.add_argument("--val-fraction", type=float, default=0.0)
@@ -162,12 +164,23 @@ def main():
     if args.target not in df.columns:
         raise SystemExit(f"Falta target '{args.target}' en TRAIN")
 
+    # --- sample_weight opcional ---
+    sample_weight = None
+    if args.sample_weight_col is not None:
+        if args.sample_weight_col not in df.columns:
+            raise SystemExit(f"Columna de sample_weight '{args.sample_weight_col}' no existe en TRAIN")
+        w = pd.to_numeric(df[args.sample_weight_col], errors="coerce").to_numpy(dtype=float)
+        if np.isnan(w).any():
+            print("[WARN] sample_weight contenía NaNs; se reemplazan por 1.0")
+            w = np.where(np.isnan(w), 1.0, w)
+        sample_weight = w
+
     # --- Selección de features (defensiva) ---
     to_exclude = {
-        args.target,                # el target nunca es feature
-        args.id_col,                # id
-        "fold",                     # por si viniera del OOF
-        "smiles_neutral", "smiles_original", "smiles"  # textos SMILES
+        args.target,
+        args.id_col,
+        "fold",
+        "smiles_neutral", "smiles_original", "smiles",
     }
     num_all = df.select_dtypes(include=[np.number]).copy()
     drop_cols = [c for c in to_exclude if c in num_all.columns]
@@ -184,6 +197,7 @@ def main():
     pre = make_preproc(num_cols)
 
     hp_xgb, hp_lgb = load_hp(args)
+
 
     # --- split opcional para ES ---
     use_val = False
@@ -214,12 +228,15 @@ def main():
                 xgb_est.set_params(n_estimators=int(best_iter + 1))
         except TypeError:
             pass
+    
     xgb_pipe = Pipeline([
         ("pre", pre),
-        ("m", get_xgb({**(hp_xgb or {}), "n_estimators": xgb_est.get_params().get("n_estimators", 2000)},
-                      args.use_gpu))
+        ("mdl", get_xgb(hp_xgb, args.use_gpu)),
     ])
-    xgb_pipe.fit(num_all, y)
+    fit_kwargs_xgb = {}
+    if sample_weight is not None:
+        fit_kwargs_xgb["mdl__sample_weight"] = sample_weight
+    xgb_pipe.fit(num_all, y, **fit_kwargs_xgb)
 
     # ---- LGBM ----
     try:
@@ -239,8 +256,14 @@ def main():
     except LightGBMError:
         print("[WARN] LGBM GPU no disponible; reintentando en CPU…", file=sys.stderr)
         lgbm_est = get_lgbm(hp_lgb, use_gpu=False)
-        lgbm_pipe = Pipeline([("pre", pre), ("m", lgbm_est)])
-        lgbm_pipe.fit(num_all, y)
+        lgb_pipe = Pipeline([
+            ("pre", pre),
+            ("mdl", get_lgbm(hp_lgb, args.use_gpu)),
+        ])
+        fit_kwargs_lgb = {}
+        if sample_weight is not None:
+            fit_kwargs_lgb["mdl__sample_weight"] = sample_weight
+        lgb_pipe.fit(num_all, y, **fit_kwargs_lgb)
 
     # ---- guardar ----
     import pickle

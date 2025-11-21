@@ -12,10 +12,6 @@ from sklearn.linear_model import RidgeCV
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_squared_error, r2_score
 
-PHENOL_CANDIDATES = ["aroOHdel", "n_phenol", "n_phenol_like",
-                     "has_phenol", "phenol_like"]
-
-
 def _read_any(p: str) -> pd.DataFrame:
     path = Path(p)
     if path.suffix.lower() == ".parquet":
@@ -24,93 +20,74 @@ def _read_any(p: str) -> pd.DataFrame:
         return pd.read_csv(path)
     raise ValueError(f"Formato no soportado: {path}")
 
-
-def _ensure_phenol_descriptor(df: pd.DataFrame):
-    """
-    Construye un descriptor tipo aroOHdel:
-      aroOHdel = n_phenol + n_phenol_like
-
-    Devuelve (df_modificado, nombre_col_phenol).
-    """
-    if "aroOHdel" in df.columns:
-        return df, "aroOHdel"
-
-    have_nphen = "n_phenol" in df.columns
-    have_nphen_like = "n_phenol_like" in df.columns
-
-    if have_nphen or have_nphen_like:
-        nphen = pd.to_numeric(df["n_phenol"], errors="coerce") if have_nphen else 0
-        nphen_like = pd.to_numeric(df["n_phenol_like"], errors="coerce") if have_nphen_like else 0
-        df["aroOHdel"] = (
-            (nphen if hasattr(nphen, "__array__") else 0)
-            + (nphen_like if hasattr(nphen_like, "__array__") else 0)
-        )
-        return df, "aroOHdel"
-
-    for c in PHENOL_CANDIDATES:
-        if c in df.columns:
-            return df, c
-
-    return df, None
-
-
 def _metrics(y, yhat):
     rmse = mean_squared_error(y, yhat, squared=False)
     r2 = r2_score(y, yhat)
     return {"rmse": float(rmse), "r2": float(r2), "n": int(len(y))}
 
-
 def main():
-    ap = argparse.ArgumentParser("OOF TPSA+phenol+mp (Ridge)")
-    ap.add_argument("--train", required=True, help="CSV/Parquet con train")
+    ap = argparse.ArgumentParser("OOF Modified Ali (Ridge)")
+    ap.add_argument("--train", required=True)
     ap.add_argument("--id-col", default="row_uid")
     ap.add_argument("--target", default="logS")
-    ap.add_argument("--save-dir", default="oof_tpsa")
-    ap.add_argument("--folds-file", default=None,
-                    help="(opcional) CSV/Parquet con columnas [id-col, fold]")
-    ap.add_argument("--kfold", type=int, default=5,
-                    help="n_splits si no pasas folds_file")
+    ap.add_argument("--save-dir", default="oof_ali_mod")
+    ap.add_argument("--folds-file", default=None)
+    ap.add_argument("--kfold", type=int, default=5)
     ap.add_argument("--seed", type=int, default=42)
-
-    # argumentos extra por compatibilidad: se ignoran
-    ap.add_argument("--smiles-col", default=None, help=argparse.SUPPRESS)
-    ap.add_argument("--tpsa-col", default="TPSA", help=argparse.SUPPRESS)
+    
+    # Nombres de columnas esperadas en tu CSV/Parquet
+    ap.add_argument("--mw-col", default="MW", help="Peso molecular")
+    ap.add_argument("--temp-col", default="temp_C", help="Temperatura en Celsius")
+    
     args = ap.parse_args()
-
     outdir = Path(args.save_dir)
     outdir.mkdir(parents=True, exist_ok=True)
 
     df = _read_any(args.train).copy()
 
-    needed = [args.id_col, args.target, "logP", "TPSA", "mp"]
-    for c in needed:
-        if c not in df.columns:
-            raise ValueError(f"Falta columna en train: {c}")
+    # 1. GESTIÓN DE TEMPERATURA (Crítico si tus datos varían de 25 a 49)
+    # La física dice que logS es proporcional a 1/T (Kelvin)
+    if args.temp_col in df.columns:
+        print(f"Detectada columna temperatura: {args.temp_col}. Creando 1000/T_K")
+        # Rellenar nulos con 25°C si los hubiera
+        df[args.temp_col] = df[args.temp_col].fillna(25.0)
+        df["inv_temp"] = 1000.0 / (df[args.temp_col] + 273.15)
+    else:
+        print("No se detectó temperatura. Asumiendo constante (no ideal).")
+        df["inv_temp"] = 0.0 # El intercepto del Ridge absorberá esto
 
-    # Fenoles → aroOHdel
-    df, phenol_col = _ensure_phenol_descriptor(df)
+    # 2. DEFINICIÓN DE FEATURES
+    # En lugar de solo fenoles, usamos MW y LogP/TPSA. 
+    # Si tienes 'n_rotatable_bonds' o 'aromatic_rings', añádelos aquí también.
+    base_features = ["logP", "TPSA"]
+    
+    # Intentamos añadir MW (Proxy del tamaño/MP)
+    if args.mw_col in df.columns:
+        base_features.append(args.mw_col)
+    
+    # Intentamos añadir features estructurales si existen (mejor que solo fenoles)
+    # El conteo de fenoles lo puedes dejar, pero no como sustituto único del MP
+    if "n_phenol" in df.columns:
+        base_features.append("n_phenol")
+        
+    # Añadimos la temperatura inversa
+    final_features = base_features + ["inv_temp"]
+    
+    # Verificar existencia
+    missing = [c for c in final_features if c not in df.columns]
+    if missing:
+        raise ValueError(f"Faltan columnas requeridas: {missing}")
+        
+    print(f"Entrenando Ridge con features: {final_features}")
 
-    have_mp = "mp" in df.columns
-
-    if have_mp:
-        df["mp_m25"] = pd.to_numeric(df["mp"], errors="coerce") - 25.0
-
-    X_cols = ["logP", "TPSA"]
-    if have_mp:
-        X_cols.append("mp_m25")
-    if phenol_col:
-        X_cols.append(phenol_col)
-
-    # limpiamos filas con NA
-    use_cols = [args.id_col, args.target] + X_cols
+    # Limpieza
+    use_cols = [args.id_col, args.target] + final_features
     df = df[use_cols].dropna().reset_index(drop=True)
 
-    # folds
+    # --- Preparación de Folds (Idéntico a tu código) ---
     if args.folds_file:
         folds = _read_any(args.folds_file)[[args.id_col, "fold"]]
         df = df.merge(folds, on=args.id_col, how="inner")
-        if df["fold"].isna().any():
-            raise ValueError("Hay filas sin fold tras merge con folds_file.")
         unique_folds = sorted(df["fold"].unique().tolist())
         fold_assign = [(df["fold"] == k) for k in unique_folds]
     else:
@@ -121,61 +98,44 @@ def main():
             m[va_idx] = True
             fold_assign.append(m)
         unique_folds = list(range(len(fold_assign)))
-        df["fold"] = -1  # se rellenará abajo
+        df["fold"] = -1
 
-    alphas = (1e-3, 1e-2, 1e-1, 1, 3, 10, 30, 100)
+    # --- Pipeline Ridge ---
+    # Nota: RidgeCV es excelente aquí. Normalizar es obligatorio.
+    alphas = (0.1, 1.0, 10.0, 100.0) 
     pipe_cv = Pipeline([
-        ("scaler", StandardScaler(with_mean=True, with_std=True)),
-        ("ridgecv", RidgeCV(alphas=alphas, store_cv_values=False))
+        ("scaler", StandardScaler()), 
+        ("ridgecv", RidgeCV(alphas=alphas)),
     ])
 
     y = df[args.target].to_numpy(float)
-    X = df[X_cols].to_numpy(float)
+    X = df[final_features].to_numpy(float)
 
     oof = np.full(len(df), np.nan, dtype=float)
-    alpha_by_fold = {}
-
+    
     for k, va_mask in zip(unique_folds, fold_assign):
         tr_mask = ~va_mask
-        if not args.folds_file:
-            df.loc[va_mask, "fold"] = k
+        if not args.folds_file: df.loc[va_mask, "fold"] = k
 
         pipe_cv.fit(X[tr_mask], y[tr_mask])
-        alpha_k = float(pipe_cv.named_steps["ridgecv"].alpha_)
-        alpha_by_fold[int(k)] = alpha_k
-
         oof[va_mask] = pipe_cv.predict(X[va_mask])
 
-    # métricas OOF
+    # Métricas y Guardado
     m_all = _metrics(y, oof)
-    (outdir / "metrics_oof_tpsa.json").write_text(json.dumps(m_all, indent=2))
-
-    # formato común OOF
+    
+    # Guardar outputs
     common = pd.DataFrame({
         "id": df[args.id_col].astype("string"),
         "fold": df["fold"].astype(int),
         "y_true": y,
         "y_pred": oof,
-        "model": "tpsa"
+        "model": "ridge_phys", # Nombre actualizado
     })
+    
     common.to_parquet(outdir / "oof_tpsa.parquet", index=False)
-
-    # manifiesto con info del modelo
-    manifest = {
-        "id_col": args.id_col,
-        "target": args.target,
-        "X_cols": X_cols,
-        "alphas_grid": list(alphas),
-        "alpha_by_fold": alpha_by_fold,
-        "phenol_col_used": phenol_col,
-        "has_mp": have_mp,
-        "n_rows_valid": int(len(df))
-    }
-    (outdir / "tpsa_oof_manifest.json").write_text(json.dumps(manifest, indent=2))
-
-    print("[OK] OOF TPSA guardado en:", (outdir / "oof_tpsa.parquet").resolve())
-    print("[OK] Métricas OOF:", m_all)
-
+    (outdir / "metrics_oof_tpsa.json").write_text(json.dumps(m_all, indent=2))
+    
+    print(f"[OK] RMSE: {m_all['rmse']:.4f} | R2: {m_all['r2']:.4f}")
 
 if __name__ == "__main__":
     main()

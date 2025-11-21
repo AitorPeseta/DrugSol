@@ -11,7 +11,6 @@ process train_oof_tpsa {
 
   output:
     path "oof_tpsa/oof_tpsa.parquet", emit: OFF_TPSA
-    path "oof_tpsa/tpsa_oof_manifest.json", emit: MANI_GNN
     path "oof_tpsa/metrics_oof_tpsa.json", emit: META_GNN
 
   script:
@@ -27,11 +26,12 @@ process train_oof_tpsa {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority --always-copy
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${train_o_tpsa_py}" \
-      --train "${train}" \
-      --folds-file "${folds}" \
-      --id-col row_uid \
-      --target logS \
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${train_o_tpsa_py}" \\
+      --train "${train}" \\
+      --folds-file "${folds}" \\
+      --id-col row_uid \\
+      --target logS \\
       --save-dir oof_tpsa
   """
 }

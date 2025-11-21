@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 import argparse, os, sys
 import pandas as pd
+import numpy as np
 
 NEEDED = [
     'smiles_original','smiles_neutral',
     'solvent','temp_C','logS',
-    'is_outlier'
+    'is_outlier',
+    'sw_temp37'
 ]
 
 # candidatos por campo (en orden de preferencia)
@@ -59,7 +61,10 @@ def load_one(path: str) -> pd.DataFrame:
 
     # temperature_K -> temp_C
     tempK = to_numeric_nullable(pick_series(raw, CANDIDATES['temperature_K']))
-    out['temp_C'] = tempK - 273.15
+    out['temp_C'] = (tempK - 273.15).round(2)
+    # Base de 1.0 para todos + Bonus gaussiano de 2.0 para los cercanos a 37
+    out["sw_temp37"] = 1.0 + 2.0 * np.exp(-((out["temp_C"] - 37.0) ** 2) / (2 * 8.0**2))
+
 
     # logS
     out['logS']       = to_numeric_nullable(pick_series(raw, CANDIDATES['logS']))

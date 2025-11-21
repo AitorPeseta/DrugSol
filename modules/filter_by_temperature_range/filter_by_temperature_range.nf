@@ -24,9 +24,9 @@ process filter_by_temperature_range {
     ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
   fi
 
-  ${params.MAMBA} run -p "\$PREFIX" python "${filter_t_py}" --input "${source}" \
-                                    --out filter_temp.parquet \
+  # Ejecución directa (Bypass micromamba run)
+  "\$PREFIX/bin/python" "${filter_t_py}" --input "${source}" \\
+                                    --out filter_temp.parquet \\
                                     --min-k "${min}" --max-k "${max}"
-
   """
 }
