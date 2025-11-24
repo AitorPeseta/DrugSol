@@ -1,55 +1,61 @@
+nextflow.enable.dsl = 2
+
 process final_infer_master {
-  tag "final_infer_master"
-  label 'cpu_small'
-  publishDir path: { "${outdir}/pred" }, mode: 'copy', overwrite: true
+    tag "Final Inference"
+    label 'cpu_medium'
+    
+    conda "${baseDir}/envs/drugsol-train.yml"
+    
+    publishDir "${params.outdir}/prediction", mode: 'copy', overwrite: true
 
-  input:
-    path test_tabular
-    path test_smiles
-    path models_dir
-    path chemprop_dir
-    path tpsa_model
-    val  outdir
-    path fim_py
-    val  weights_json       // puede venir como null
-    val  stack_model        // puede venir como null
+    input:
+        path test_tabular  // Parquet file features
+        path test_smiles   // Parquet file SMILES
+        path models_dir    // Directory with base models
+        path chemprop_dir  // Directory with Chemprop models
+        path tpsa_model    // TPSA model JSON
+        val  outdir_val
+        path script_py     // Python script
+        path weights_json  // Optional
+        path stack_model   // Optional
 
-  output:
-    path "pred/test_level0.parquet"
-    path "pred/test_blend.parquet"
-    path "pred/test_stack.parquet", optional: true
-    path "pred/metrics_test.json"
+    output:
+        path "pred/test_level0.parquet", emit: LEVEL0
+        path "pred/test_blend.parquet",  emit: BLEND
+        path "pred/test_stack.parquet",  emit: STACK, optional: true
+        path "pred/metrics_test.json",   emit: METRICS
 
-  script:
-  """
-  set -euo pipefail
+    script:
+    """
+    # Final Inference Pipeline
+    # 1. Generates predictions from all base models (XGB, LGBM, GNN, TPSA)
+    # 2. Combines them using learned weights/stacking model
+    # 3. Calculates final metrics (including physiological range)
+    
+    # Build optional flags
+    WEIGHTS_OPT=""
+    if [[ -f "${weights_json}" ]]; then
+        WEIGHTS_OPT="--weights-json ${weights_json}"
+    fi
 
-  PREFIX="\$HOME/.conda_nf/train_methods"
-  YAML="${baseDir}/envs/train_methods.yml"
-  [[ -d "\$PREFIX" ]] || ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
-
-  # ----- construir flags de forma segura en BASH -----
-  WEIGHTS_OPT=""
-  if [[ "${weights_json}" != "null" && -n "${weights_json}" && -f "${weights_json}" ]]; then
-    WEIGHTS_OPT="--weights-json ${weights_json}"
-  fi
-
-  # dentro del script: del process final_infer_master
-  STACK_OPT=""
-  if [[ "${stack_model}" != "null" && -n "${stack_model}" && -f "${stack_model}" ]]; then
-    STACK_OPT="--stack-pkl ${stack_model}"
-  fi
-
-  # Ejecución directa (Bypass micromamba run)
-  "\$PREFIX/bin/python" "${fim_py}" \\
-      --test-tabular "${test_tabular}" \\
-      --test-smiles  "${test_smiles}"  \\
-      --models-dir   "${models_dir}"   \\
-      --id-col row_uid \\
-      --chemprop-model-dir "${chemprop_dir}" \\
-      --chemprop-smiles-col smiles \\
-      --tpsa-json "${tpsa_model}" --tpsa-col TPSA --phenol-col phenol_count \\
-      --smiles-col smiles_neutral --target logS \\
-      --save-dir pred \$WEIGHTS_OPT \$STACK_OPT
-  """
+    STACK_OPT=""
+    if [[ -f "${stack_model}" ]]; then
+        STACK_OPT="--stack-pkl ${stack_model}"
+    fi
+    
+    python ${script_py} \\
+        --test-tabular "${test_tabular}" \\
+        --test-smiles  "${test_smiles}"  \\
+        --models-dir   "${models_dir}"   \\
+        --chemprop-model-dir "${chemprop_dir}" \\
+        --tpsa-json "${tpsa_model}" \\
+        --id-col row_uid \\
+        --smiles-col smiles_neutral \\
+        --chemprop-smiles-col smiles \\
+        --tpsa-col TPSA \\
+        --phenol-col n_phenol \\
+        --target logS \\
+        --save-dir pred \\
+        \$WEIGHTS_OPT \$STACK_OPT
+    """
 }

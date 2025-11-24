@@ -1,37 +1,33 @@
+nextflow.enable.dsl = 2
+
 process train_oof_tpsa {
-  tag "train_oof_tpsa"
-  label 'cpu_small'
-  publishDir path: { "${outdir}/training" }, mode: 'copy', overwrite: true
+    tag "Train Baseline (Ridge)"
+    label 'cpu_small'
+    
+    conda "${baseDir}/envs/drugsol-data.yml"
+    
+    publishDir "${params.outdir}/training", mode: 'copy', overwrite: true
 
-  input:
-    path train
-    val  outdir
-    path train_o_tpsa_py
-    path folds
+    input:
+        path train_file    // Training data file
+        val  outdir_val
+        path script_py     // Python script
+        path folds_file    // Cross-validation folds file
 
-  output:
-    path "oof_tpsa/oof_tpsa.parquet", emit: OFF_TPSA
-    path "oof_tpsa/metrics_oof_tpsa.json", emit: META_GNN
+    output:
+        path "oof_tpsa/oof_tpsa.parquet", emit: OFF_TPSA
+        path "oof_tpsa/metrics_oof_tpsa.json", emit: META_TPSA
 
-  script:
-  """
-  set -euo pipefail
-
-  PREFIX="\$HOME/.conda_nf/train_methods"
-  YAML="${baseDir}/envs/train_methods.yml"
-
-  if [[ ! -d "\$PREFIX" ]]; then
-    rm -rf "\$PREFIX"
-    ${params.MAMBA} clean --all -y
-    ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority --always-copy
-  fi
-
-  # Ejecución directa (Bypass micromamba run)
-  "\$PREFIX/bin/python" "${train_o_tpsa_py}" \\
-      --train "${train}" \\
-      --folds-file "${folds}" \\
-      --id-col row_uid \\
-      --target logS \\
-      --save-dir oof_tpsa
-  """
+    script:
+    """
+    # Train a Ridge Regression Baseline
+    # Features: logP, TPSA, MW, 1/Temperature
+    
+    python ${script_py} \\
+        --train "${train_file}" \\
+        --folds-file "${folds_file}" \\
+        --id-col row_uid \\
+        --target logS \\
+        --save-dir oof_tpsa
+    """
 }

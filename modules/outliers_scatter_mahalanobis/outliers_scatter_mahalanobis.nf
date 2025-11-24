@@ -1,34 +1,32 @@
+nextflow.enable.dsl = 2
+
 process outliers_scatter_mahalanobis {
-  tag "outliers_scatter_mahalanobis"
-  label 'cpu_small'
-  publishDir path: { "${outdir}/analysis" }, mode: 'copy', overwrite: true
-
-  input:
-    tuple path(train), path(test)
-    val  outdir
-    path out_scatter_py
-
-  output:
-    path "out_viz", emit: OUTLIER_DIR
+    tag "EDA: Scatter & Outliers"
+    label 'cpu_small'
     
-  script:
-  """
-  set -euo pipefail
+    conda "${baseDir}/envs/drugsol-data.yml"
+    
+    publishDir "${params.outdir}/analysis", mode: 'copy', overwrite: true
 
-  PREFIX="\$HOME/.conda_nf/analysis"
-  YAML="${baseDir}/envs/analysis.yml"
+    input:
+        tuple path(train), path(test)  // Train and Test parquet files
+        val  outdir
+        path script_py             // Python script
 
-  if [[ ! -d "\$PREFIX" ]]; then
-    ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
-  fi
-
-  # Ejecución directa (Bypass micromamba run)
-  "\$PREFIX/bin/python" "${out_scatter_py}" --train "${train}" --test "${test}" \\
-                                    --only_cols logS temp_C \\
-                                    --exclude id target \\
-                                    --basis combined \\
-                                    --outlier_col is_outlier \\
-                                    --y-mode jitter --jitter-amp 0.12 --thresh 3.0 \\
-                                    --outdir out_viz
-  """
+    output:
+        path "out_viz", emit: OUTLIER_DIR
+    
+    script:
+    """
+    # Visualize Data Space using PCA and Mahalanobis distance
+    # Useful to check if Test set is within the domain of applicability of Train
+    
+    python ${script_py} \\
+        --train "${train}" \\
+        --test "${test}" \\
+        --only_cols logS temp_C qed weight \\
+        --outlier_col is_outlier \\
+        --basis combined \\
+        --outdir out_viz
+    """
 }

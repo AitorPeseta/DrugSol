@@ -1,38 +1,36 @@
+nextflow.enable.dsl = 2
+
 process train_full_chemprop {
-  tag "train_full_chemprop"
-  label 'cpu_small'
-  publishDir path: { "${outdir}/training" }, mode: 'copy', overwrite: true
+    tag "Train Full Chemprop"
+    label 'process_gpu' // Request GPU
+    accelerator 1, type: 'nvidia'
+    
+    conda "${baseDir}/envs/drugsol-train.yml"
+    
+    publishDir "${params.outdir}/training", mode: 'copy', overwrite: true
 
-  input:
-    path train
-    val  outdir
-    path train_full_py
-    path best_params
+    input:
+        path train_file
+        val  outdir_val
+        path script_py
+        path best_params_json
 
-  output:
-    path "models_GNN",               emit: CHEMPROP_DIR
-    path "models_GNN/chemprop_manifest.json", emit: CHEMPROP_MANIFEST
+    output:
+        path "models_GNN", emit: CHEMPROP_DIR
+        path "models_GNN/chemprop_manifest.json", emit: CHEMPROP_MANIFEST
 
-
-  script:
-  """
-  set -euo pipefail
-
-  PREFIX="\$HOME/.conda_nf/train_methods"
-  YAML="${baseDir}/envs/train_methods.yml"
-
-  if [[ ! -d "\$PREFIX" ]]; then
-    ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
-  fi
-
-  # Ejecución directa (Bypass micromamba run)
-  "\$PREFIX/bin/python" "${train_full_py}" \\
-                                    --train "${train}" \\
-                                    --smiles-col smiles_neutral \\
-                                    --target logS \\
-                                    --gpu \\
-                                    --epochs 40 \\
-                                    --best-params "${best_params}" \\
-                                    --save-dir models_GNN
-  """
+    script:
+    """
+    # Retrain Chemprop on 100% data using best hyperparameters found in OOF
+    # Injects Physics (1/T) and Weights (Gaussian around 37C)
+    
+    python ${script_py} \\
+        --train "${train_file}" \\
+        --smiles-col smiles_neutral \\
+        --target logS \\
+        --best-params "${best_params_json}" \\
+        --epochs 40 \\
+        --gpu \\
+        --save-dir models_GNN
+    """
 }

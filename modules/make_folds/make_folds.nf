@@ -1,38 +1,37 @@
+nextflow.enable.dsl = 2
+
 process make_folds {
-  tag "make_folds"
-  label 'cpu_small'
-  publishDir path: { "${outdir}/training" }, mode: 'copy', overwrite: true
+    tag "Generate CV Folds"
+    label 'cpu_small'
+    
+    conda "${baseDir}/envs/drugsol-data.yml"
+    
+    publishDir "${params.outdir}/training", mode: 'copy', overwrite: true
 
-  input:
-    path train
-    val  outdir
-    path folds_py
+    input:
+        path train_file   // Parquet file with training data
+        val  outdir_val
+        path script_py    // Python script
 
-  output:
-    path "folds.parquet", emit: out
+    output:
+        path "folds.parquet", emit: out
 
-  script:
-  """
-  set -euo pipefail
-
-  PREFIX="\$HOME/.conda_nf/train_methods"
-  YAML="${baseDir}/envs/train_methods.yml"
-
-  if [[ ! -d "\$PREFIX" ]]; then
-    rm -rf  "\$PREFIX"
-    ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority --always-copy
-  fi
-
-  # Ejecución directa (Bypass micromamba run)
-  "\$PREFIX/bin/python" "${folds_py}" --input "${train}" \\
-                                    --out folds.parquet \\
-                                    --id-col row_uid \\
-                                    --group-col cluster_ecfp4_0p7 \\
-                                    --strat-mode both \\
-                                    --temp-col temp_C \\
-                                    --temp-step 2 \\
-                                    --temp-unit auto \\
-                                    --target logS --bins 2 \\
-                                    --n-splits 5 --seed 42
-  """
+    script:
+    """
+    # Generate Cross-Validation folds
+    # Strategy: Grouped (by scaffold) & Stratified (by Target + Temp)
+    
+    python ${script_py} \\
+        --input "${train_file}" \\
+        --out "folds.parquet" \\
+        --id-col row_uid \\
+        --group-col cluster_ecfp4_0p7 \\
+        --target logS \\
+        --strat-mode both \\
+        --temp-col temp_C \\
+        --temp-step 5 \\
+        --bins 5 \\
+        --n-splits 5 \\
+        --seed 42
+    """
 }

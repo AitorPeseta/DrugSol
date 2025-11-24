@@ -1,33 +1,38 @@
+nextflow.enable.dsl = 2
+
 process filter_features {
-  tag "filter_features"
-  label 'cpu_small'
-  publishDir path: { "${outdir}/prepare_data" }, mode: 'copy', overwrite: true
-
-  input:
-    path file
-    val  outdir
-    path features_py
-    val  name_out
-
-  output:
-    path "${name_out}_features_mordred_filtered.parquet", emit: out
+    tag "Filter Features (${dataset_name})"
+    label 'cpu_medium'
     
-  script:
-  """
-  set -euo pipefail
+    conda "${baseDir}/envs/drugsol-data.yml"
+    
+    // Publish Logic:
+    publishDir "${params.outdir}/prepare_data/filtered", mode: 'copy', overwrite: true
+    
+    publishDir "${baseDir}/resources", mode: 'copy', overwrite: true, enabled: (dataset_name == 'train')
 
-  PREFIX="\$HOME/.conda_nf/prepare_data"
-  YAML="${baseDir}/envs/prepare_data.yml"
+    input:
+        path input_file    // Parquet file with features to filter
+        val  outdir_val
+        path script_py     // Python script to run
+        val  dataset_name  // "train" or "test"
 
-  if [[ ! -d "\$PREFIX" ]]; then
-    ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
-  fi
-
-  # Ejecución directa (Bypass micromamba run)
-  "\$PREFIX/bin/python" "${features_py}" \\
-                                    -i "${file}" \\
-                                    -o ${name_out}_features_mordred_filtered.parquet \\
-                                    --target logS
-
-  """
+    output:
+        path "${dataset_name}_features_mordred_filtered.parquet", emit: out
+    
+    script:
+    """
+    # Feature Selection Pipeline:
+    # 1. Drop Constant/NZV columns
+    # 2. Cluster correlated features
+    # 3. Select representative (medoid) by LightGBM gain importance
+    
+    python ${script_py} \\
+        --input "${input_file}" \\
+        --output "${dataset_name}_features_mordred_filtered.parquet" \\
+        --target logS \\
+        --mordred-prefix "mordred__" \\
+        --corr-thresh 0.99 \\
+        --algo lgbm
+    """
 }

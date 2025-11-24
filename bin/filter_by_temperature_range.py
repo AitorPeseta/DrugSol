@@ -1,73 +1,96 @@
 #!/usr/bin/env python3
 # filter_by_temperature_range.py
-# Filtra filas manteniendo solo las que tienen temperature_K dentro del rango especificado.
+# Filters rows keeping only those where the temperature column is within a specified range.
 
-import argparse, os, sys
+import argparse
+import os
+import sys
 import pandas as pd
 import numpy as np
 
 def read_any(path: str) -> pd.DataFrame:
+    """Reads CSV or Parquet files."""
     if path.lower().endswith(".csv"):
         return pd.read_csv(path)
     return pd.read_parquet(path)
 
 def write_any(df: pd.DataFrame, path: str):
+    """Writes to CSV or Parquet based on extension."""
     if path.lower().endswith(".csv"):
         df.to_csv(path, index=False, encoding="utf-8", lineterminator="\n")
     else:
         df.to_parquet(path)
 
 def main():
-    ap = argparse.ArgumentParser(description="Filtra filas por rango de temperatura (K).")
-    ap.add_argument("--input", required=True, help="Archivo de entrada (.parquet o .csv)")
-    ap.add_argument("--out", required=True, help="Archivo de salida (.parquet o .csv)")
-    ap.add_argument("--temp-col", default="temp_C", help="Nombre de la columna de temperatura (default: temp_C)")
-    ap.add_argument("--min-k", type=float, default=None, help="Temperatura mínima en K (inclusiva). Si no se indica, -inf.")
-    ap.add_argument("--max-k", type=float, default=None, help="Temperatura máxima en K (inclusiva). Si no se indica, +inf.")
-    ap.add_argument("--strict", action="store_true", help="Usar límites estrictos (min,max) en lugar de inclusivos [min,max].")
-    ap.add_argument("--keep-na", action="store_true", help="Conservar filas con NaN en temperatura (por defecto se descartan).")
+    ap = argparse.ArgumentParser(description="Filter rows by a numeric range in a specific column.")
+    ap.add_argument("--input", required=True, help="Input file (.parquet or .csv)")
+    ap.add_argument("--out", required=True, help="Output file (.parquet or .csv)")
+    ap.add_argument("--temp-col", default="temp_C", help="Name of the temperature column (default: temp_C)")
+    
+    # Changed from min-k to min to be unit-agnostic (since we work with Celsius)
+    ap.add_argument("--min", type=float, default=None, help="Minimum value (inclusive). Default: -inf")
+    ap.add_argument("--max", type=float, default=None, help="Maximum value (inclusive). Default: +inf")
+    
+    ap.add_argument("--strict", action="store_true", help="Use strict inequality (min < x < max) instead of inclusive.")
+    ap.add_argument("--keep-na", action="store_true", help="Keep rows with NaN in the target column.")
+    
     args = ap.parse_args()
 
-    df = read_any(args.input)
-    if args.temp_col not in df.columns:
-        sys.exit(f"[ERROR] La columna '{args.temp_col}' no existe en {args.input}.")
+    # 1. Load Data
+    print(f"[Filter Temp] Loading {args.input}...")
+    try:
+        df = read_any(args.input)
+    except Exception as e:
+        sys.exit(f"[ERROR] Could not read file: {e}")
 
-    # Columna como numérica
+    if args.temp_col not in df.columns:
+        sys.exit(f"[ERROR] Column '{args.temp_col}' does not exist in the dataset.")
+
+    # 2. Convert column to numeric (force coercion)
     t = pd.to_numeric(df[args.temp_col], errors="coerce")
     mask_valid_num = t.notna()
 
-    # Límites
-    lo = -np.inf if args.min_k is None else float(args.min_k)
-    hi =  np.inf if args.max_k is None else float(args.max_k)
+    # 3. Define Limits
+    lo = -np.inf if args.min is None else float(args.min)
+    hi =  np.inf if args.max is None else float(args.max)
 
+    # 4. Create Boolean Mask
     if args.strict:
         in_range = (t > lo) & (t < hi)
     else:
         in_range = (t >= lo) & (t <= hi)
 
     if args.keep_na:
-        # Mantén NaN + los que están en rango
+        # Keep if in range OR if it was NaN originally
         final_mask = in_range | (~mask_valid_num)
     else:
-        # Solo los numéricos en rango
+        # Keep only if valid number AND in range
         final_mask = mask_valid_num & in_range
 
+    # 5. Stats
     kept = int(final_mask.sum())
     total = len(df)
     dropped = total - kept
-
+    
+    # 6. Filter and Save
     df_out = df.loc[final_mask].copy()
-    # Escritura
+    
+    # Ensure directory exists
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     write_any(df_out, args.out)
 
-    # Resumen
-    bounds = f"({'>' if args.strict else '>='} {lo} K) & ({'<' if args.strict else '<='} {hi} K)"
-    print(f"[filter_by_temperature_range] OK  kept={kept}  dropped={dropped}  total={total}  rango: {bounds}")
+    # Summary Log
+    operator_min = '>' if args.strict else '>='
+    operator_max = '<' if args.strict else '<='
+    bounds_desc = f"({operator_min} {lo}) & ({operator_max} {hi})"
+    
+    print(f"[Filter Temp] OK. Kept: {kept} | Dropped: {dropped} | Total: {total}")
+    print(f"[Filter Temp] Logic: Column '{args.temp_col}' {bounds_desc}")
+
     if not args.keep_na:
         n_na = int((~mask_valid_num).sum())
-        if n_na:
-            print(f"[AVISO] Descargadas {n_na} filas por temperatura NaN/no numérica. Usa --keep-na para conservarlas.", file=sys.stderr)
+        if n_na > 0:
+            print(f"[WARNING] Dropped {n_na} rows due to NaN/Non-numeric temperature.", file=sys.stderr)
 
 if __name__ == "__main__":
     main()

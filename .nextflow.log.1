@@ -1,426 +1,202 @@
-de nov.-20 15:48:50.258 [main] DEBUG nextflow.cli.Launcher - $> nextflow run main.nf --mode research -resume
-de nov.-20 15:48:50.387 [main] DEBUG nextflow.cli.CmdRun - N E X T F L O W  ~  version 25.04.8
-de nov.-20 15:48:50.400 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/home/aitor/.nextflow/plugins; core-plugins: nf-amazon@2.15.0-patch2,nf-azure@1.16.0-patch1,nf-cloudcache@0.4.3,nf-codecommit@0.2.3,nf-console@1.2.1,nf-google@1.21.1,nf-k8s@1.0.1,nf-tower@1.11.4-patch2,nf-wave@1.12.1
-de nov.-20 15:48:50.414 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
-de nov.-20 15:48:50.415 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
-de nov.-20 15:48:50.416 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.12.0 in 'deployment' mode
-de nov.-20 15:48:50.424 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
-de nov.-20 15:48:50.438 [main] DEBUG nextflow.config.ConfigBuilder - Found config local: /home/aitor/Documents/DrugSol/nextflow.config
-de nov.-20 15:48:50.439 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /home/aitor/Documents/DrugSol/nextflow.config
-de nov.-20 15:48:50.459 [main] DEBUG n.secret.LocalSecretsProvider - Secrets store: /home/aitor/.nextflow/secrets/store.json
-de nov.-20 15:48:50.461 [main] DEBUG nextflow.secret.SecretsLoader - Discovered secrets providers: [nextflow.secret.LocalSecretsProvider@3b0ca5e1] - activable => nextflow.secret.LocalSecretsProvider@3b0ca5e1
-de nov.-20 15:48:50.468 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `standard`
-de nov.-20 15:48:50.704 [main] DEBUG nextflow.cli.CmdRun - Applied DSL=2 from script declaration
-de nov.-20 15:48:50.712 [main] DEBUG nextflow.cli.CmdRun - Launching `main.nf` [serene_woese] DSL2 - revision: 498c29daf6
-de nov.-20 15:48:50.713 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins default=[]
-de nov.-20 15:48:50.713 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins resolved requirement=[]
-de nov.-20 15:48:50.739 [main] DEBUG nextflow.Session - Session UUID: 12f842a8-0375-4b09-be90-75f4eb4f2985
-de nov.-20 15:48:50.740 [main] DEBUG nextflow.Session - Run name: serene_woese
-de nov.-20 15:48:50.740 [main] DEBUG nextflow.Session - Executor pool size: 32
-de nov.-20 15:48:50.744 [main] DEBUG nextflow.file.FilePorter - File porter settings maxRetries=3; maxTransfers=50; pollTimeout=null
-de nov.-20 15:48:50.747 [main] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'FileTransfer' minSize=10; maxSize=96; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
-de nov.-20 15:48:50.758 [main] DEBUG nextflow.cli.CmdRun - 
-  Version: 25.04.8 build 5956
-  Created: 06-10-2025 21:19 UTC (23:19 CEST)
-  System: Linux 6.8.0-87-generic
-  Runtime: Groovy 4.0.26 on OpenJDK 64-Bit Server VM 17.0.16+8-Ubuntu-0ubuntu122.04.1
+Nov-22 11:32:21.642 [main] DEBUG nextflow.cli.Launcher - $> nextflow run main.nf --mode research -resume
+Nov-22 11:32:22.131 [main] DEBUG nextflow.cli.CmdRun - N E X T F L O W  ~  version 25.10.0
+Nov-22 11:32:22.230 [main] DEBUG nextflow.config.ConfigBuilder - Found config local: /mnt/c/URV/TFG/DrugSol/nextflow.config
+Nov-22 11:32:22.237 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /mnt/c/URV/TFG/DrugSol/nextflow.config
+Nov-22 11:32:22.314 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `standard`
+Nov-22 11:32:23.674 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/home/adduser/.nextflow/plugins; core-plugins: nf-amazon@3.4.1,nf-azure@1.20.2,nf-cloudcache@0.5.0,nf-codecommit@0.5.0,nf-console@1.3.0,nf-google@1.23.3,nf-k8s@1.2.2,nf-tower@1.17.1,nf-wave@1.16.1
+Nov-22 11:32:23.711 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+Nov-22 11:32:23.717 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+Nov-22 11:32:23.725 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.12.0 in 'deployment' mode
+Nov-22 11:32:23.759 [main] DEBUG nextflow.util.RetryConfig - Missing nextflow session - using default retry config
+Nov-22 11:32:24.081 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
+Nov-22 11:32:24.085 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins default=[]
+Nov-22 11:32:24.086 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins resolved requirement=[]
+Nov-22 11:32:24.114 [main] DEBUG n.secret.LocalSecretsProvider - Secrets store: /home/adduser/.nextflow/secrets/store.json
+Nov-22 11:32:24.120 [main] DEBUG nextflow.secret.SecretsLoader - Discovered secrets providers: [nextflow.secret.LocalSecretsProvider@2ae62bb6] - activable => nextflow.secret.LocalSecretsProvider@2ae62bb6
+Nov-22 11:32:24.128 [main] DEBUG nextflow.cli.CmdRun - Applied DSL=2 from script declaration
+Nov-22 11:32:24.157 [main] DEBUG nextflow.cli.CmdRun - Launching `main.nf` [cheeky_kalam] DSL2 - revision: f2b0b83ba6
+Nov-22 11:32:24.241 [main] DEBUG nextflow.Session - Session UUID: 12f842a8-0375-4b09-be90-75f4eb4f2985
+Nov-22 11:32:24.243 [main] DEBUG nextflow.Session - Run name: cheeky_kalam
+Nov-22 11:32:24.244 [main] DEBUG nextflow.Session - Executor pool size: 16
+Nov-22 11:32:24.259 [main] DEBUG nextflow.file.FilePorter - File porter settings maxRetries=3; maxTransfers=50; pollTimeout=null
+Nov-22 11:32:24.271 [main] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'FileTransfer' minSize=10; maxSize=48; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
+Nov-22 11:32:24.307 [main] DEBUG nextflow.cli.CmdRun - 
+  Version: 25.10.0 build 10289
+  Created: 22-10-2025 16:26 UTC (18:26 CEST)
+  System: Linux 6.6.87.2-microsoft-standard-WSL2
+  Runtime: Groovy 4.0.28 on OpenJDK 64-Bit Server VM 17.0.10+7
   Encoding: UTF-8 (UTF-8)
-  Process: 71186@QiN-02 [127.0.1.1]
-  CPUs: 32 - Mem: 124.9 GB (65.6 GB) - Swap: 2 GB (2 GB)
-de nov.-20 15:48:50.805 [main] DEBUG nextflow.Session - Work-dir: /home/aitor/Documents/DrugSol/work [ext2/ext3]
-de nov.-20 15:48:50.823 [main] DEBUG nextflow.executor.ExecutorFactory - Extension executors providers=[]
-de nov.-20 15:48:50.829 [main] DEBUG nextflow.Session - Observer factory: DefaultObserverFactory
-de nov.-20 15:48:50.832 [main] DEBUG nextflow.Session - Observer factory (v2): LinObserverFactory
-de nov.-20 15:48:50.843 [main] DEBUG nextflow.cache.CacheFactory - Using Nextflow cache factory: nextflow.cache.DefaultCacheFactory
-de nov.-20 15:48:50.849 [main] DEBUG nextflow.util.CustomThreadPool - Creating default thread pool > poolSize: 33; maxThreads: 1000
-de nov.-20 15:48:50.905 [main] DEBUG nextflow.Session - Session start
-de nov.-20 15:48:50.991 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
-de nov.-20 15:48:51.127 [main] INFO  nextflow.script.BaseScript - [DrugSol] Nextflow 25.04.8 | DSL2 enabled
-de nov.-20 15:48:51.128 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `input` -- Initialise it to a default value eg. `params.input = some_value`
-de nov.-20 15:48:51.128 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `model` -- Initialise it to a default value eg. `params.model = some_value`
-de nov.-20 15:48:51.129 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `outdir` -- Initialise it to a default value eg. `params.outdir = some_value`
-de nov.-20 15:48:51.129 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `stratify` -- Initialise it to a default value eg. `params.stratify = some_value`
-de nov.-20 15:48:51.129 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `exp` -- Initialise it to a default value eg. `params.exp = some_value`
-de nov.-20 15:48:51.129 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `smiles` -- Initialise it to a default value eg. `params.smiles = some_value`
-de nov.-20 15:48:51.129 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `solvent` -- Initialise it to a default value eg. `params.solvent = some_value`
-de nov.-20 15:48:51.130 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `temperature_K_Min` -- Initialise it to a default value eg. `params.temperature_K_Min = some_value`
-de nov.-20 15:48:51.130 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `temperature_K_Max` -- Initialise it to a default value eg. `params.temperature_K_Max = some_value`
-de nov.-20 15:48:52.412 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `grid` -- Initialise it to a default value eg. `params.grid = some_value`
-de nov.-20 15:48:52.412 [main] INFO  nextflow.Nextflow - ================== DrugSol Pipeline ==================
-mode                : research
-input               : -
-model (exec)        : -
-outdir              : /home/aitor/Documents/DrugSol/results
-stratify            : solvent,T_bin
-exp (execution)     : -
-smiles              : -
-solvent             : -
-temperature_K_Min   : -
-temperature_K_Max   : -
-grid (execution)    : -
-======================================================
+  Process: 421@DESKTOP-DJSEM29 [127.0.1.1]
+  CPUs: 16 - Mem: 7.5 GB (6.5 GB) - Swap: 2 GB (2 GB)
+Nov-22 11:32:24.654 [main] DEBUG nextflow.Session - Work-dir: /mnt/c/URV/TFG/DrugSol/work [v9fs]
+Nov-22 11:32:24.908 [main] DEBUG nextflow.executor.ExecutorFactory - Extension executors providers=[]
+Nov-22 11:32:24.937 [main] DEBUG nextflow.Session - Observer factory (v2): LinObserverFactory
+Nov-22 11:32:24.949 [main] DEBUG nextflow.Session - Observer factory (v2): DefaultObserverFactory
+Nov-22 11:32:25.087 [main] DEBUG nextflow.cache.CacheFactory - Using Nextflow cache factory: nextflow.cache.DefaultCacheFactory
+Nov-22 11:32:25.118 [main] DEBUG nextflow.util.CustomThreadPool - Creating default thread pool > poolSize: 17; maxThreads: 1000
+Nov-22 11:32:25.358 [main] DEBUG nextflow.Session - Session start
+Nov-22 11:32:25.617 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
+Nov-22 11:32:26.068 [main] INFO  nextflow.Nextflow - [DrugSol] Nextflow 25.10.0 | DSL2 enabled
+Nov-22 11:32:26.074 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `input` -- Initialise it to a default value eg. `params.input = some_value`
+Nov-22 11:32:26.077 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `stratify` -- Initialise it to a default value eg. `params.stratify = some_value`
+Nov-22 11:32:26.079 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `model` -- Initialise it to a default value eg. `params.model = some_value`
+Nov-22 11:32:26.080 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `solvent` -- Initialise it to a default value eg. `params.solvent = some_value`
+Nov-22 11:32:26.081 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `temperature_K_Min` -- Initialise it to a default value eg. `params.temperature_K_Min = some_value`
+Nov-22 11:32:26.083 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `temperature_K_Max` -- Initialise it to a default value eg. `params.temperature_K_Max = some_value`
+Nov-22 11:32:31.619 [main] INFO  nextflow.Nextflow - ==========================================================
+  D R U G S O L   P I P E L I N E
+==========================================================
+Mode                : research
+Input Data          : N/A
+Output Dir          : /mnt/c/URV/TFG/DrugSol/results
+----------------------------------------------------------
+[Execution Params]
+Model Override      : Auto-detect from results
+Solvent             : N/A
+Temp Range (K)      : - to -
+==========================================================
 
-de nov.-20 15:48:52.462 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.463 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.466 [main] DEBUG nextflow.executor.Executor - [warm up] executor > local
-de nov.-20 15:48:52.469 [main] DEBUG n.processor.LocalPollingMonitor - Creating local task monitor for executor 'local' > cpus=32; memory=124.9 GB; capacity=32; pollInterval=100ms; dumpInterval=5m
-de nov.-20 15:48:52.470 [main] DEBUG n.processor.TaskPollingMonitor - >>> barrier register (monitor: local)
-de nov.-20 15:48:52.482 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:COMMON_INGEST:fetch_chembl': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.512 [main] WARN  nextflow.extension.OperatorImpl - The operator `first` is useless when applied to a value channel which returns a single value by definition
-de nov.-20 15:48:52.518 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.518 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.519 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:COMMON_INGEST:fetch_bigsoldb': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.525 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.525 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.526 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:COMMON_INGEST:unify_datasets': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.530 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.531 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.531 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:CURATE:filter_water': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.535 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.535 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.536 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:CURATE:filter_by_temperature_range': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.540 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.540 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.541 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:CURATE:detect_outliers': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.544 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.544 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.545 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:CURATE:filter_outlier': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.553 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.553 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.554 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:PREPARE:standardize_smiles': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.557 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.557 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.558 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:PREPARE:merge_drug_flag': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.561 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.561 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.562 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:PREPARE:enrich_ionization_features': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.566 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.566 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.566 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:PREPARE:make_fingerprints': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.569 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.570 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.570 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:PREPARE:stratified_split': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.573 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.573 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.573 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:PREPARE:make_features_mordred_train': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.575 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.575 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.575 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:PREPARE:make_features_mordred_test': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.579 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.579 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.579 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:PREPARE:filter_features_train': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.582 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.582 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.582 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:PREPARE:filter_features_test': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.597 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.597 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.597 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:PREPARE:align_feature_columns_mordred': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.600 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.600 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.600 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:PREPARE:dropnan_rows_train': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.602 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.602 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.603 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:PREPARE:dropnan_rows_test': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.606 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.607 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.607 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:PREPARE:make_features_rdkit_train': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.610 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.610 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.611 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:PREPARE:make_features_rdkit_test': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.615 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.616 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.616 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:PREPARE:align_feature_columns_rdkit': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.620 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.620 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.621 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:PREPARE:dropnan_rows_train_smile': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.625 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.625 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.625 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:PREPARE:dropnan_rows_test_smile': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.636 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.636 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.636 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:ANALYSIS:histogram': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.643 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.643 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.643 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:ANALYSIS:outlier': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.648 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.648 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.649 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:ANALYSIS:measure_counts': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.654 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.654 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.654 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:TRAIN_STACK:make_folds': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.659 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.659 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.659 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:TRAIN_STACK:train_oof_gbm': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.665 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.665 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.665 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:TRAIN_STACK:train_oof_chemprop': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.671 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.671 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.672 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:TRAIN_STACK:train_oof_tpsa': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.691 [main] DEBUG nextflow.script.ProcessConfig - Config settings `withName:.*meta_stack_blend.*` matches process drugsol:research:TRAIN_STACK:meta_stack_blend
-de nov.-20 15:48:52.692 [main] DEBUG nextflow.script.ProcessConfig - Config settings `withName:.*meta_stack_blend.*` matches process drugsol:research:TRAIN_STACK:meta_stack_blend
-de nov.-20 15:48:52.692 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.692 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.693 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:TRAIN_STACK:meta_stack_blend': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.699 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.699 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.699 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:TRAIN_STACK:train_full_chemprop': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.707 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.707 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.707 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:TRAIN_STACK:train_full_tpsa': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.710 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.710 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.710 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:TRAIN_STACK:train_full_gbm': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.716 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
-de nov.-20 15:48:52.716 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
-de nov.-20 15:48:52.717 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:TRAIN_STACK:final_infer_master': maxForks=0; fair=false; array=0
-de nov.-20 15:48:52.721 [main] DEBUG nextflow.Session - Workflow process names [dsl2]: enrich_ionization_features, unify_datasets, measure_counts, drugsol:research:CURATE:detect_outliers, drugsol:research:COMMON_INGEST:fetch_chembl, standardize_smiles, drugsol:research:TRAIN_STACK:train_oof_gbm, filter_features, drugsol:research:TRAIN_STACK:make_folds, make_features_rdkit_test, drugsol:research:PREPARE:dropnan_rows_train_smile, meta_stack_blend, drugsol:research:COMMON_INGEST:fetch_bigsoldb, make_features_rdkit_train, make_folds, filter_features_train, histograms_columns, drugsol:research:PREPARE:filter_features_train, drugsol:research:PREPARE:align_feature_columns_rdkit, filter_by_temperature_range, measurement_counts_histogram, drugsol:research:TRAIN_STACK:train_full_tpsa, outlier, drugsol:research:PREPARE:dropnan_rows_train, stratified_split, dropnan_rows_train_smile, drugsol:research:COMMON_INGEST:unify_datasets, drugsol:research:PREPARE:enrich_ionization_features, drugsol:research:ANALYSIS:outlier, filter_outlier, histogram, drugsol:research:PREPARE:stratified_split, drugsol:research:ANALYSIS:measure_counts, make_features_mordred_train, train_full_chemprop, drugsol:research:TRAIN_STACK:train_oof_tpsa, drugsol:research:PREPARE:make_features_mordred_train, align_feature_columns_mordred, align_feature_columns, train_full_tpsa, drugsol:research:PREPARE:align_feature_columns_mordred, drugsol:research:TRAIN_STACK:meta_stack_blend, train_oof_gbm, dropnan_rows_train, merge_drug_flag, dropnan_rows, outliers_scatter_mahalanobis, drugsol:research:PREPARE:make_fingerprints, make_fingerprints, dropnan_rows_test_smile, train_oof_chemprop, filter_water, drugsol:research:PREPARE:merge_drug_flag, drugsol:research:CURATE:filter_outlier, drugsol:research:PREPARE:make_features_mordred_test, fetch_bigsoldb, drugsol:research:ANALYSIS:histogram, train_full_gbm, drugsol:research:PREPARE:standardize_smiles, drugsol:research:PREPARE:dropnan_rows_test_smile, make_features_mordred, drugsol:research:CURATE:filter_water, train_oof_tpsa, drugsol:research:TRAIN_STACK:train_full_gbm, final_infer_master, dropnan_rows_test, align_feature_columns_rdkit, detect_outliers, drugsol:research:PREPARE:dropnan_rows_test, drugsol:research:CURATE:filter_by_temperature_range, drugsol:research:PREPARE:make_features_rdkit_test, drugsol:research:PREPARE:filter_features_test, filter_features_test, make_features_rdkit, make_features_mordred_test, drugsol:research:PREPARE:make_features_rdkit_train, drugsol:research:TRAIN_STACK:train_full_chemprop, drugsol:research:TRAIN_STACK:final_infer_master, fetch_chembl, drugsol:research:TRAIN_STACK:train_oof_chemprop
-de nov.-20 15:48:52.722 [main] DEBUG nextflow.Session - Igniting dataflow network (72)
-de nov.-20 15:48:52.722 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:COMMON_INGEST:fetch_chembl
-de nov.-20 15:48:52.723 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:COMMON_INGEST:fetch_bigsoldb
-de nov.-20 15:48:52.723 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:COMMON_INGEST:unify_datasets
-de nov.-20 15:48:52.723 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:CURATE:filter_water
-de nov.-20 15:48:52.723 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:CURATE:filter_by_temperature_range
-de nov.-20 15:48:52.723 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:CURATE:detect_outliers
-de nov.-20 15:48:52.723 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:CURATE:filter_outlier
-de nov.-20 15:48:52.724 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:PREPARE:standardize_smiles
-de nov.-20 15:48:52.724 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:PREPARE:merge_drug_flag
-de nov.-20 15:48:52.724 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:PREPARE:enrich_ionization_features
-de nov.-20 15:48:52.724 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:PREPARE:make_fingerprints
-de nov.-20 15:48:52.724 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:PREPARE:stratified_split
-de nov.-20 15:48:52.724 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:PREPARE:make_features_mordred_train
-de nov.-20 15:48:52.724 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:PREPARE:make_features_mordred_test
-de nov.-20 15:48:52.724 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:PREPARE:filter_features_train
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:PREPARE:filter_features_test
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:PREPARE:align_feature_columns_mordred
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:PREPARE:dropnan_rows_train
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:PREPARE:dropnan_rows_test
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:PREPARE:make_features_rdkit_train
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:PREPARE:make_features_rdkit_test
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:PREPARE:align_feature_columns_rdkit
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:PREPARE:dropnan_rows_train_smile
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:PREPARE:dropnan_rows_test_smile
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:ANALYSIS:histogram
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:ANALYSIS:outlier
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:ANALYSIS:measure_counts
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:TRAIN_STACK:make_folds
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:TRAIN_STACK:train_oof_gbm
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:TRAIN_STACK:train_oof_chemprop
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:TRAIN_STACK:train_oof_tpsa
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:TRAIN_STACK:meta_stack_blend
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:TRAIN_STACK:train_full_chemprop
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:TRAIN_STACK:train_full_tpsa
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:TRAIN_STACK:train_full_gbm
-de nov.-20 15:48:52.725 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > drugsol:research:TRAIN_STACK:final_infer_master
-de nov.-20 15:48:52.726 [main] DEBUG nextflow.script.ScriptRunner - Parsed script files:
-  Script_5c85a26ba72a01fc: /home/aitor/Documents/DrugSol/modules/outliers_scatter_mahalanobis/outliers_scatter_mahalanobis.nf
-  Script_8a310eb52620421e: /home/aitor/Documents/DrugSol/subworkflows/tools/common_ingest/common_ingest.nf
-  Script_f92f3504a1ed3247: /home/aitor/Documents/DrugSol/modules/make_folds/make_folds.nf
-  Script_6cbb4192059be894: /home/aitor/Documents/DrugSol/subworkflows/tools/train_methods/train_methods.nf
-  Script_8245c91cc9a3f61c: /home/aitor/Documents/DrugSol/modules/measurement_counts_histogram/measurement_counts_histogram.nf
-  Script_9a60f5a326906a22: /home/aitor/Documents/DrugSol/modules/make_features_rdkit/make_features_rdkit.nf
-  Script_f7b9b14cce1c1bbf: /home/aitor/Documents/DrugSol/subworkflows/tools/analysis/analysis.nf
-  Script_6f28edda2abd4330: /home/aitor/Documents/DrugSol/modules/final_infer_master/final_infer_master.nf
-  Script_5c4ad3b5c2697a65: /home/aitor/Documents/DrugSol/modules/train_oof_tpsa/train_oof_tpsa.nf
-  Script_8d7305fdf95f2889: /home/aitor/Documents/DrugSol/modules/detect_outliers/detect_outliers.nf
-  Script_9b1996b1a432ae36: /home/aitor/Documents/DrugSol/modules/stratified_split/stratified_split.nf
-  Script_7fffa939f5b6e08d: /home/aitor/Documents/DrugSol/modules/filter_features/filter_features.nf
-  Script_f8696d04ff209751: /home/aitor/Documents/DrugSol/modules/train_oof_gbm/train_oof_gbm.nf
-  Script_b528e73066dcc4a6: /home/aitor/Documents/DrugSol/modules/standardize_smiles/standardize_smiles.nf
-  Script_8cc69253c724e0c4: /home/aitor/Documents/DrugSol/modules/merge_drug_flag/merge_drug_flag.nf
-  Script_2d18063cfa69e408: /home/aitor/Documents/DrugSol/subworkflows/tools/prepare_data/prepare_data.nf
-  Script_66cc65103eb63cbe: /home/aitor/Documents/DrugSol/modules/train_full_tpsa/train_full_tpsa.nf
-  Script_fc6b6298ad8d78ed: /home/aitor/Documents/DrugSol/modules/filter_outlier/filter_outlier.nf
-  Script_72f63dc80e30b8ce: /home/aitor/Documents/DrugSol/modules/histograms_columns/histograms_columns.nf
-  Script_e9faca265e55672d: /home/aitor/Documents/DrugSol/modules/fetch_bigsoldb/fetch_bigsoldb.nf
-  Script_cc0e61305c882939: /home/aitor/Documents/DrugSol/subworkflows/tools/curate/curate.nf
-  Script_0ecc373f7b895b8f: /home/aitor/Documents/DrugSol/modules/make_fingerprints/make_fingerprints.nf
-  Script_c3c22459de831a65: /home/aitor/Documents/DrugSol/modules/train_full_gbm/train_full_gbm.nf
-  Script_918d5e4d83feafcb: /home/aitor/Documents/DrugSol/modules/train_oof_chemprop/train_oof_chemprop.nf
-  Script_8f0dae63fed81419: /home/aitor/Documents/DrugSol/modules/fetch_chembl/fetch_chembl.nf
-  Script_b19de77386ae2e33: /home/aitor/Documents/DrugSol/modules/unify_datasets/unify_datasets.nf
-  Script_7a3344c978e93973: /home/aitor/Documents/DrugSol/modules/meta_stack_blend/meta_stack_blend.nf
-  Script_e207501a111f6828: /home/aitor/Documents/DrugSol/modules/dropnan_rows/dropnan_rows.nf
-  Script_fb36bf97b4eac855: /home/aitor/Documents/DrugSol/modules/train_full_chemprop/train_full_chemprop.nf
-  Script_d9bcdd73e49600e7: /home/aitor/Documents/DrugSol/modules/align_feature_columns/align_feature_columns.nf
-  Script_2d68d9606e1a8445: /home/aitor/Documents/DrugSol/modules/enrich_ionization_features/enrich_ionization_features.nf
-  Script_7f6f1bc80e2aa367: /home/aitor/Documents/DrugSol/modules/filter_by_temperature_range/filter_by_temperature_range.nf
-  Script_462b5c03383ac243: /home/aitor/Documents/DrugSol/main.nf
-  Script_28ec97930c61db3f: /home/aitor/Documents/DrugSol/subworkflows/modes/execution/execution.nf
-  Script_b6b4c4f1a904a80c: /home/aitor/Documents/DrugSol/workflows/drugsol/main.nf
-  Script_e574f7fab864cab1: /home/aitor/Documents/DrugSol/modules/make_features_mordred/make_features_mordred.nf
-  Script_89ded5aafbb4c609: /home/aitor/Documents/DrugSol/subworkflows/modes/research/research.nf
-  Script_f8580dafd1ba07a5: /home/aitor/Documents/DrugSol/modules/filter_water/filter_water.nf
-de nov.-20 15:48:52.726 [main] DEBUG nextflow.script.ScriptRunner - > Awaiting termination 
-de nov.-20 15:48:52.726 [main] DEBUG nextflow.Session - Session await
-de nov.-20 15:48:52.809 [Actor Thread 31] INFO  nextflow.processor.TaskProcessor - [7d/2959e5] Cached process > drugsol:research:COMMON_INGEST:fetch_chembl (ChEMBL)
-de nov.-20 15:48:52.809 [Actor Thread 33] INFO  nextflow.processor.TaskProcessor - [fe/5998d8] Cached process > drugsol:research:COMMON_INGEST:fetch_bigsoldb (BigSolDB)
-de nov.-20 15:48:52.821 [Actor Thread 29] INFO  nextflow.processor.TaskProcessor - [6c/967a32] Cached process > drugsol:research:COMMON_INGEST:unify_datasets (unify_datasets)
-de nov.-20 15:48:52.822 [Actor Thread 31] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'PublishDir' minSize=10; maxSize=96; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
-de nov.-20 15:48:52.830 [Actor Thread 26] INFO  nextflow.processor.TaskProcessor - [e0/6865f5] Cached process > drugsol:research:CURATE:filter_water (filter_water)
-de nov.-20 15:48:52.837 [Actor Thread 27] INFO  nextflow.processor.TaskProcessor - [44/191eb9] Cached process > drugsol:research:CURATE:filter_by_temperature_range (filter_by_temperature_range)
-de nov.-20 15:48:52.842 [Actor Thread 26] INFO  nextflow.processor.TaskProcessor - [06/a94b4a] Cached process > drugsol:research:CURATE:detect_outliers (detect_outliers)
-de nov.-20 15:48:52.848 [Actor Thread 27] INFO  nextflow.processor.TaskProcessor - [5c/f7a53d] Cached process > drugsol:research:CURATE:filter_outlier (filter_outlier)
-de nov.-20 15:48:52.854 [Actor Thread 32] INFO  nextflow.processor.TaskProcessor - [da/7297dd] Cached process > drugsol:research:ANALYSIS:measure_counts (measurement_counts_histogram)
-de nov.-20 15:48:52.856 [Actor Thread 29] INFO  nextflow.processor.TaskProcessor - [db/7729a2] Cached process > drugsol:research:PREPARE:standardize_smiles (standardize)
-de nov.-20 15:48:52.870 [Actor Thread 32] INFO  nextflow.processor.TaskProcessor - [98/855ce3] Cached process > drugsol:research:PREPARE:merge_drug_flag (merge_drug_flag)
-de nov.-20 15:48:52.876 [Actor Thread 21] INFO  nextflow.processor.TaskProcessor - [88/764e83] Cached process > drugsol:research:PREPARE:enrich_ionization_features (enrich_ionization_features)
-de nov.-20 15:48:52.885 [Actor Thread 26] INFO  nextflow.processor.TaskProcessor - [9c/9d25b9] Cached process > drugsol:research:PREPARE:make_fingerprints (make_fingerprints)
-de nov.-20 15:48:52.890 [Actor Thread 32] INFO  nextflow.processor.TaskProcessor - [cc/9d4bd0] Cached process > drugsol:research:PREPARE:stratified_split (stratified_split)
-de nov.-20 15:48:52.897 [Actor Thread 30] INFO  nextflow.processor.TaskProcessor - [f7/ae8f0b] Cached process > drugsol:research:PREPARE:make_features_rdkit_test (make_features_rdkit)
-de nov.-20 15:48:52.897 [Actor Thread 31] INFO  nextflow.processor.TaskProcessor - [3a/087836] Cached process > drugsol:research:PREPARE:make_features_mordred_test (make_features_mordred)
-de nov.-20 15:48:52.898 [Actor Thread 25] INFO  nextflow.processor.TaskProcessor - [16/89cd16] Cached process > drugsol:research:PREPARE:make_features_mordred_train (make_features_mordred)
-de nov.-20 15:48:52.903 [Actor Thread 23] INFO  nextflow.processor.TaskProcessor - [ad/98cdb7] Cached process > drugsol:research:PREPARE:make_features_rdkit_train (make_features_rdkit)
-de nov.-20 15:48:52.905 [Actor Thread 33] INFO  nextflow.processor.TaskProcessor - [34/f226e8] Cached process > drugsol:research:PREPARE:filter_features_test (filter_features)
-de nov.-20 15:48:52.905 [Actor Thread 31] INFO  nextflow.processor.TaskProcessor - [40/79d3e0] Cached process > drugsol:research:PREPARE:filter_features_train (filter_features)
-de nov.-20 15:48:52.909 [Actor Thread 27] INFO  nextflow.processor.TaskProcessor - [77/e9efb0] Cached process > drugsol:research:PREPARE:dropnan_rows_train_smile (dropnan_rows)
-de nov.-20 15:48:52.910 [Actor Thread 23] INFO  nextflow.processor.TaskProcessor - [dc/733992] Cached process > drugsol:research:PREPARE:align_feature_columns_mordred (align_feature_columns)
-de nov.-20 15:48:52.911 [Actor Thread 21] INFO  nextflow.processor.TaskProcessor - [1b/769104] Cached process > drugsol:research:PREPARE:dropnan_rows_train (dropnan_rows)
-de nov.-20 15:48:52.914 [Actor Thread 26] INFO  nextflow.processor.TaskProcessor - [ad/5f6637] Cached process > drugsol:research:PREPARE:align_feature_columns_rdkit (align_feature_columns)
-de nov.-20 15:48:52.915 [Actor Thread 31] INFO  nextflow.processor.TaskProcessor - [6c/27ca21] Cached process > drugsol:research:TRAIN_STACK:train_full_tpsa (train_full_tpsa)
-de nov.-20 15:48:52.915 [Actor Thread 32] INFO  nextflow.processor.TaskProcessor - [f8/30fde1] Cached process > drugsol:research:TRAIN_STACK:make_folds (make_folds)
-de nov.-20 15:48:52.916 [Actor Thread 17] INFO  nextflow.processor.TaskProcessor - [42/918a0b] Cached process > drugsol:research:PREPARE:dropnan_rows_test (dropnan_rows)
-de nov.-20 15:48:52.923 [Actor Thread 27] INFO  nextflow.processor.TaskProcessor - [69/3aaf78] Cached process > drugsol:research:TRAIN_STACK:train_oof_tpsa (train_oof_tpsa)
-de nov.-20 15:48:52.923 [Actor Thread 29] INFO  nextflow.processor.TaskProcessor - [3a/6babae] Cached process > drugsol:research:PREPARE:dropnan_rows_test_smile (dropnan_rows)
-de nov.-20 15:48:52.925 [Actor Thread 28] INFO  nextflow.processor.TaskProcessor - [d8/c2d869] Cached process > drugsol:research:ANALYSIS:histogram (histograms_columns)
-de nov.-20 15:48:52.925 [Actor Thread 20] INFO  nextflow.processor.TaskProcessor - [f0/76df82] Cached process > drugsol:research:ANALYSIS:outlier (outliers_scatter_mahalanobis)
-de nov.-20 15:48:52.955 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
-de nov.-20 15:48:52.957 [Task submitter] INFO  nextflow.Session - [9c/c60f7e] Submitted process > drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop)
-de nov.-20 15:48:52.964 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
-de nov.-20 15:48:52.965 [Task submitter] INFO  nextflow.Session - [ac/3c7eae] Submitted process > drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm)
-de nov.-20 15:53:52.638 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 2 -- submitted tasks are shown below
-~> TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-~> TaskHandler[id: 30; name: drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/ac/3c7eae790f55e1808fb75a35b168c7]
-de nov.-20 15:58:52.695 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 2 -- submitted tasks are shown below
-~> TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-~> TaskHandler[id: 30; name: drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/ac/3c7eae790f55e1808fb75a35b168c7]
-de nov.-20 16:03:52.771 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 2 -- submitted tasks are shown below
-~> TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-~> TaskHandler[id: 30; name: drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/ac/3c7eae790f55e1808fb75a35b168c7]
-de nov.-20 16:08:52.831 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 2 -- submitted tasks are shown below
-~> TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-~> TaskHandler[id: 30; name: drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/ac/3c7eae790f55e1808fb75a35b168c7]
-de nov.-20 16:13:52.874 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 2 -- submitted tasks are shown below
-~> TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-~> TaskHandler[id: 30; name: drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/ac/3c7eae790f55e1808fb75a35b168c7]
-de nov.-20 16:18:52.919 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 2 -- submitted tasks are shown below
-~> TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-~> TaskHandler[id: 30; name: drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/ac/3c7eae790f55e1808fb75a35b168c7]
-de nov.-20 16:23:52.967 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 2 -- submitted tasks are shown below
-~> TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-~> TaskHandler[id: 30; name: drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/ac/3c7eae790f55e1808fb75a35b168c7]
-de nov.-20 16:28:52.976 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 2 -- submitted tasks are shown below
-~> TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-~> TaskHandler[id: 30; name: drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/ac/3c7eae790f55e1808fb75a35b168c7]
-de nov.-20 16:33:53.026 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 2 -- submitted tasks are shown below
-~> TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-~> TaskHandler[id: 30; name: drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/ac/3c7eae790f55e1808fb75a35b168c7]
-de nov.-20 16:38:53.053 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 2 -- submitted tasks are shown below
-~> TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-~> TaskHandler[id: 30; name: drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/ac/3c7eae790f55e1808fb75a35b168c7]
-de nov.-20 16:43:53.149 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 2 -- submitted tasks are shown below
-~> TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-~> TaskHandler[id: 30; name: drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/ac/3c7eae790f55e1808fb75a35b168c7]
-de nov.-20 16:48:53.229 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 2 -- submitted tasks are shown below
-~> TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-~> TaskHandler[id: 30; name: drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/ac/3c7eae790f55e1808fb75a35b168c7]
-de nov.-20 16:53:53.265 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 2 -- submitted tasks are shown below
-~> TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-~> TaskHandler[id: 30; name: drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/ac/3c7eae790f55e1808fb75a35b168c7]
-de nov.-20 16:58:53.327 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 2 -- submitted tasks are shown below
-~> TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-~> TaskHandler[id: 30; name: drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/ac/3c7eae790f55e1808fb75a35b168c7]
-de nov.-20 17:03:53.327 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 2 -- submitted tasks are shown below
-~> TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-~> TaskHandler[id: 30; name: drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/ac/3c7eae790f55e1808fb75a35b168c7]
-de nov.-20 17:08:53.350 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 2 -- submitted tasks are shown below
-~> TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-~> TaskHandler[id: 30; name: drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/ac/3c7eae790f55e1808fb75a35b168c7]
-de nov.-20 17:13:53.424 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 2 -- submitted tasks are shown below
-~> TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-~> TaskHandler[id: 30; name: drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/ac/3c7eae790f55e1808fb75a35b168c7]
-de nov.-20 17:18:53.461 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 2 -- submitted tasks are shown below
-~> TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-~> TaskHandler[id: 30; name: drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/ac/3c7eae790f55e1808fb75a35b168c7]
-de nov.-20 17:23:53.502 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 2 -- submitted tasks are shown below
-~> TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-~> TaskHandler[id: 30; name: drugsol:research:TRAIN_STACK:train_oof_gbm (train_oof_gbm); status: RUNNING; exit: -; error: -; workDir: /home/aitor/Documents/DrugSol/work/ac/3c7eae790f55e1808fb75a35b168c7]
-de nov.-20 17:25:15.171 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 28; name: drugsol:research:TRAIN_STACK:train_oof_chemprop (train_oof_chemprop); status: COMPLETED; exit: 0; error: -; workDir: /home/aitor/Documents/DrugSol/work/9c/c60f7efa2c7251898d0f12bf156188]
-de nov.-20 17:25:15.171 [Task monitor] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'TaskFinalizer' minSize=10; maxSize=96; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
-de nov.-20 17:25:15.182 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
-de nov.-20 17:25:15.182 [Task submitter] INFO  nextflow.Session - [c1/bbd50a] Submitted process > drugsol:research:TRAIN_STACK:train_full_chemprop (train_full_chemprop)
-de nov.-20 17:25:19.799 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 33; name: drugsol:research:TRAIN_STACK:train_full_chemprop (train_full_chemprop); status: COMPLETED; exit: 1; error: -; workDir: /home/aitor/Documents/DrugSol/work/c1/bbd50ab01147648b3e7989af02b0d6]
-de nov.-20 17:25:19.802 [TaskFinalizer-2] DEBUG nextflow.processor.TaskProcessor - Handling unexpected condition for
-  task: name=drugsol:research:TRAIN_STACK:train_full_chemprop (train_full_chemprop); work-dir=/home/aitor/Documents/DrugSol/work/c1/bbd50ab01147648b3e7989af02b0d6
-  error [nextflow.exception.ProcessFailedException]: Process `drugsol:research:TRAIN_STACK:train_full_chemprop (train_full_chemprop)` terminated with an error exit status (1)
-de nov.-20 17:25:19.810 [TaskFinalizer-2] ERROR nextflow.processor.TaskProcessor - Error executing process > 'drugsol:research:TRAIN_STACK:train_full_chemprop (train_full_chemprop)'
-
-Caused by:
-  Process `drugsol:research:TRAIN_STACK:train_full_chemprop (train_full_chemprop)` terminated with an error exit status (1)
-
-
-Command executed:
-
-  set -euo pipefail
-  
-  PREFIX="$HOME/.conda_nf/train_methods"
-  YAML="/home/aitor/Documents/DrugSol/envs/train_methods.yml"
-  
-  if [[ ! -d "$PREFIX" ]]; then
-    /home/aitor/.local/bin/micromamba create -y -p "$PREFIX" -f "$YAML" --strict-channel-priority
-  fi
-  
-  # Ejecución directa (Bypass micromamba run)
-  "$PREFIX/bin/python" "train_full_chemprop.py" \
-                                    --train "final_train_smile_dropnan.parquet" \
-                                    --smiles-col smiles_neutral \
-                                    --target logS \
-                                    --gpu \
-                                    --epochs 40 \
-                                    --best-params "chemprop_best_params.json" \
-                                    --save-dir models_GNN
-
-Command exit status:
-  1
-
-Command output:
-  [INFO] Lanzando: /home/aitor/.conda_nf/train_methods/bin/chemprop train -i /tmp/chemprop_full_ndl2xuvb/combined.csv --splits-file /tmp/chemprop_full_ndl2xuvb/splits.json --data-weights-path /tmp/chemprop_full_ndl2xuvb/weights.csv --smiles-columns smiles --target-columns logS -o models_GNN/run_full --epochs 40 --patience 15 --metric rmse --tracking-metric val_loss --batch-size 32 --message-hidden-dim 2360 --depth 6 --dropout 0.15380070920766642 --ffn-num-layers 3 --accelerator gpu --devices 1 --descriptors-columns temp_C inv_temp n_ionizable n_acid n_base TPSA logP HBD HBA FractionCSP3 MW
-  usage: chemprop [-h] {train,predict,convert,fingerprint,hpopt} ...
-  chemprop: error: unrecognized arguments: --data-weights-path /tmp/chemprop_full_ndl2xuvb/weights.csv
-
-Command error:
-  [INFO] Lanzando: /home/aitor/.conda_nf/train_methods/bin/chemprop train -i /tmp/chemprop_full_ndl2xuvb/combined.csv --splits-file /tmp/chemprop_full_ndl2xuvb/splits.json --data-weights-path /tmp/chemprop_full_ndl2xuvb/weights.csv --smiles-columns smiles --target-columns logS -o models_GNN/run_full --epochs 40 --patience 15 --metric rmse --tracking-metric val_loss --batch-size 32 --message-hidden-dim 2360 --depth 6 --dropout 0.15380070920766642 --ffn-num-layers 3 --accelerator gpu --devices 1 --descriptors-columns temp_C inv_temp n_ionizable n_acid n_base TPSA logP HBD HBA FractionCSP3 MW
-  usage: chemprop [-h] {train,predict,convert,fingerprint,hpopt} ...
-  chemprop: error: unrecognized arguments: --data-weights-path /tmp/chemprop_full_ndl2xuvb/weights.csv
-  
-  chemprop command failed
-
-Work dir:
-  /home/aitor/Documents/DrugSol/work/c1/bbd50ab01147648b3e7989af02b0d6
-
-Tip: you can replicate the issue by changing to the process work dir and entering the command `bash .command.run`
-de nov.-20 17:25:19.811 [TaskFinalizer-2] DEBUG nextflow.Session - Session aborted -- Cause: Process `drugsol:research:TRAIN_STACK:train_full_chemprop (train_full_chemprop)` terminated with an error exit status (1)
-de nov.-20 17:25:19.820 [TaskFinalizer-2] DEBUG nextflow.Session - The following nodes are still active:
-[process] drugsol:research:TRAIN_STACK:meta_stack_blend
-  status=ACTIVE
-  port 0: (queue) OPEN  ; channel: -
-  port 1: (value) bound ; channel: outdir
-  port 2: (value) bound ; channel: meta_s_b
-  port 3: (value) bound ; channel: suffix
-  port 4: (cntrl) -     ; channel: $
-
-[process] drugsol:research:TRAIN_STACK:train_full_gbm
-  status=ACTIVE
-  port 0: (value) bound ; channel: train
-  port 1: (value) bound ; channel: outdir
-  port 2: (value) bound ; channel: train_full_py
-  port 3: (value) OPEN  ; channel: hp_dir
-  port 4: (cntrl) -     ; channel: $
-
-de nov.-20 17:25:19.822 [main] DEBUG nextflow.Session - Session await > all processes finished
-de nov.-20 17:25:19.822 [main] DEBUG nextflow.Session - Session await > all barriers passed
-de nov.-20 17:25:19.822 [Task monitor] DEBUG n.processor.TaskPollingMonitor - <<< barrier arrives (monitor: local) - terminating tasks monitor poll loop
-de nov.-20 17:25:19.825 [main] WARN  n.processor.TaskPollingMonitor - Killing running tasks (1)
-de nov.-20 17:25:19.830 [main] DEBUG n.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=1; failedCount=1; ignoredCount=0; cachedCount=30; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=1; succeedDuration=1h 36m 22s; failedDuration=4.5s; cachedDuration=25m 13s;loadCpus=0; loadMemory=0; peakRunning=2; peakCpus=2; peakMemory=0; ]
-de nov.-20 17:25:20.019 [main] DEBUG nextflow.cache.CacheDB - Closing CacheDB done
-de nov.-20 17:25:20.031 [main] DEBUG nextflow.script.ScriptRunner - > Execution complete -- Goodbye
+Nov-22 11:32:31.645 [main] INFO  nextflow.Nextflow - [Ingest] No input provided. Downloading BigSolDB...
+Nov-22 11:32:31.674 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: local
+Nov-22 11:32:31.676 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+Nov-22 11:32:31.692 [main] DEBUG nextflow.executor.Executor - [warm up] executor > local
+Nov-22 11:32:31.702 [main] DEBUG n.processor.LocalPollingMonitor - Creating local task monitor for executor 'local' > cpus=16; memory=7.5 GB; capacity=16; pollInterval=100ms; dumpInterval=5m
+Nov-22 11:32:31.706 [main] DEBUG n.processor.TaskPollingMonitor - >>> barrier register (monitor: local)
+Nov-22 11:32:31.744 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:COMMON_INGEST:fetch_bigsoldb': maxForks=0; fair=false; array=0
+Nov-22 11:32:31.851 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: local
+Nov-22 11:32:31.851 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+Nov-22 11:32:31.854 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:COMMON_INGEST:unify_datasets': maxForks=0; fair=false; array=0
+Nov-22 11:32:31.875 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: local
+Nov-22 11:32:31.876 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+Nov-22 11:32:31.878 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:CURATE:filter_water': maxForks=0; fair=false; array=0
+Nov-22 11:32:31.891 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: local
+Nov-22 11:32:31.892 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+Nov-22 11:32:31.894 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:CURATE:filter_by_temperature_range': maxForks=0; fair=false; array=0
+Nov-22 11:32:31.906 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: local
+Nov-22 11:32:31.907 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+Nov-22 11:32:31.909 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:CURATE:detect_outliers': maxForks=0; fair=false; array=0
+Nov-22 11:32:31.920 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: local
+Nov-22 11:32:31.921 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+Nov-22 11:32:31.922 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'drugsol:research:CURATE:filter_outlier': maxForks=0; fair=false; array=0
+Nov-22 11:32:31.933 [main] DEBUG nextflow.script.ScriptRunner - Parsed script files:
+  Script_5c85a26ba72a01fc: /mnt/c/URV/TFG/DrugSol/modules/outliers_scatter_mahalanobis/outliers_scatter_mahalanobis.nf
+  Script_f92f3504a1ed3247: /mnt/c/URV/TFG/DrugSol/modules/make_folds/make_folds.nf
+  Script_6cbb4192059be894: /mnt/c/URV/TFG/DrugSol/subworkflows/tools/train_methods/train_methods.nf
+  Script_bed63a6babe67b9e: /mnt/c/URV/TFG/DrugSol/modules/unify_datasets/unify_datasets.nf
+  Script_8245c91cc9a3f61c: /mnt/c/URV/TFG/DrugSol/modules/measurement_counts_histogram/measurement_counts_histogram.nf
+  Script_f7b9b14cce1c1bbf: /mnt/c/URV/TFG/DrugSol/subworkflows/tools/analysis/analysis.nf
+  Script_6f28edda2abd4330: /mnt/c/URV/TFG/DrugSol/modules/final_infer_master/final_infer_master.nf
+  Script_9a60f5a326906a22: /mnt/c/URV/TFG/DrugSol/modules/make_features_rdkit/make_features_rdkit.nf
+  Script_8d7305fdf95f2889: /mnt/c/URV/TFG/DrugSol/modules/detect_outliers/detect_outliers.nf
+  Script_9b1996b1a432ae36: /mnt/c/URV/TFG/DrugSol/modules/stratified_split/stratified_split.nf
+  Script_7fffa939f5b6e08d: /mnt/c/URV/TFG/DrugSol/modules/filter_features/filter_features.nf
+  Script_f8696d04ff209751: /mnt/c/URV/TFG/DrugSol/modules/train_oof_gbm/train_oof_gbm.nf
+  Script_b528e73066dcc4a6: /mnt/c/URV/TFG/DrugSol/modules/standardize_smiles/standardize_smiles.nf
+  Script_881ee6ce55114bdf: /mnt/c/URV/TFG/DrugSol/modules/fetch_bigsoldb/fetch_bigsoldb.nf
+  Script_6eb7ca19d7644ca5: /mnt/c/URV/TFG/DrugSol/subworkflows/modes/research/research.nf
+  Script_6363d3786cc37265: /mnt/c/URV/TFG/DrugSol/workflows/drugsol/main.nf
+  Script_8cc69253c724e0c4: /mnt/c/URV/TFG/DrugSol/modules/merge_drug_flag/merge_drug_flag.nf
+  Script_2d18063cfa69e408: /mnt/c/URV/TFG/DrugSol/subworkflows/tools/prepare_data/prepare_data.nf
+  Script_66cc65103eb63cbe: /mnt/c/URV/TFG/DrugSol/modules/train_full_tpsa/train_full_tpsa.nf
+  Script_fc6b6298ad8d78ed: /mnt/c/URV/TFG/DrugSol/modules/filter_outlier/filter_outlier.nf
+  Script_72f63dc80e30b8ce: /mnt/c/URV/TFG/DrugSol/modules/histograms_columns/histograms_columns.nf
+  Script_15f502d4fbd7fc9f: /mnt/c/URV/TFG/DrugSol/modules/train_oof_tpsa/train_oof_tpsa.nf
+  Script_c3c22459de831a65: /mnt/c/URV/TFG/DrugSol/modules/train_full_gbm/train_full_gbm.nf
+  Script_0ecc373f7b895b8f: /mnt/c/URV/TFG/DrugSol/modules/make_fingerprints/make_fingerprints.nf
+  Script_f7e53425d76fa31a: /mnt/c/URV/TFG/DrugSol/modules/filter_water/filter_water.nf
+  Script_918d5e4d83feafcb: /mnt/c/URV/TFG/DrugSol/modules/train_oof_chemprop/train_oof_chemprop.nf
+  Script_7a3344c978e93973: /mnt/c/URV/TFG/DrugSol/modules/meta_stack_blend/meta_stack_blend.nf
+  Script_e207501a111f6828: /mnt/c/URV/TFG/DrugSol/modules/dropnan_rows/dropnan_rows.nf
+  Script_ccd25621a275f152: /mnt/c/URV/TFG/DrugSol/subworkflows/tools/common_ingest/common_ingest.nf
+  Script_fb36bf97b4eac855: /mnt/c/URV/TFG/DrugSol/modules/train_full_chemprop/train_full_chemprop.nf
+  Script_d3e255871fcc5166: /mnt/c/URV/TFG/DrugSol/subworkflows/tools/curate/curate.nf
+  Script_2d68d9606e1a8445: /mnt/c/URV/TFG/DrugSol/modules/enrich_ionization_features/enrich_ionization_features.nf
+  Script_d9bcdd73e49600e7: /mnt/c/URV/TFG/DrugSol/modules/align_feature_columns/align_feature_columns.nf
+  Script_7f6f1bc80e2aa367: /mnt/c/URV/TFG/DrugSol/modules/filter_by_temperature_range/filter_by_temperature_range.nf
+  Script_b964671b62437de3: /mnt/c/URV/TFG/DrugSol/main.nf
+  Script_28ec97930c61db3f: /mnt/c/URV/TFG/DrugSol/subworkflows/modes/execution/execution.nf
+  Script_e574f7fab864cab1: /mnt/c/URV/TFG/DrugSol/modules/make_features_mordred/make_features_mordred.nf
+Nov-22 11:32:31.934 [main] DEBUG nextflow.Session - Session aborted -- Cause: Workflow `drugsol:research:PREPARE` declares 3 input channels but 2 were given
+Nov-22 11:32:31.987 [main] DEBUG n.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=0; failedCount=0; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=0ms; failedDuration=0ms; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=0; peakCpus=0; peakMemory=0; ]
+Nov-22 11:32:32.014 [Task monitor] DEBUG n.processor.TaskPollingMonitor - <<< barrier arrives (monitor: local) - terminating tasks monitor poll loop
+Nov-22 11:32:32.235 [main] ERROR nextflow.cli.Launcher - Workflow `drugsol:research:PREPARE` declares 3 input channels but 2 were given
+java.lang.IllegalArgumentException: Workflow `drugsol:research:PREPARE` declares 3 input channels but 2 were given
+	at nextflow.script.WorkflowDef.collectInputs(WorkflowDef.groovy:131)
+	at nextflow.script.WorkflowDef.run0(WorkflowDef.groovy:200)
+	at nextflow.script.WorkflowDef.run(WorkflowDef.groovy:189)
+	at nextflow.script.BindableDef.invoke_a(BindableDef.groovy:51)
+	at nextflow.script.ComponentDef.invoke_o(ComponentDef.groovy:40)
+	at nextflow.script.WorkflowBinding.invokeMethod(WorkflowBinding.groovy:105)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokePogoMethod(InvokerHelper.java:651)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokeMethod(InvokerHelper.java:628)
+	at org.codehaus.groovy.runtime.metaclass.ClosureMetaClass.invokeOnDelegationObjects(ClosureMetaClass.java:392)
+	at org.codehaus.groovy.runtime.metaclass.ClosureMetaClass.invokeMethod(ClosureMetaClass.java:331)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1007)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at Script_6eb7ca19d7644ca5$_runScript_closure1$_closure2.doCall(Script_6eb7ca19d7644ca5:50)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:343)
+	at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:328)
+	at org.codehaus.groovy.runtime.metaclass.ClosureMetaClass.invokeMethod(ClosureMetaClass.java:280)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1007)
+	at groovy.lang.Closure.call(Closure.java:433)
+	at groovy.lang.Closure.call(Closure.java:412)
+	at nextflow.script.WorkflowDef.run0(WorkflowDef.groovy:205)
+	at nextflow.script.WorkflowDef.run(WorkflowDef.groovy:189)
+	at nextflow.script.BindableDef.invoke_a(BindableDef.groovy:51)
+	at nextflow.script.ComponentDef.invoke_o(ComponentDef.groovy:40)
+	at nextflow.script.WorkflowBinding.invokeMethod(WorkflowBinding.groovy:105)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokePogoMethod(InvokerHelper.java:651)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokeMethod(InvokerHelper.java:628)
+	at org.codehaus.groovy.runtime.metaclass.ClosureMetaClass.invokeOnDelegationObjects(ClosureMetaClass.java:392)
+	at org.codehaus.groovy.runtime.metaclass.ClosureMetaClass.invokeMethod(ClosureMetaClass.java:331)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1007)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at Script_6363d3786cc37265$_runScript_closure1$_closure2.doCall(Script_6363d3786cc37265:99)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:343)
+	at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:328)
+	at org.codehaus.groovy.runtime.metaclass.ClosureMetaClass.invokeMethod(ClosureMetaClass.java:280)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1007)
+	at groovy.lang.Closure.call(Closure.java:433)
+	at groovy.lang.Closure.call(Closure.java:412)
+	at nextflow.script.WorkflowDef.run0(WorkflowDef.groovy:205)
+	at nextflow.script.WorkflowDef.run(WorkflowDef.groovy:189)
+	at nextflow.script.BindableDef.invoke_a(BindableDef.groovy:51)
+	at nextflow.script.ComponentDef.invoke_o(ComponentDef.groovy:40)
+	at nextflow.script.WorkflowBinding.invokeMethod(WorkflowBinding.groovy:105)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokePogoMethod(InvokerHelper.java:651)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokeMethod(InvokerHelper.java:628)
+	at org.codehaus.groovy.runtime.metaclass.ClosureMetaClass.invokeOnDelegationObjects(ClosureMetaClass.java:392)
+	at org.codehaus.groovy.runtime.metaclass.ClosureMetaClass.invokeMethod(ClosureMetaClass.java:331)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1007)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at Script_b964671b62437de3$_runScript_closure1$_closure2.doCall(Script_b964671b62437de3:11)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:343)
+	at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:328)
+	at org.codehaus.groovy.runtime.metaclass.ClosureMetaClass.invokeMethod(ClosureMetaClass.java:280)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1007)
+	at groovy.lang.Closure.call(Closure.java:433)
+	at groovy.lang.Closure.call(Closure.java:412)
+	at nextflow.script.WorkflowDef.run0(WorkflowDef.groovy:205)
+	at nextflow.script.WorkflowDef.run(WorkflowDef.groovy:189)
+	at nextflow.script.BindableDef.invoke_a(BindableDef.groovy:51)
+	at nextflow.script.BaseScript.run0(BaseScript.groovy:249)
+	at nextflow.script.BaseScript.run(BaseScript.groovy:260)
+	at nextflow.script.parser.v1.ScriptLoaderV1.runScript(ScriptLoaderV1.groovy:246)
+	at nextflow.script.parser.v1.ScriptLoaderV1.runScript(ScriptLoaderV1.groovy)
+	at nextflow.script.ScriptRunner.run(ScriptRunner.groovy:246)
+	at nextflow.script.ScriptRunner.execute(ScriptRunner.groovy:139)
+	at nextflow.cli.CmdRun.run(CmdRun.groovy:428)
+	at nextflow.cli.Launcher.run(Launcher.groovy:515)
+	at nextflow.cli.Launcher.main(Launcher.groovy:675)

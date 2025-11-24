@@ -1,1104 +1,316 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+final_infer_master.py
+---------------------
+Orchestrates the final inference process on the Test set.
+1. Generates predictions from base models (XGB, LGBM, Chemprop, TPSA).
+2. Applies Stacking/Blending meta-models.
+3. Calculates performance metrics (Global + Physiological Range).
+"""
 
 import argparse
 import json
+import sys
 import subprocess
-from pathlib import Path
-from typing import Optional, List
-
 import numpy as np
 import pandas as pd
+from pathlib import Path
+import joblib
 from sklearn.metrics import mean_squared_error, r2_score
 
+# ---------------- UTILS ----------------
 
-# ============================= utilidades base ================================
-
-def _norm_id(s: pd.Series) -> pd.Series:
-    return s.astype("string").str.strip()
-
-
-def _norm_smiles(s: pd.Series) -> pd.Series:
-    return s.astype("string").str.strip()
-
-
-def _must_have(df: pd.DataFrame, col: str, name: str):
-    if col not in df.columns:
-        raise ValueError(f"[FATAL] {name} no tiene la columna obligatoria '{col}'")
-
-
-def _must_be_unique(df: pd.DataFrame, col: str, name: str):
-    _must_have(df, col, name)
-    if df[col].isna().any():
-        na = int(df[col].isna().sum())
-        raise ValueError(f"[FATAL] {name}.{col} tiene {na} NAs")
-    if not df[col].is_unique:
-        dups = int(df[col].size - df[col][~df[col].duplicated()].size)
-        raise ValueError(f"[FATAL] {name}.{col} no es único (dups={dups})")
-
-
-def _dump_ids(path: Path, ids: pd.Series, title: str):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame({"row_uid": _norm_id(ids)}).to_csv(path, index=False)
-    print(f"[DEBUG] {title} guardado en {path.resolve()}")
-
-
-def _save_parquet(df: pd.DataFrame, path: Path):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(path, index=False)
-    print(f"[OK] Guardado Parquet: {path.resolve()}")
-
-
-def _read_parquet_or_csv(path: Path) -> pd.DataFrame:
-    if path.suffix.lower() == ".parquet":
-        return pd.read_parquet(path)
-    elif path.suffix.lower() == ".csv":
-        return pd.read_csv(path)
-    else:
-        raise ValueError(f"Formato no soportado: {path.suffix} ({path})")
-
-
-# ====================== helpers columnas/features/GBM =========================
-
-def _extract_feature_names_in(mdl) -> Optional[List[str]]:
-    """Intenta extraer la lista exacta de columnas usadas en train."""
+def run_cmd(cmd, check=True):
+    print(f"[CMD] {' '.join(map(str, cmd))}")
     try:
-        if hasattr(mdl, "feature_names_in_"):
-            return list(mdl.feature_names_in_)
-        from sklearn.pipeline import Pipeline
-        if isinstance(mdl, Pipeline):
-            if hasattr(mdl, "feature_names_in_"):
-                return list(mdl.feature_names_in_)
-            for _, step in mdl.named_steps.items():
-                if hasattr(step, "feature_names_in_"):
-                    return list(step.feature_names_in_)
-            last = mdl.steps[-1][1]
-            if hasattr(last, "feature_names_in_"):
-                return list(last.feature_names_in_)
-    except Exception:
-        pass
-    return None
+        subprocess.run(cmd, check=check)
+    except subprocess.CalledProcessError as e:
+        print(f"[ERROR] Command failed: {e}")
+        raise e
 
+def read_any(path):
+    p = Path(path)
+    if p.suffix == '.parquet': return pd.read_parquet(p)
+    return pd.read_csv(p)
 
-def _load_manifest_feature_cols(path: Path) -> Optional[List[str]]:
-    if not path.exists():
-        return None
-    try:
-        j = json.loads(path.read_text())
-        for k in ["feature_cols", "features", "feature_columns"]:
-            v = j.get(k)
-            if isinstance(v, list):
-                return list(v)
-    except Exception:
-        pass
-    return None
+def get_metrics(y_true, y_pred):
+    mask = np.isfinite(y_true) & np.isfinite(y_pred)
+    if not mask.any(): return {}
+    return {
+        "rmse": float(np.sqrt(mean_squared_error(y_true[mask], y_pred[mask]))),
+        "r2": float(r2_score(y_true[mask], y_pred[mask])),
+        "n": int(mask.sum())
+    }
 
+# ---------------- MODEL INFERENCE ----------------
 
-def _reorder_X_to_feature_list(df: pd.DataFrame, features: List[str]) -> pd.DataFrame:
-    missing = [c for c in features if c not in df.columns]
-    if missing:
-        raise ValueError(
-            f"[FATAL] Faltan columnas requeridas por el modelo GBM: "
-            f"{missing[:12]}{'...' if len(missing) > 12 else ''}"
-        )
-    return df[features].copy()
+def predict_gbm(models_dir, test_df, id_col):
+    """Generates predictions for XGBoost and LightGBM."""
+    preds = pd.DataFrame({id_col: test_df[id_col]})
+    
+    # XGBoost
+    xgb_path = Path(models_dir) / "xgb.pkl"
+    if xgb_path.exists():
+        try:
+            print("[Infer] Predicting with XGBoost...")
+            xgb_pipe = joblib.load(xgb_path)
+            # Ensure features match training
+            # (Pipeline handles scaling/imputing, but we need correct columns)
+            # We rely on the pipeline's feature names if available, or intersect
+            
+            # Get feature names from the VarianceThreshold step or similar if possible
+            # Or just try to predict and let sklearn complain nicely
+            
+            # Drop non-features
+            X = test_df.select_dtypes(include=[np.number])
+            cols_to_drop = [id_col, "fold", "target", "logS"]
+            X = X.drop(columns=[c for c in cols_to_drop if c in X.columns])
+            
+            # Align columns with training manifest if present
+            manifest_path = Path(models_dir) / "gbm_manifest.json"
+            if manifest_path.exists():
+                manifest = json.loads(manifest_path.read_text())
+                feat_cols = manifest.get("features", [])
+                # Add missing as 0, drop extra
+                for c in feat_cols:
+                    if c not in X.columns: X[c] = 0
+                X = X[feat_cols] # Reorder
+            
+            preds["y_xgb"] = xgb_pipe.predict(X)
+        except Exception as e:
+            print(f"[WARN] XGBoost inference failed: {e}")
 
+    # LightGBM
+    lgbm_path = Path(models_dir) / "lgbm.pkl"
+    if lgbm_path.exists():
+        try:
+            print("[Infer] Predicting with LightGBM...")
+            lgbm_pipe = joblib.load(lgbm_path)
+            # Re-use X from above if possible
+            preds["y_lgbm"] = lgbm_pipe.predict(X)
+        except Exception as e:
+            print(f"[WARN] LightGBM inference failed: {e}")
+            
+    return preds
 
-def _prep_X_for_model(df: pd.DataFrame, id_col: str, target: Optional[str],
-                      manifest_cols: Optional[List[str]], mdl) -> pd.DataFrame:
-    base = df.copy()
-    drop = [id_col]
-    if target and target in base.columns:
-        drop.append(target)
-    for s in ["smiles", "smiles_neutral", "SMILES", "Smiles"]:
-        if s in base.columns:
-            drop.append(s)
-    base = base.drop(columns=list(set(drop) & set(base.columns)))
-    names = _extract_feature_names_in(mdl) or manifest_cols
-    if not names:
-        raise ValueError(
-            "[FATAL] No se pudieron determinar las columnas exactas para los GBM.\n"
-            "Proporciona gbm_manifest.json con 'feature_cols' o guarda los PKL con feature_names_in_."
-        )
-    return _reorder_X_to_feature_list(base, names)
-
-
-# ===================== helpers Chemprop / SMILES / dups =======================
-
-def _apply_stack_object(stack_obj, level0_out: pd.DataFrame, pred_cols: list) -> np.ndarray:
-    import numpy as _np
-    X_meta_default = level0_out[pred_cols].to_numpy(dtype=float)
-
-    # Caso 1: estimador sklearn directo (Ridge, Pipeline, etc.)
-    if hasattr(stack_obj, "predict") and callable(stack_obj.predict):
-        return _np.asarray(stack_obj.predict(X_meta_default)).ravel()
-
-    # Caso 2: dict serializado (formatos varios)
-    if isinstance(stack_obj, dict):
-        d = stack_obj
-
-        # Si viene como {"labels": [...], "model": Ridge}
-        mdl = d.get("model", None)
-        if mdl is not None and hasattr(mdl, "predict") and callable(mdl.predict):
-            return _np.asarray(mdl.predict(X_meta_default)).ravel()
-
-        # Formato: coef / intercept / feature_names
-        coef = d.get("coef", d.get("coef_", None))
-        if coef is not None:
-            coef = _np.asarray(coef, dtype=float).ravel()
-            intercept = float(d.get("intercept", d.get("intercept_", 0.0)))
-            feat_names = d.get("feature_names", d.get("features", None))
-
-            if feat_names is not None:
-                feat_names = list(feat_names)
-                present = [c for c in feat_names if c in level0_out.columns]
-                missing = [c for c in feat_names if c not in level0_out.columns]
-
-                if missing:
-                    print(f"[WARN] stack_pkl pide columnas {missing} que no están en level0; se ignorarán.")
-
-                if not present:
-                    raise ValueError("[FATAL] Ninguna de las columnas requeridas por stack_pkl está en level0.")
-
-                if len(coef) != len(feat_names):
-                    raise ValueError(
-                        f"[FATAL] len(coef)={len(coef)} != len(feature_names)={len(feat_names)}"
-                    )
-
-                coef_map = {name: coef[i] for i, name in enumerate(feat_names)}
-                coef_vec = _np.array([coef_map[c] for c in present], dtype=float)
-                X_meta = level0_out[present].to_numpy(dtype=float)
-            else:
-                if len(coef) != len(pred_cols):
-                    raise ValueError(
-                        f"[FATAL] len(coef)={len(coef)} != len(pred_cols)={len(pred_cols)} ({pred_cols})"
-                    )
-                X_meta = X_meta_default
-                coef_vec = coef
-
-            return X_meta.dot(coef_vec) + intercept
-
-        # Otros formatos de pesos simples
-        weights = d.get("weights", None)
-        if isinstance(weights, dict):
-            alias = {
-                "xgb": "y_xgb", "lgbm": "y_lgbm",
-                "gnn": "y_chemprop", "chemprop": "y_chemprop", "tpsa": "y_tpsa"
-            }
-            w_by_col = {}
-            for k, v in weights.items():
-                col = alias.get(k, k)
-                w_by_col[col] = float(v)
-            wvec = _np.array([float(w_by_col.get(c, 0.0)) for c in pred_cols], dtype=float)
-            return X_meta_default.dot(wvec) + float(d.get("intercept", 0.0))
-
-        def _extract_weights_full(dd):
-            wf = None
-            if isinstance(dd.get("blend"), dict) and isinstance(dd["blend"].get("weights_full"), dict):
-                wf = dd["blend"]["weights_full"]
-            elif isinstance(dd.get("weights_full"), dict):
-                wf = dd["weights_full"]
-            return wf
-
-        wf = _extract_weights_full(d)
-        if isinstance(wf, dict):
-            alias = {
-                "xgb": "y_xgb", "lgbm": "y_lgbm",
-                "gnn": "y_chemprop", "chemprop": "y_chemprop", "tpsa": "y_tpsa",
-                "y_xgb": "y_xgb", "y_lgbm": "y_lgbm",
-                "y_chemprop": "y_chemprop", "y_tpsa": "y_tpsa"
-            }
-            w_by_col = {alias.get(k, k): float(v) for k, v in wf.items()}
-            wvec = _np.array([float(w_by_col.get(c, 0.0)) for c in pred_cols], dtype=float)
-            return X_meta_default.dot(wvec)
-
-        labels = d.get("labels", None)
-        w_vec = d.get("weights", None)
-        if isinstance(labels, (list, tuple)) and isinstance(w_vec, (list, tuple)):
-            alias = {
-                "xgb": "y_xgb", "lgbm": "y_lgbm",
-                "gnn": "y_chemprop", "chemprop": "y_chemprop", "tpsa": "y_tpsa",
-                "y_xgb": "y_xgb", "y_lgbm": "y_lgbm",
-                "y_chemprop": "y_chemprop", "y_tpsa": "y_tpsa"
-            }
-            label_to_w = {}
-            for lab, w in zip(labels, w_vec):
-                col = alias.get(str(lab), str(lab))
-                label_to_w[col] = float(w)
-            wvec = _np.array([float(label_to_w.get(c, 0.0)) for c in pred_cols], dtype=float)
-            return X_meta_default.dot(wvec) + float(d.get("intercept", 0.0))
-
-        raise ValueError("[FATAL] --stack-pkl dict no coincide con formatos soportados.")
-
-    raise TypeError("[FATAL] --stack-pkl debe ser un estimator sklearn o un dict soportado.")
-
-
-def _pick_smiles_col(df: pd.DataFrame, preferred: Optional[str], default_hint: str) -> str:
-    """
-    Elige la columna de SMILES a usar.
-
-    Priorizamos 'smiles_neutral' si existe, porque en tu flujo actual
-    'smiles' puede ser otra cosa (InChIKey|solvente|T#idx).
-    """
-
-    # 1) Si existe smiles_neutral, es la buena
-    if "smiles_neutral" in df.columns:
-        return "smiles_neutral"
-
-    # 2) Si no, probamos las pistas que nos pasan
-    candidates = [preferred, default_hint, "smiles", "SMILES", "Smiles"]
-    for c in candidates:
-        if c and c in df.columns:
-            return c
-
-    raise KeyError(
-        "No se encontró ninguna columna de SMILES. "
-        f"Probadas: {candidates}. Disponibles: {list(df.columns)}"
-    )
-
-
-
-def _smiles_cumkey(df: pd.DataFrame, smiles_col: str, key_name: str = "_cum") -> pd.DataFrame:
-    out = df.copy()
-    out[key_name] = out.groupby(smiles_col).cumcount()
-    return out
-
-
-def _find_pred_col(df_or_path, target: Optional[str] = None) -> str:
-    import pandas as _pd
-    from pathlib import Path as _Path
-    if isinstance(df_or_path, (str, _Path)):
-        p = _Path(df_or_path)
-        df = _pd.read_parquet(p) if p.suffix.lower() == ".parquet" else _pd.read_csv(p)
-    else:
-        df = df_or_path
-    if target and target in df.columns:
-        return target
-    lower = {c.lower(): c for c in df.columns}
-    for key in ["y_chemprop", "prediction", "pred", "value", "target", "y_hat", "logS"]:
-        if key in lower:
-            return lower[key]
-    if "smiles" in df.columns and len(df.columns) == 2:
-        other = [c for c in df.columns if c != "smiles"]
-        if other:
-            return other[0]
-    raise ValueError(f"No se encontró columna de predicción en {df.columns.tolist()}")
-
-
-def _chemprop_models(chem_dir: Path) -> List[Path]:
-    """
-    Devuelve la lista de modelos Chemprop a usar en inferencia.
-    Para evitar problemas de dimensiones, aquí devolvemos UN SOLO checkpoint
-    coherente (normalmente best.pt del run_full/model_0).
-    """
-    # 1) Preferimos run_full/model_0/best.pt
-    m_full = chem_dir / "run_full" / "model_0"
-    best_full = m_full / "best.pt"
-    if best_full.exists():
-        return [best_full]
-
-    # 2) Si no existe, probamos con model_0/best.pt
-    m0 = chem_dir / "model_0"
-    best_m0 = m0 / "best.pt"
-    if best_m0.exists():
-        return [best_m0]
-
-    # 3) Si tampoco, probamos con best.pt en la raíz
-    best_root = chem_dir / "best.pt"
-    if best_root.exists():
-        return [best_root]
-
-    # 4) Último recurso: cogemos el primer .pt/.ckpt que encontremos
-    all_paths = sorted(list(chem_dir.rglob("*.pt")) + list(chem_dir.rglob("*.ckpt")))
-    if not all_paths:
-        raise FileNotFoundError(f"No hay checkpoints .pt/.ckpt en {chem_dir}")
-
-    # Devuelve solo el primero para evitar mezclar arquitecturas
-    return [all_paths[0]]
-
-def _chemprop_predict_legacy(model_paths: List[Path], test_csv: Path, preds_csv: Path):
-    """
-    Llamada a chemprop predict replicando el entrenamiento del GNN:
-    - SMILES como columna principal
-    - descriptores extra en columnas del CSV
-    """
-    present_cols = [
-        "temp_C", "n_ionizable", "n_acid", "n_base",
-        "TPSA", "logP", "HBD", "HBA", "FractionCSP3", "MW",
-    ]
-
+def predict_chemprop(model_dir, test_smiles_df, smiles_col, id_col, gpu=False):
+    """Generates predictions for Chemprop."""
+    # Locate best checkpoint
+    p = Path(model_dir)
+    # Prioritize: output/best.pt -> output/model_0/best.pt -> recursive search
+    ckpt = p / "best.pt"
+    if not ckpt.exists():
+        cands = list(p.rglob("best.pt"))
+        if cands: ckpt = cands[0]
+        else:
+            # Fallback to any .pt
+            cands = list(p.rglob("*.pt"))
+            if not cands:
+                print("[WARN] No Chemprop checkpoint found.")
+                return pd.DataFrame({id_col: test_smiles_df[id_col]})
+            ckpt = cands[0]
+            
+    print(f"[Infer] Predicting with Chemprop (ckpt={ckpt.name})...")
+    
+    # Prepare Input CSV
+    tmp_in = p / "test_in.csv"
+    tmp_out = p / "test_out.csv"
+    
+    # Chemprop expects SMILES as first column
+    cols = [smiles_col] + [c for c in test_smiles_df.columns if c not in [smiles_col, id_col, "smiles"]]
+    # Ensure descriptor columns are present if model needs them
+    # For now, dump everything numeric + smiles
+    df_in = test_smiles_df.rename(columns={smiles_col: "smiles"})
+    # Keep numeric columns for descriptors
+    desc_cols = ["temp_C", "inv_temp", "n_ionizable", "n_acid", "n_base", "TPSA", "logP", "HBD", "HBA", "FractionCSP3", "MW"]
+    present_desc = [c for c in desc_cols if c in df_in.columns]
+    
+    df_in_final = df_in[["smiles"] + present_desc]
+    df_in_final.to_csv(tmp_in, index=False)
+    
     cmd = [
         "chemprop", "predict",
-        "-i", str(test_csv),
-        "-o", str(preds_csv),
-        "--model-paths", *[str(p) for p in model_paths],
-        "--descriptors-columns", *present_cols,
+        "--test-path", str(tmp_in),
+        "--preds-path", str(tmp_out),
+        "--checkpoint-path", str(ckpt),
+        "--batch-size", "64",
+        "--drop-extra-columns"
     ]
-    print("[INFO] Ejecutando:", " ".join(cmd))
-    subprocess.run(cmd, check=True)
-
-
-
-
-
-# ============================== blend / stack =================================
-
-def _blend_with_rowwise_renorm(mat: np.ndarray, w: np.ndarray) -> np.ndarray:
-    W = np.tile(w, (mat.shape[0], 1))
-    mask = ~np.isnan(mat)
-    W_eff = W * mask
-    den = W_eff.sum(axis=1)
-    den[den == 0] = np.nan
-    return np.nansum(mat * W, axis=1) / den
-
-
-def _blend_weights_from_json(weights_json: Path, pred_cols: List[str]) -> np.ndarray:
-    w_json = json.loads(weights_json.read_text())
-    keymap = {"y_xgb": "xgb", "y_lgbm": "lgbm", "y_chemprop": "chemprop", "y_tpsa": "tpsa"}
-    alias_map = {"chemprop": "chemprop", "gnn": "chemprop", "xgb": "xgb", "lgbm": "lgbm", "tpsa": "tpsa"}
-
-    def _get_weight_for(col: str) -> float:
-        key = keymap.get(col, col)
-        if key in w_json:
-            return float(w_json[key])
-        for k, v in alias_map.items():
-            if v == key and k in w_json:
-                return float(w_json[k])
-        if col in w_json:
-            return float(w_json[col])
-        return 0.0
-
-    w_raw = np.array([_get_weight_for(c) for c in pred_cols], dtype=float)
-    if w_raw.sum() > 0:
-        w = w_raw / w_raw.sum()
-    else:
-        w = np.ones(len(pred_cols), dtype=float) / max(1, len(pred_cols))
-    return w
-
-
-def _metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
-    rmse = mean_squared_error(y_true, y_pred, squared=False)
-    r2 = r2_score(y_true, y_pred)
-    return {"rmse": float(rmse), "r2": float(r2), "n": int(len(y_true))}
-
-
-# ======================= GBM / TPSA: cargar o generar preds ===================
-
-def _maybe_make_gbm_preds_from_pkls(models_dir: Path,
-                                    test_tab: pd.DataFrame,
-                                    id_col: str,
-                                    target: Optional[str],
-                                    save_dir: Path) -> pd.DataFrame:
-    out = test_tab[[id_col]].copy()
-    out[id_col] = _norm_id(out[id_col])
-
-    xgb_parq = next((p for p in [models_dir / "pred" / "xgb_test.parquet",
-                                 models_dir / "xgb_test.parquet",
-                                 save_dir / "xgb_test.parquet"] if p.exists()), None)
-    lgbm_parq = next((p for p in [models_dir / "pred" / "lgbm_test.parquet",
-                                  models_dir / "lgbm_test.parquet",
-                                  save_dir / "lgbm_test.parquet"] if p.exists()), None)
-
-    if xgb_parq:
-        xdf = pd.read_parquet(xgb_parq)
-        if id_col in xdf.columns and "y_xgb" in xdf.columns:
-            xdf[id_col] = _norm_id(xdf[id_col])
-            out = out.merge(xdf[[id_col, "y_xgb"]].drop_duplicates(id_col), on=id_col, how="left")
-            print(f"[INFO] Cargado XGB preds: {xgb_parq.resolve()}")
-
-    if lgbm_parq:
-        ldf = pd.read_parquet(lgbm_parq)
-        if id_col in ldf.columns and "y_lgbm" in ldf.columns:
-            ldf[id_col] = _norm_id(ldf[id_col])
-            out = out.merge(ldf[[id_col, "y_lgbm"]].drop_duplicates(id_col), on=id_col, how="left")
-            print(f"[INFO] Cargado LGBM preds: {lgbm_parq.resolve()}")
-
-    if ("y_xgb" in out.columns and out["y_xgb"].notna().any()) or ("y_lgbm" in out.columns and out["y_lgbm"].notna().any()):
-        return out
-
-    xgb_pkl = models_dir / "xgb.pkl"
-    lgbm_pkl = models_dir / "lgbm.pkl"
-    if not xgb_pkl.exists() and not lgbm_pkl.exists():
-        return out
-
-    import joblib
-    manifest_cols = _load_manifest_feature_cols(models_dir / "gbm_manifest.json")
-
-    if xgb_pkl.exists():
-        try:
-            xgb = joblib.load(xgb_pkl)
-            X = _prep_X_for_model(test_tab, id_col, target, manifest_cols, xgb)
-            out["y_xgb"] = np.asarray(xgb.predict(X)).ravel()
-            _save_parquet(out[[id_col, "y_xgb"]], save_dir / "xgb_test.parquet")
-            print("[INFO] Generado y guardado XGB preds desde PKL (con columnas alineadas)")
-        except Exception as e:
-            print(f"[WARN] No se pudo predecir con xgb.pkl: {e}")
-
-    if lgbm_pkl.exists():
-        try:
-            lgb = joblib.load(lgbm_pkl)
-            X = _prep_X_for_model(test_tab, id_col, target, manifest_cols, lgb)
-            out["y_lgbm"] = np.asarray(lgb.predict(X)).ravel()
-            _save_parquet(out[[id_col, "y_lgbm"]], save_dir / "lgbm_test.parquet")
-            print("[INFO] Generado y guardado LGBM preds desde PKL (con columnas alineadas)")
-        except Exception as e:
-            print(f"[WARN] No se pudo predecir con lgbm.pkl: {e}")
-
-    return out
-
-
-def _maybe_add_tpsa_pred(out_df: pd.DataFrame,
-                         test_tab: pd.DataFrame,
-                         id_col: str,
-                         tpsa_json: Optional[Path],
-                         tpsa_col: str,
-                         phenol_col: Optional[str]) -> pd.DataFrame:
-    """
-    Añade y_tpsa si se proporciona un modelo TPSA.
-
-    Soporta dos formatos de JSON:
-
-    1) **Nuevo (full Ridge)** (salida de train_full_tpsa_mp.py, por ejemplo)
-       {
-         "intercept": ...,
-         "coef": {"TPSA": w1, "logP": w2, "mp_m25": w3, "aroOHdel": w4, ...},
-         "features": ["TPSA","logP","mp_m25","aroOHdel",...],
-       }
-       y_tpsa = intercept + sum_i coef[feat_i] * x[feat_i]
-
-       - Si falta algún feature pero se puede derivar:
-           * "mp_m25"  -> a partir de columna "mp" (ºC): mp_m25 = mp - 25
-           * "_sqrt_*" -> a partir de la columna base: sqrt( max(col, 0) )
-           * "aroOHdel" -> n_phenol + n_phenol_like (si existen)
-         se crea en test_tab al vuelo.
-       - Si después de eso sigue faltando algo, se emite WARN y no se añade y_tpsa.
-
-    2) **Antiguo** (lineal simple):
-       {"a":..., "b":..., "c": opcional}
-       y_tpsa = a * TPSA + b (+ c * phenol_col)
-    """
-    if tpsa_json is None:
-        return out_df
-
-    if not tpsa_json.exists():
-        print(f"[WARN] --tpsa-json {tpsa_json} no existe; se ignora modelo TPSA.")
-        return out_df
-
+    if gpu: cmd += ["--accelerator", "gpu", "--devices", "1"]
+    if present_desc: cmd += ["--descriptors-columns", *present_desc]
+    
     try:
-        cfg = json.loads(tpsa_json.read_text())
-    except Exception as e:
-        print(f"[WARN] No se pudo leer JSON de {tpsa_json}: {e}")
-        return out_df
-
-    # --- Formato nuevo: con 'coef' ---
-    if isinstance(cfg, dict) and "coef" in cfg:
-        coef_map = cfg.get("coef", {})
-        if not isinstance(coef_map, dict) or not coef_map:
-            print(f"[WARN] tpsa_json {tpsa_json} tiene 'coef' vacío; se ignora.")
-            return out_df
-
-        intercept = float(cfg.get("intercept", 0.0))
-        features = cfg.get("features")
-        if not isinstance(features, list) or not features:
-            features = list(coef_map.keys())
-
-        tab = test_tab.copy()
-
-        # Intentar crear columnas derivadas (mp_m25, _sqrt_*, aroOHdel)
-        for feat in features:
-            if feat in tab.columns:
-                continue
-
-            # mp_m25 a partir de 'mp'
-            if feat == "mp_m25" and "mp" in tab.columns:
-                tab["mp_m25"] = pd.to_numeric(tab["mp"], errors="coerce") - 25.0
-                continue
-
-            # _sqrt_X a partir de X (p.ej. _sqrt_TPSA)
-            if feat.startswith("_sqrt_"):
-                base_col = feat[len("_sqrt_"):]
-                if base_col in tab.columns:
-                    tab[feat] = np.sqrt(
-                        np.clip(pd.to_numeric(tab[base_col], errors="coerce"), a_min=0, a_max=None)
-                    )
-                    continue
-
-            # aroOHdel = n_phenol + n_phenol_like
-            if feat == "aroOHdel":
-                have_nphen = "n_phenol" in tab.columns
-                have_nlike = "n_phenol_like" in tab.columns
-                if have_nphen or have_nlike:
-                    nphen = pd.to_numeric(tab["n_phenol"], errors="coerce") if have_nphen else 0
-                    nlike = pd.to_numeric(tab["n_phenol_like"], errors="coerce") if have_nlike else 0
-                    tab["aroOHdel"] = (
-                        (nphen if hasattr(nphen, "__array__") else 0)
-                        + (nlike if hasattr(nlike, "__array__") else 0)
-                    )
-                    continue
-                    
-            if feat == "inv_temp":
-                # Buscamos temp_C o temp_K
-                if "temp_C" in tab.columns:
-                    t_c = pd.to_numeric(tab["temp_C"], errors="coerce").fillna(25.0)
-                    tab["inv_temp"] = 1000.0 / (t_c + 273.15)
-                elif "temp_K" in tab.columns:
-                    t_k = pd.to_numeric(tab["temp_K"], errors="coerce").fillna(298.15)
-                    tab["inv_temp"] = 1000.0 / t_k
-                else:
-                    # Fallback por defecto
-                    tab["inv_temp"] = 1000.0 / (25.0 + 273.15)
-                continue
-
-        # Comprobamos que ya están todas las features
-        missing = [f for f in features if f not in tab.columns]
-        if missing:
-            print(f"[WARN] No se puede aplicar modelo TPSA (faltan columnas {missing}); se ignora y_tpsa.")
-            return out_df
-
-        # Valores numéricos y predicción
-        X_cols = []
-        for f in features:
-            X_cols.append(pd.to_numeric(tab[f], errors="coerce").values)
-        X = np.vstack(X_cols).T  # shape (n, n_features)
-        coefs = np.array([float(coef_map[f]) for f in features], dtype=float)
-        y_vals = intercept + X.dot(coefs)
-
-        tdf = pd.DataFrame({
-            id_col: _norm_id(tab[id_col]) if id_col in tab.columns else _norm_id(test_tab[id_col]),
-            "y_tpsa": y_vals
+        run_cmd(cmd)
+        preds = pd.read_csv(tmp_out)
+        
+        # Find pred column
+        # Usually 'logS' or 'prediction'
+        target_col = preds.columns[0] if "smiles" not in preds.columns[0].lower() else preds.columns[1]
+        # Robust check
+        for c in preds.columns:
+            if c.lower() not in ["smiles"] + [d.lower() for d in present_desc]:
+                target_col = c
+                break
+        
+        out = pd.DataFrame({
+            id_col: test_smiles_df[id_col].values,
+            "y_chemprop": preds[target_col].values
         })
-        return out_df.merge(tdf[[id_col, "y_tpsa"]], on=id_col, how="left")
-
-    # --- Formato antiguo: a,b,c ---
-    try:
-        a = float(cfg["a"])
-        b = float(cfg["b"])
-        c = float(cfg.get("c", 0.0))
+        return out
     except Exception as e:
-        print(f"[WARN] tpsa_json no tiene ni 'coef' ni (a,b,c) válidos: {e}")
-        return out_df
+        print(f"[WARN] Chemprop inference failed: {e}")
+        return pd.DataFrame({id_col: test_smiles_df[id_col]})
 
-    if tpsa_col not in test_tab.columns:
-        print(f"[WARN] No está la columna TPSA '{tpsa_col}' en test_tab; se ignora TPSA.")
-        return out_df
+def predict_tpsa(tpsa_json_path, test_df, id_col):
+    """Generates predictions for Baseline TPSA/Ridge."""
+    if not tpsa_json_path or not Path(tpsa_json_path).exists():
+        return pd.DataFrame({id_col: test_df[id_col]})
+        
+    print("[Infer] Predicting with Baseline (Ridge)...")
+    try:
+        model = json.loads(Path(tpsa_json_path).read_text())
+        
+        # Calculate features on the fly if missing
+        if "inv_temp" not in test_df.columns and "temp_C" in test_df.columns:
+             test_df["inv_temp"] = 1000.0 / (test_df["temp_C"] + 273.15)
+             
+        # Formula: y = intercept + sum(coef * val)
+        intercept = model.get("intercept", 0.0)
+        coefs = model.get("coefs", {}) # {feature_name: weight}
+        
+        y_pred = np.full(len(test_df), intercept)
+        
+        for feat, w in coefs.items():
+            if feat in test_df.columns:
+                vals = pd.to_numeric(test_df[feat], errors='coerce').fillna(0.0).values
+                y_pred += vals * w
+            else:
+                print(f"[WARN] TPSA feature missing: {feat}")
+                
+        return pd.DataFrame({id_col: test_df[id_col], "y_tpsa": y_pred})
+        
+    except Exception as e:
+        print(f"[WARN] TPSA inference failed: {e}")
+        return pd.DataFrame({id_col: test_df[id_col]})
 
-    df = test_tab[[id_col, tpsa_col]].copy()
-    df[id_col] = _norm_id(df[id_col])
-    x = pd.to_numeric(df[tpsa_col], errors="coerce")
-
-    extra = 0.0
-    if phenol_col and phenol_col in test_tab.columns and c != 0.0:
-        ph = pd.to_numeric(test_tab[phenol_col], errors="coerce").fillna(0.0)
-        extra = c * ph.values
-    else:
-        extra = 0.0
-
-    y = a * x.values + b + extra
-    tdf = pd.DataFrame({id_col: df[id_col].values, "y_tpsa": y})
-    return out_df.merge(tdf, on=id_col, how="left")
-
-
-# ================================== main =====================================
+# ---------------- MAIN ----------------
 
 def main():
-    ap = argparse.ArgumentParser("final_infer_master")
-    ap.add_argument("--test-tabular", required=True, type=str)
-    ap.add_argument("--test-smiles", required=True, type=str)
-    ap.add_argument("--models-dir", default="models", type=str)
-    ap.add_argument("--chemprop-model-dir", required=True, type=str)
-    ap.add_argument("--save-dir", default="pred", type=str)
-
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--test-tabular", required=True)
+    ap.add_argument("--test-smiles", required=True)
+    ap.add_argument("--models-dir", required=True)
+    ap.add_argument("--chemprop-model-dir", required=True)
+    ap.add_argument("--tpsa-json", default=None)
+    ap.add_argument("--save-dir", default="pred")
+    
     ap.add_argument("--id-col", default="row_uid")
     ap.add_argument("--smiles-col", default="smiles_neutral")
+    ap.add_argument("--target", default="logS")
+    
+    # Ignored but kept for compatibility
     ap.add_argument("--chemprop-smiles-col", default=None)
-    ap.add_argument("--target", default=None)
-
-    ap.add_argument("--weights-json", default=None, type=str)
-    ap.add_argument("--stack-pkl", default=None, type=str)
-    ap.add_argument("--chemprop-preds", default=None, type=str,
-                    help="CSV/Parquet con predicciones de chemprop. Columnas admitidas: "
-                         "(row_uid,y_chemprop) o (smiles,y_chemprop) con el mismo orden/duplicados que test_smiles.")
-
-    # --- TPSA (+ phenol + mp) ---
-    ap.add_argument("--tpsa-json", default=None, type=str,
-                    help="JSON del modelo TPSA. "
-                         "Formato nuevo: {'intercept':..,'coef':{'TPSA':..,'logP':..,'mp_m25':..,'aroOHdel':..},'features':[...]}. "
-                         "Formato antiguo (legacy): {'a':..,'b':..,'c': opcional}.")
-    ap.add_argument("--tpsa-col", default="TPSA", type=str,
-                    help="Nombre de columna TPSA en test tabular (se usa sobre todo en formato antiguo).")
-    ap.add_argument("--phenol-col", default="phenol_count", type=str,
-                    help="Descriptor de fenoles (sólo usado si el JSON es antiguo a,b,c).")
-
+    ap.add_argument("--tpsa-col", default="TPSA")
+    ap.add_argument("--phenol-col", default="n_phenol")
+    
+    ap.add_argument("--weights-json", default=None)
+    ap.add_argument("--stack-pkl", default=None)
+    
     args = ap.parse_args()
-
     outdir = Path(args.save_dir)
     outdir.mkdir(parents=True, exist_ok=True)
 
-    # -------------------- carga y normalización de TEST -----------------------
-    test_tab = _read_parquet_or_csv(Path(args.test_tabular)).copy()
-    test_smi = _read_parquet_or_csv(Path(args.test_smiles)).copy()
-
-    _must_have(test_tab, args.id_col, "test_tab")
-    test_tab[args.id_col] = _norm_id(test_tab[args.id_col])
-    _must_be_unique(test_tab, args.id_col, "test_tab")
-
-    _must_have(
-        test_smi,
-        args.smiles_col if args.chemprop_smiles_col is None
-        else _pick_smiles_col(test_smi, args.chemprop_smiles_col, args.smiles_col),
-        "test_smi (smiles)"
-    )
-    if args.id_col in test_smi.columns:
-        test_smi[args.id_col] = _norm_id(test_smi[args.id_col])
-
-    print(f"[DEBUG] test_tab rows={len(test_tab)}, test_smi rows={len(test_smi)}")
-
-    # -------------------- base predictions (GBM) ------------------------------
-    base_tab = _maybe_make_gbm_preds_from_pkls(
-        Path(args.models_dir),
-        test_tab,
-        args.id_col,
-        args.target,
-        Path(args.save_dir)
-    )
-    _must_be_unique(base_tab, args.id_col, "base_tab")
-    print(f"[DEBUG] base_tab rows={len(base_tab)} (ids únicos)")
-
-    # ==================== CHEMPROP (primero) ==================================
-    if args.chemprop_preds:
-        cp_raw = _read_parquet_or_csv(Path(args.chemprop_preds)).copy()
-        cols_lower = {c.lower(): c for c in cp_raw.columns}
-        if args.id_col in cp_raw.columns:
-            pred_col = _find_pred_col(cp_raw.drop(columns=[args.id_col], errors="ignore"), target=args.target)
-            cp_preds = cp_raw[[args.id_col, pred_col]].rename(columns={pred_col: "y_chemprop"}).copy()
-        elif "smiles" in cols_lower:
-            pred_col = _find_pred_col(cp_raw, target=args.target)
-            test_key = _smiles_cumkey(
-                test_smi[[args.id_col, args.smiles_col]].copy(),
-                args.smiles_col,
-                "_cum"
-            ).rename(columns={args.smiles_col: "smiles"})
-            cp_key = _smiles_cumkey(
-                cp_raw[["smiles", pred_col]].rename(columns={"smiles": "smiles"}),
-                "smiles",
-                "_cum"
-            )
-            tmp = test_key.merge(cp_key.rename(columns={pred_col: "y_chemprop"}),
-                                 on=["smiles", "_cum"], how="left")
-            cp_preds = tmp[[args.id_col, "y_chemprop"]].copy()
-        else:
-            raise ValueError(
-                "Formato de --chemprop-preds no reconocido. "
-                "Esperado (row_uid,y_chemprop) o (smiles,y_chemprop)."
-            )
-
-        cp_preds[args.id_col] = _norm_id(cp_preds[args.id_col])
-        _must_be_unique(cp_preds, args.id_col, "cp_preds (from file)")
-        print(f"[INFO] Usando predicciones de Chemprop desde archivo: {args.chemprop_preds}")
-
-    else:
-        chem_dir = Path(args.chemprop_model_dir)
-        model_paths = _chemprop_models(chem_dir)
-
-        chem_col = _pick_smiles_col(test_smi, args.chemprop_smiles_col, args.smiles_col)
-
-        # AÑADIDO: inv_temp es obligatorio ahora
-        desc_cols_all = [
-            "temp_C", "inv_temp", "n_ionizable", "n_acid", "n_base",
-            "TPSA", "logP", "HBD", "HBA", "FractionCSP3", "MW",
-        ]
-
-        # Base: id + smiles
-        tmp = pd.DataFrame({
-            args.id_col: _norm_id(test_smi[args.id_col]) if args.id_col in test_smi.columns else _norm_id(test_tab[args.id_col]),
-            chem_col: _norm_smiles(test_smi[chem_col]),
-        })
-
-        # 1. Intentar traer temp_C primero si existe, para poder calcular inv_temp
-        if "temp_C" in test_smi.columns:
-            tmp["temp_C"] = pd.to_numeric(test_smi["temp_C"], errors="coerce").values
-        elif "temp_C" in test_tab.columns:
-             # Traer desde test_tab
-             aux = test_tab[[args.id_col, "temp_C"]].drop_duplicates(args.id_col)
-             tmp = tmp.merge(aux, on=args.id_col, how="left")
-
-        # 2. Calcular inv_temp si tenemos temp_C
-        if "temp_C" in tmp.columns:
-            # Rellenar con 25 si es nulo (igual que en train)
-            t_vals = tmp["temp_C"].fillna(25.0)
-            tmp["inv_temp"] = 1000.0 / (t_vals + 273.15)
-        else:
-            # Si no hay temperatura, asumimos 25 grados para inv_temp
-            tmp["inv_temp"] = 1000.0 / (25.0 + 273.15)
-
-        # 3. Rellenar el resto de descriptores
-        missing = []
-        for col in desc_cols_all:
-            if col in tmp.columns: continue # Ya lo tenemos (temp_C o inv_temp)
-
-            if col in test_smi.columns:
-                tmp[col] = pd.to_numeric(test_smi[col], errors="coerce").values
-            elif col in test_tab.columns:
-                tmp = tmp.merge(
-                    test_tab[[args.id_col, col]].drop_duplicates(args.id_col),
-                    on=args.id_col, how="left", suffixes=("", "_from_tab"),
-                )
-                if f"{col}_from_tab" in tmp.columns:
-                    tmp[col] = tmp[f"{col}_from_tab"]
-                    tmp.drop(columns=[f"{col}_from_tab"], inplace=True)
-            else:
-                missing.append(col)
+    # 1. Load Test Data
+    print("[Infer] Loading Test Data...")
+    df_tab = read_any(args.test_tabular)
+    df_smi = read_any(args.test_smiles)
+    
+    # Ensure ID alignment
+    if args.id_col not in df_tab.columns or args.id_col not in df_smi.columns:
+        sys.exit(f"[ERROR] ID col '{args.id_col}' missing.")
         
-        if missing:
-            raise ValueError(
-                f"[FATAL] Faltan columnas de descriptores para Chemprop en test_tab/test_smi: {missing}"
-            )
+    # Merge to have all features available
+    # (Tabular has descriptors, SMILES has... smiles)
+    # We perform a left merge on Tabular to keep its rows
+    df_full = df_tab.merge(df_smi, on=args.id_col, suffixes=("", "_smi"))
+    
+    # 2. Base Predictions
+    preds_gbm = predict_gbm(args.models_dir, df_full, args.id_col)
+    preds_gnn = predict_chemprop(args.chemprop_model_dir, df_full, args.smiles_col, args.id_col)
+    preds_tpsa = predict_tpsa(args.tpsa_json, df_full, args.id_col)
+    
+    # Combine Level 0
+    level0 = preds_gbm.merge(preds_gnn, on=args.id_col, how="left") \
+                      .merge(preds_tpsa, on=args.id_col, how="left")
+                      
+    # Add Target if available (for metrics)
+    if args.target in df_full.columns:
+        level0 = level0.merge(df_full[[args.id_col, args.target]], on=args.id_col, how="left")
+        
+    # Save Level 0
+    level0.to_parquet(outdir / "test_level0.parquet", index=False)
+    
+    # 3. Ensemble
+    cols = ["y_xgb", "y_lgbm", "y_chemprop", "y_tpsa"]
+    present_cols = [c for c in cols if c in level0.columns]
+    X_meta = level0[present_cols].values
+    
+    # A. Blending
+    if args.weights_json and Path(args.weights_json).exists():
+        print("[Infer] Applying Blend Weights...")
+        weights = json.loads(Path(args.weights_json).read_text())
+        # Align weights to columns
+        w_vec = np.array([weights.get(c.replace("y_", ""), 0.0) for c in present_cols])
+        # Normalize
+        if w_vec.sum() > 0: w_vec /= w_vec.sum()
+        
+        y_blend = np.nansum(X_meta * w_vec, axis=1)
+        level0["y_pred_blend"] = y_blend
+        level0[[args.id_col, "y_pred_blend"]].to_parquet(outdir / "test_blend.parquet", index=False)
 
-        tmp_keyed = _smiles_cumkey(tmp, chem_col, "_cum").rename(columns={chem_col: "smiles"})
+    # B. Stacking
+    if args.stack_pkl and Path(args.stack_pkl).exists():
+        print("[Infer] Applying Stacking Model...")
+        stack_meta = pickle.loads(Path(args.stack_pkl).read_bytes())
+        # Check model type
+        if "coef" in stack_meta:
+            # It's our custom dictionary from meta_stack_blend.py
+            coefs = stack_meta["coef"]
+            intercept = stack_meta["intercept"]
+            # Map features
+            feat_names = stack_meta["feature_names"] # e.g. ["y_xgb", "y_lgbm"]
+            
+            y_stack = np.full(len(level0), intercept)
+            for f, w in zip(feat_names, coefs):
+                if f in level0.columns:
+                    y_stack += level0[f].fillna(0.0).values * w
+                    
+            level0["y_pred_stack"] = y_stack
+            level0[[args.id_col, "y_pred_stack"]].to_parquet(outdir / "test_stack.parquet", index=False)
 
-        tmp_test_csv = Path(args.save_dir) / "chemprop_test_input.csv"
-
-        # Chemprop necesita que la columna de SMILES sea la primera.
-        df_out = tmp_keyed.drop(columns=["_cum"])
-
-        cols = list(df_out.columns)
-        if "smiles" in cols:
-            cols = ["smiles"] + [c for c in cols if c != "smiles"]
-        df_out = df_out[cols]
-
-        df_out.to_csv(tmp_test_csv, index=False)
-
-
-        preds_path = Path(args.save_dir) / "chemprop_test_rows.csv"
-        _chemprop_predict_legacy(model_paths, tmp_test_csv, preds_path)
-
-
-        preds_df = pd.read_csv(preds_path)
-        pred_col = _find_pred_col(preds_df, target=args.target)
-        if "smiles" not in preds_df.columns:
-            preds_df["smiles"] = pd.read_csv(tmp_test_csv)["smiles"].values
-        preds_df["smiles"] = _norm_smiles(preds_df["smiles"])
-        preds_df = preds_df.rename(columns={pred_col: "y_chemprop"})[["smiles", "y_chemprop"]]
-
-        preds_keyed = _smiles_cumkey(preds_df, "smiles", "_cum")
-        test_key = tmp_keyed
-        cp_preds = test_key.merge(preds_keyed, on=["smiles", "_cum"], how="left") \
-                           .drop(columns=["smiles", "_cum"])
-        cp_preds[args.id_col] = _norm_id(test_smi[args.id_col]) if args.id_col in test_smi.columns else pd.Series(np.arange(len(cp_preds))).astype("string")
-        _must_have(cp_preds, "y_chemprop", "cp_preds")
-        cp_preds = pd.concat([test_smi[[args.id_col]].reset_index(drop=True), cp_preds[["y_chemprop"]]], axis=1)
-        _must_be_unique(cp_preds, args.id_col, "cp_preds")
-
-    print(f"[DEBUG] cp_preds rows={len(cp_preds)} (ids únicos)")
-
-    # ==================== TPSA (después de chemprop) ==========================
-    tpsa_json = Path(args.tpsa_json) if args.tpsa_json else None
-
-    # Mezclamos features de test_smiles en test_tab para TPSA
-    features_df = test_tab.copy()
-    if args.id_col in test_smi.columns:
-        cols_tpsa = [
-            c for c in [
-                "logP", "TPSA", "mp",
-                "n_phenol", "n_phenol_like",
-                "phenol_like", "has_phenol"
-            ]
-            if c in test_smi.columns
-        ]
-        if cols_tpsa:
-            aux = test_smi[[args.id_col] + cols_tpsa].drop_duplicates(args.id_col)
-            aux[args.id_col] = _norm_id(aux[args.id_col])
-            features_df = features_df.merge(aux, on=args.id_col, how="left")
-            print(f"[INFO] Enriquecido test_tab con columnas TPSA/logP/mp/phenol desde test_smiles: {cols_tpsa}")
-
-    base_tab = _maybe_add_tpsa_pred(
-        out_df=base_tab,
-        test_tab=features_df,
-        id_col=args.id_col,
-        tpsa_json=tpsa_json,
-        tpsa_col=args.tpsa_col,
-        phenol_col=args.phenol_col
-    )
-
-    # -------------------- unión segura y level0 --------------------------------
-    union_df = base_tab.merge(
-        cp_preds.drop_duplicates(subset=[args.id_col]),
-        on=args.id_col, how="outer"
-    ).drop_duplicates(subset=[args.id_col])
-
-    level0_cols = [args.id_col]
-    for c in ["y_xgb", "y_lgbm", "y_chemprop", "y_tpsa"]:
-        if c in union_df.columns:
-            level0_cols.append(c)
-    level0_out = union_df[level0_cols].copy()
-
-    # % NA en y_chemprop tras la unión (por ids)
-    if "y_chemprop" in level0_out.columns:
-        na_rate = float(level0_out["y_chemprop"].isna().mean())
-        print(f"[DEBUG] y_chemprop NA rate after union: {na_rate:.3f}")
-        if na_rate > 0.10:
-            bad_ids = level0_out.loc[level0_out["y_chemprop"].isna(), args.id_col]
-            _dump_ids(Path(args.save_dir) / "debug_ids" / "ids_missing_chemprop.csv", bad_ids, "ids_missing_chemprop")
-            raise ValueError(
-                f"[FATAL] >10% de filas sin y_chemprop tras merge (NA rate={na_rate:.3f}). "
-                "Indica desalineación de ids o smiles. Revisa --id-col/--smiles-col y el TEST usado."
-            )
-
-    _save_parquet(level0_out, Path(args.save_dir) / "test_level0.parquet")
-
-    # -------------------- blend simple (opcional pesos) ------------------------
-    pred_cols = [c for c in ["y_xgb", "y_lgbm", "y_chemprop", "y_tpsa"] if c in level0_out.columns]
-    blend_out = level0_out[[args.id_col]].copy()
-    if pred_cols:
-        if args.weights_json:
-            w = _blend_weights_from_json(Path(args.weights_json), pred_cols)
-        else:
-            w = np.ones(len(pred_cols), dtype=float) / len(pred_cols)
-        mat = level0_out[pred_cols].to_numpy(dtype=float)
-        y_blend = _blend_with_rowwise_renorm(mat, w)
-        blend_out["y_pred_blend"] = y_blend
-    _save_parquet(blend_out, Path(args.save_dir) / "test_blend.parquet")
-
-    # -------------------- stack con pesos (opcional) ---------------------------
-    if args.weights_json:
-        w = _blend_weights_from_json(Path(args.weights_json), pred_cols)
-        stack_out = level0_out[[args.id_col]].copy()
-        mat = level0_out[pred_cols].to_numpy(dtype=float)
-        y_stack = _blend_with_rowwise_renorm(mat, w)
-        stack_out["y_pred_stack"] = y_stack
-        _save_parquet(stack_out, Path(args.save_dir) / "test_stack.parquet")
-
-    # -------------------- meta-modelo pickle (opcional) ------------------------
-    if args.stack_pkl:
-        import joblib
-        mdl = joblib.load(args.stack_pkl)
-
-        missing = [c for c in pred_cols if c not in level0_out.columns]
-        if missing:
-            raise ValueError(f"Faltan columnas para meta-modelo: {missing}")
-
-        try:
-            y_stack_model = _apply_stack_object(mdl, level0_out, pred_cols)
-        except Exception as e:
-            raise RuntimeError(f"[FATAL] No se pudo aplicar --stack-pkl: {e}")
-
-        stack_model_out = level0_out[[args.id_col]].copy()
-        stack_model_out["y_pred_stack_model"] = y_stack_model
-        _save_parquet(stack_model_out, Path(args.save_dir) / "test_stack_model.parquet")
-
-    # -------------------- métricas (si hay y_true en TEST) ---------------------
-    metrics = {}
-    y_true_col = args.target or "target"
-    has_y = y_true_col in test_tab.columns
-    if has_y:
-        # y_true
-        test_tab[y_true_col] = pd.to_numeric(test_tab[y_true_col], errors="coerce")
-
-        # Predicciones + y_true
-        merged_eval = test_tab[[args.id_col, y_true_col]].merge(
-            level0_out, on=args.id_col, how="left"
-        )
-
-        # ----------------- detectar columna de temperatura -------------------
-        temp_col_eval = None
-        if "temp_C" in test_tab.columns:
-            temp_col_eval = "temp_C"
-        elif "temperature_C" in test_tab.columns:
-            temp_col_eval = "temperature_C"
-        elif "temperature_K" in test_tab.columns:
-            temp_col_eval = "temperature_K"
-
-        if temp_col_eval is not None:
-            tmp_temp = test_tab[[args.id_col, temp_col_eval]].copy()
-            tmp_temp[temp_col_eval] = pd.to_numeric(
-                tmp_temp[temp_col_eval], errors="coerce"
-            )
-            # Si viene en Kelvin, lo pasamos a °C
-            if temp_col_eval == "temperature_K":
-                tmp_temp["_temp_C_eval"] = tmp_temp[temp_col_eval] - 273.15
-                use_temp_col = "_temp_C_eval"
-            else:
-                use_temp_col = temp_col_eval
-
-            merged_eval = merged_eval.merge(
-                tmp_temp[[args.id_col, use_temp_col]].rename(
-                    columns={use_temp_col: "_temp_C_eval"}
-                ),
-                on=args.id_col,
-                how="left",
-            )
-
-        # ----------------- cohorts globales ---------------------------------
-        base_cols_for_mask = [
-            c for c in ["y_xgb", "y_lgbm", "y_tpsa"] if c in merged_eval.columns
-        ]
-        if base_cols_for_mask:
-            base_mask = merged_eval[base_cols_for_mask].notna().any(axis=1)
-        else:
-            base_mask = pd.Series(False, index=merged_eval.index)
-
-        cp_mask = (
-            merged_eval["y_chemprop"].notna()
-            if "y_chemprop" in merged_eval.columns
-            else pd.Series(False, index=merged_eval.index)
-        )
-        inner_mask = base_mask & cp_mask
-        union_mask = base_mask | cp_mask
-
-        cohorts = {
-            "base_all": int(base_mask.sum()),
-            "chemprop": int(cp_mask.sum()),
-            "inner": int(inner_mask.sum()),
-            "union": int(union_mask.sum()),
-        }
-        metrics["cohorts"] = cohorts
-
-        def _eval_mask(m, col):
-            df = merged_eval.loc[
-                m & merged_eval[col].notna() & merged_eval[y_true_col].notna(),
-                [y_true_col, col],
-            ]
-            if len(df) == 0:
-                return None
-            return _metrics(df[y_true_col].values, df[col].values)
-
-        # --------- métricas globales por cohort/modelo base -----------------
-        for cohort_name, m in [
-            ("base_all", base_mask),
-            ("chemprop", cp_mask),
-            ("inner", inner_mask),
-            ("union", union_mask),
-        ]:
-            for col in [
-                c
-                for c in ["y_xgb", "y_lgbm", "y_chemprop", "y_tpsa"]
-                if c in merged_eval.columns
-            ]:
-                res = _eval_mask(m, col)
-                if res is not None:
-                    metrics.setdefault(cohort_name, {})[col] = res
-
-        # --------- métricas globales de blend/stack/stack_model -------------
-        df_union = merged_eval[[args.id_col, y_true_col]].copy()
-
-        tb = Path(args.save_dir) / "test_blend.parquet"
-        if tb.exists():
-            b = pd.read_parquet(tb)
-            df = df_union.merge(b, on=args.id_col, how="left")
-            mm = df[
-                union_mask
-                & df["y_pred_blend"].notna()
-                & df[y_true_col].notna()
-            ]
-            if len(mm):
-                metrics.setdefault("union", {})["blend"] = _metrics(
-                    mm[y_true_col].values, mm["y_pred_blend"].values
-                )
-
-        ts = Path(args.save_dir) / "test_stack.parquet"
-        if ts.exists():
-            s = pd.read_parquet(ts)
-            df = df_union.merge(s, on=args.id_col, how="left")
-            mm = df[
-                union_mask
-                & df["y_pred_stack"].notna()
-                & df[y_true_col].notna()
-            ]
-            if len(mm):
-                metrics.setdefault("union", {})["stack"] = _metrics(
-                    mm[y_true_col].values, mm["y_pred_stack"].values
-                )
-
-        tsm = Path(args.save_dir) / "test_stack_model.parquet"
-        if tsm.exists():
-            sm = pd.read_parquet(tsm)
-            df = df_union.merge(sm, on=args.id_col, how="left")
-            mm = df[
-                union_mask
-                & df["y_pred_stack_model"].notna()
-                & df[y_true_col].notna()
-            ]
-            if len(mm):
-                metrics.setdefault("union", {})["stack_model"] = _metrics(
-                    mm[y_true_col].values, mm["y_pred_stack_model"].values
-                )
-
-        # --------- métricas en rango fisiológico 35–38 °C -------------------
-        # Sólo si hemos conseguido tener temperatura en °C
-        if "_temp_C_eval" in merged_eval.columns:
-            physio_mask = (
-                union_mask
-                & merged_eval["_temp_C_eval"].notna()
-                & merged_eval["_temp_C_eval"].between(35.0, 38.0)
-            )
-
-            metrics["cohorts_physio"] = {
-                "union": int(physio_mask.sum()),
-            }
-
-            # Modelos base en rango fisiológico
-            for col in [
-                c
-                for c in ["y_xgb", "y_lgbm", "y_chemprop", "y_tpsa"]
-                if c in merged_eval.columns
-            ]:
-                res = _eval_mask(physio_mask, col)
-                if res is not None:
-                    metrics.setdefault("physio_union", {})[col] = res
-
-            # Blend / stack / stack_model en rango fisiológico
-            if tb.exists():
-                b = pd.read_parquet(tb)
-                df = df_union.merge(b, on=args.id_col, how="left")
-                mm = df[
-                    physio_mask
-                    & df["y_pred_blend"].notna()
-                    & df[y_true_col].notna()
-                ]
-                if len(mm):
-                    metrics.setdefault("physio_union", {})["blend"] = _metrics(
-                        mm[y_true_col].values, mm["y_pred_blend"].values
-                    )
-
-            if ts.exists():
-                s = pd.read_parquet(ts)
-                df = df_union.merge(s, on=args.id_col, how="left")
-                mm = df[
-                    physio_mask
-                    & df["y_pred_stack"].notna()
-                    & df[y_true_col].notna()
-                ]
-                if len(mm):
-                    metrics.setdefault("physio_union", {})["stack"] = _metrics(
-                        mm[y_true_col].values, mm["y_pred_stack"].values
-                    )
-
-            if tsm.exists():
-                sm = pd.read_parquet(tsm)
-                df = df_union.merge(sm, on=args.id_col, how="left")
-                mm = df[
-                    physio_mask
-                    & df["y_pred_stack_model"].notna()
-                    & df[y_true_col].notna()
-                ]
-                if len(mm):
-                    metrics.setdefault("physio_union", {})["stack_model"] = _metrics(
-                        mm[y_true_col].values, mm["y_pred_stack_model"].values
-                    )
-
-    if metrics:
-        (Path(args.save_dir) / "metrics_test.json").write_text(
-            json.dumps(metrics, indent=2)
-        )
-        print("[OK] Guardado:", (Path(args.save_dir) / "metrics_test.json").resolve())
-
-    print(" -", (Path(args.save_dir) / "test_level0.parquet").resolve())
-    print(" -", (Path(args.save_dir) / "test_blend.parquet").resolve())
-    if (Path(args.save_dir) / "test_stack.parquet").exists():
-        print(" -", (Path(args.save_dir) / "test_stack.parquet").resolve())
-    if (Path(args.save_dir) / "test_stack_model.parquet").exists():
-        print(" -", (Path(args.save_dir) / "test_stack_model.parquet").resolve())
-
+    # 4. Metrics (if Target exists)
+    if args.target in level0.columns:
+        print("[Infer] Calculating Metrics...")
+        metrics = {}
+        y_true = level0[args.target].values
+        
+        # Global Metrics
+        for c in present_cols + ["y_pred_blend", "y_pred_stack"]:
+            if c in level0.columns:
+                metrics[c] = get_metrics(y_true, level0[c].values)
+                
+        # Physiological Range Metrics (35-38 C)
+        if "temp_C" in df_full.columns:
+            phys_mask = df_full["temp_C"].between(35, 38).values
+            if phys_mask.any():
+                metrics["physio_range"] = {}
+                for c in present_cols + ["y_pred_blend", "y_pred_stack"]:
+                    if c in level0.columns:
+                        metrics["physio_range"][c] = get_metrics(y_true[phys_mask], level0.loc[phys_mask, c].values)
+        
+        (outdir / "metrics_test.json").write_text(json.dumps(metrics, indent=2))
+        print(f"[Infer] Done. Blend RMSE: {metrics.get('y_pred_blend', {}).get('rmse', 'N/A')}")
 
 if __name__ == "__main__":
     main()

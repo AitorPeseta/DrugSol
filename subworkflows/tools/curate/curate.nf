@@ -1,45 +1,55 @@
 nextflow.enable.dsl = 2
 
-// === Includes de módulos ===
-include { filter_water }                                    from '../../../modules/filter_water/filter_water.nf'
-include { detect_outliers }                                 from '../../../modules/detect_outliers/detect_outliers.nf'
-include { filter_outlier }                                  from '../../../modules/filter_outlier/filter_outlier.nf'
-include { filter_by_temperature_range }                     from '../../../modules/filter_by_temperature_range/filter_by_temperature_range.nf'
-
+// ============================================================================
+// MODULE INCLUDES
+// ============================================================================
+include { filter_water }                from '../../../modules/filter_water/filter_water.nf'
+include { filter_by_temperature_range } from '../../../modules/filter_by_temperature_range/filter_by_temperature_range.nf'
+include { detect_outliers }             from '../../../modules/detect_outliers/detect_outliers.nf'
+include { filter_outlier }              from '../../../modules/filter_outlier/filter_outlier.nf'
 
 /**
- * Workflow: curate
- * Toma un dataset unificado, añade flags, limpia, hace split y prepara features train/test alineadas.
+ * WORKFLOW: curate
+ * ----------------
+ * Input: Unified raw dataset.
+ * Steps:
+ * 1. Filter Water: Keep only aqueous solubility.
+ * 2. Filter Temperature: Keep data within [25, 49] °C for physiological relevance + context.
+ * 3. Outlier Detection: Identify statistical anomalies.
+ * 4. Filter Outliers: Remove the identified anomalies.
  */
+
 workflow curate {
 
-  take:
-    UNIFIED_CH    // tabla unificada (parquet/csv)
-    OUTDIR_VAL    // val con el outdir 
+    take:
+        ch_unified_data  // Channel: Path to unified.parquet/csv
+        outdir_val       // Value: Output directory path
 
-  main:
+    main:
+        // --- Define Scripts (located in bin/) ---
+        def script_filter_water   = file("${baseDir}/bin/filter_water.py")
+        def script_filter_temp    = file("${baseDir}/bin/filter_by_temperature_range.py")
+        def script_detect_outliers= file("${baseDir}/bin/detect_outliers.py")
+        def script_filter_outliers= file("${baseDir}/bin/filter_outlier.py")
 
-    // --- 0) Rutas a scripts Python como valores (NO encadenar operadores sobre value) ---
-    def FW_PY = Channel.value( file("${baseDir}/bin/filter_water.py") )
-    def DET_PY = Channel.value( file("${baseDir}/bin/detect_outliers.py") )
-    def FO_PY = Channel.value( file("${baseDir}/bin/filter_outlier.py") )
-    def FT_PY = Channel.value( file("${baseDir}/bin/filter_by_temperature_range.py") )
+        // --- 1. Filter Water / Solvents ---
+        filter_water(ch_unified_data, outdir_val, script_filter_water)
+        
+        // --- 2. Filter Temperature Range (25°C - 49°C) ---
+        // We capture RTP (25°C) up to high physiological stress (49°C)
+        filter_by_temperature_range(
+            filter_water.out, 
+            outdir_val, 
+            script_filter_temp, 
+            '25', // Min Temp
+            '49'  // Max Temp
+        )
 
-    // --- 1) Filtrado ---
-    filter_water( UNIFIED_CH, OUTDIR_VAL, FW_PY )
-    def FILTER_W = filter_water.out
+        // --- 3. Outlier Management ---
+        detect_outliers(filter_by_temperature_range.out, outdir_val, script_detect_outliers)
+        
+        filter_outlier(detect_outliers.out, outdir_val, script_filter_outliers)
 
-    filter_by_temperature_range(FILTER_W, OUTDIR_VAL, FT_PY, '25', '49')
-    def FILTER_T = filter_by_temperature_range.out
-
-    // --- 2) Outliers (detección + filtrado) ---
-    detect_outliers( FILTER_T, OUTDIR_VAL, DET_PY )
-    def OUTLIER = detect_outliers.out
-
-    filter_outlier( OUTLIER, OUTDIR_VAL, FO_PY )
-    def FILTER_O = filter_outlier.out
-
-emit:
-  output = FILTER_O
-
+    emit:
+        output = filter_outlier.out
 }

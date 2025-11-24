@@ -1,34 +1,34 @@
+nextflow.enable.dsl = 2
+
 process make_fingerprints {
-  tag "make_fingerprints"
-  label 'cpu_small'
-  publishDir path: { "${outdir}/prepare_data" }, mode: 'copy', overwrite: true
+    tag "ECFP4 & Butina Clustering"
+    label 'cpu_medium'
+    
+    conda "${baseDir}/envs/drugsol-data.yml"
+    
+    publishDir "${params.outdir}/prepare_data", mode: 'copy', overwrite: true
 
-  input:
-    path file      
-    val  outdir
-    path fingerprint_py
-    val  name_out
+    input:  
+        path input_file     // Input parquet file
+        val  outdir_val
+        path script_py      // Python script
+        val  name_prefix    // e.g. "cluster_ecfp4_0p7"
 
-  output:
-    path "${name_out}_fingerprint.parquet", emit: out
+    output:
+        path "${name_prefix}_fingerprint.parquet", emit: out
 
-  script:
-  """
-  set -euo pipefail
-
-  PREFIX="\$HOME/.conda_nf/prepare_data"
-  YAML="${baseDir}/envs/prepare_data.yml"
-
-  if [[ ! -d "\$PREFIX" ]]; then
-    ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
-  fi
-
-  # [cite_start]Ejecución directa (Bypass micromamba run) [cite: 20]
-  "\$PREFIX/bin/python" "${fingerprint_py}" \\
-                                    -i "${file}" \\
-                                    --out-parquet "${name_out}_fingerprint.parquet" \\
-                                    --smiles-col smiles_neutral \\
-                                    --n-bits 2048 --radius 2 --cluster-cutoff 0.7 \\
-                                    --save-csv
-  """
+    script:
+    """
+    # Generate ECFP4 fingerprints (bits) and perform Butina clustering
+    # Used for stratified splitting to prevent data leakage
+    
+    python ${script_py} \\
+        --input ${input_file} \\
+        --out-parquet "${name_prefix}_fingerprint.parquet" \\
+        --smiles-col smiles_neutral \\
+        --n-bits 2048 \\
+        --radius 2 \\
+        --cluster-cutoff 0.7 \\
+        --save-csv
+    """
 }

@@ -1,47 +1,58 @@
 nextflow.enable.dsl = 2
 
-include { fetch_bigsoldb }  from '../../../modules/fetch_bigsoldb/fetch_bigsoldb.nf'
-include { fetch_chembl }  from '../../../modules/fetch_chembl/fetch_chembl.nf'
-include { unify_datasets }  from '../../../modules/unify_datasets/unify_datasets.nf'
+// ============================================================================
+// MODULE INCLUDES
+// ============================================================================
+include { fetch_bigsoldb } from '../../../modules/fetch_bigsoldb/fetch_bigsoldb.nf'
+include { unify_datasets } from '../../../modules/unify_datasets/unify_datasets.nf'
 
 /*
- * Versión anterior: SOLO produce UNIFIED
- * - Si --input: lo usa tal cual (csv/parquet)
- * - Si no: descarga BigSolDB y hace unify (de 1 fuente)
+ * WORKFLOW: common_ingest
+ * -----------------------
+ * Purpose: 
+ * 1. Check if user provided an input file (--input).
+ * 2. If NOT, download the BigSolDB dataset automatically.
+ * 3. Unify/Format the dataset for the next steps.
  */
+
 workflow common_ingest {
 
-  take:
-    OUTDIR_VAL
+    take:
+        outdir_val // Value channel: Path to output directory
 
-  main:
-    def input_val  = params.input
-    def hasInput   = (input_val && input_val.toString().trim() && input_val.toString().trim() != '-')
-    def sources_ch 
+    main:
+        def input_path = params.input
+        def source_ch  = null
 
-    //Chembl
-    def dl_chem = Channel.value( file("${baseDir}/bin/download_chembl.py") )
-    fetch_chembl(OUTDIR_VAL, dl_chem)
-    CHEMBL_PATH_CH = fetch_chembl.out          // canal de path (1 elemento)
-    CHEMBL_VAL_CH  = CHEMBL_PATH_CH.first()
+        // --- Logic: User Input vs. Download ---
+        
+        // Check if input is provided and not just an empty hyphen or null
+        if (input_path && input_path != '-') {
+            
+            log.info "[Ingest] Using user-provided dataset: ${input_path}"
+            source_ch = Channel.fromPath(input_path, checkIfExists: true)
 
-    if( hasInput ) {
-      sources_ch = Channel.fromPath(input_val, checkIfExists:true).collect()
-    }
-    else {
-      // BigSolDB
-      def dl_big = Channel.value( file("${baseDir}/bin/download_bigsoldb.py") )
-      def rec_id = '15094979'
-      fetch_bigsoldb( OUTDIR_VAL, Channel.value(rec_id), dl_big )
-      sources_ch = fetch_bigsoldb.out
-    }
+        } else {
+            
+            log.info "[Ingest] No input provided. Downloading BigSolDB..."
+            
+            // Define script and parameters
+            def script_download = Channel.value(file("${baseDir}/bin/download_bigsoldb.py"))
+            def zenodo_record   = Channel.value('15094979') // Explicit version for reproducibility
+            
+            // Execute Module
+            fetch_bigsoldb(outdir_val, zenodo_record, script_download)
+            source_ch = fetch_bigsoldb.out
+        }
 
-    def dl_unify = Channel.value( file("${baseDir}/bin/unify_data_sets.py") ) 
-    unify_datasets( sources_ch, OUTDIR_VAL, dl_unify ) 
-    result_ch = unify_datasets.out
-     
+        // --- Logic: Unify/Standardize Data ---
+        
+        def script_unify = Channel.value(file("${baseDir}/bin/unify_data_sets.py"))
+        
+        // Pass the source (either user file or downloaded file) to unify
+        unify_datasets(source_ch, outdir_val, script_unify)
 
-  emit:
-    unify = result_ch
-    chembl = CHEMBL_VAL_CH
+    emit:
+        // Main output: The unified dataset ready for curation
+        unify = unify_datasets.out.parquet
 }

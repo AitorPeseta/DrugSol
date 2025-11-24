@@ -1,35 +1,31 @@
+nextflow.enable.dsl = 2
+
 process dropnan_rows {
-  tag "dropnan_rows"
-  label 'cpu_small'
-  publishDir path: { "${outdir}/prepare_data" }, mode: 'copy', overwrite: true
+    tag "Clean Rows (${mode})"
+    label 'cpu_small'
+    
+    conda "${baseDir}/envs/drugsol-data.yml"
+    
+    publishDir "${params.outdir}/prepare_data/final", mode: 'copy', overwrite: true
 
-  input:
-    path source
-    val  outdir
-    path drop_py
-    val  name_out
-    val  mode        
+    input:
+        path source_file // Parquet file to clean
+        val  outdir_val
+        path script_py   // Python script
+        val  name_out    // e.g. "final_train_gbm"
+        val  mode        // "train" or "test"
 
-  output:
-    path "${name_out}_dropnan.parquet", emit: out
+    output:
+        path "${name_out}.parquet", emit: out
 
-  script:
-  """
-  set -euo pipefail
-  set -x
-
-  PREFIX="\$HOME/.conda_nf/prepare_data"
-  YAML="${baseDir}/envs/prepare_data.yml"
-
-  if [[ ! -d "\$PREFIX" ]]; then
-    ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
-  fi
-
-  # Ejecución directa (Bypass micromamba run)
-  "\$PREFIX/bin/python" "${drop_py}" \
-    --input "${source}" \
-    --output "${name_out}_dropnan.parquet" \
-    --save_csv \
-    --mode "${mode}"
-  """
+    script:
+    """
+    # Final Data Cleaning: Drop rows with NaNs in critical columns
+    
+    python ${script_py} \\
+        --input "${source_file}" \\
+        --output "${name_out}.parquet" \\
+        --mode "${mode}" \\
+        --save_csv
+    """
 }

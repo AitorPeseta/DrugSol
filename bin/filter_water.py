@@ -1,22 +1,43 @@
+#!/usr/bin/env python3
+import argparse
 import sys
 import pandas as pd
 
-# Verificar que se haya pasado un argumento
-if len(sys.argv) < 2:
-    print("Uso: python filtrar_water.py <ruta_al_archivo.parquet>")
-    sys.exit(1)
+def parse_args():
+    ap = argparse.ArgumentParser(description="Filter dataset to keep only aqueous solubility entries.")
+    ap.add_argument("--input", required=True, help="Path to input parquet file")
+    ap.add_argument("--output", required=True, help="Path to output parquet file")
+    return ap.parse_args()
 
-# Tomar el nombre del archivo desde los argumentos
-input_file = sys.argv[1]
+def main():
+    args = parse_args()
 
-# Leer el archivo Parquet
-df = pd.read_parquet(input_file)
+    print(f"[Filter Water] Loading {args.input}...")
+    try:
+        df = pd.read_parquet(args.input)
+    except Exception as e:
+        print(f"[ERROR] Failed to read input file: {e}")
+        sys.exit(1)
 
-# Filtrar solo las filas donde solvent == "water"
-df_water = df[df["solvent"].str.lower() == "water"]
+    initial_rows = len(df)
 
-# Crear un nombre de salida (curated.parquet)
-output_file = "filter_water.parquet"
+    # Filter logic: Case-insensitive check for 'water'
+    # We strip whitespace just in case ' water ' slipped through
+    df_water = df[df["solvent"].astype(str).str.strip().str.lower() == "water"]
+    
+    final_rows = len(df_water)
+    dropped = initial_rows - final_rows
 
-# Guardar el archivo filtrado
-df_water.to_parquet(output_file, index=False)
+    print(f"[Filter Water] Rows before: {initial_rows}")
+    print(f"[Filter Water] Rows after : {final_rows}")
+    print(f"[Filter Water] Dropped (non-water): {dropped}")
+
+    if final_rows == 0:
+        print("[WARNING] Resulting dataset is empty! Check if 'solvent' column contains 'water'.")
+
+    # Save output
+    df_water.to_parquet(args.output, index=False)
+    print(f"[Filter Water] Saved to {args.output}")
+
+if __name__ == "__main__":
+    main()

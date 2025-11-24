@@ -1,164 +1,172 @@
-include { stratified_split }                                from '../../../modules/stratified_split/stratified_split.nf'
-include { make_features_mordred as make_features_mordred_train } from '../../../modules/make_features_mordred/make_features_mordred.nf'
-include { make_features_mordred as make_features_mordred_test  } from '../../../modules/make_features_mordred/make_features_mordred.nf'
-include { make_features_rdkit as make_features_rdkit_train } from '../../../modules/make_features_rdkit/make_features_rdkit.nf'
-include { make_features_rdkit as make_features_rdkit_test  } from '../../../modules/make_features_rdkit/make_features_rdkit.nf'
-include { align_feature_columns as align_feature_columns_mordred}                           from '../../../modules/align_feature_columns/align_feature_columns.nf'
-include { align_feature_columns as align_feature_columns_rdkit}                           from '../../../modules/align_feature_columns/align_feature_columns.nf'
-include { dropnan_rows as dropnan_rows_train_smile }              from '../../../modules/dropnan_rows/dropnan_rows.nf'
-include { dropnan_rows as dropnan_rows_test_smile  }              from '../../../modules/dropnan_rows/dropnan_rows.nf'
-include { dropnan_rows as dropnan_rows_train }              from '../../../modules/dropnan_rows/dropnan_rows.nf'
-include { dropnan_rows as dropnan_rows_test  }              from '../../../modules/dropnan_rows/dropnan_rows.nf'
-include { make_fingerprints }     from '../../../modules/make_fingerprints/make_fingerprints.nf'
-include { enrich_ionization_features }     from '../../../modules/enrich_ionization_features/enrich_ionization_features.nf'
-include { standardize_smiles }                              from '../../../modules/standardize_smiles/standardize_smiles.nf'
-include { merge_drug_flag }                                 from '../../../modules/merge_drug_flag/merge_drug_flag.nf'
-include { filter_features as filter_features_train }        from '../../../modules/filter_features/filter_features.nf'
-include { filter_features as filter_features_test}          from '../../../modules/filter_features/filter_features.nf'
+nextflow.enable.dsl = 2
 
+// ============================================================================
+// INCLUDES
+// ============================================================================
 
+// 1. Standardization & Engineering
+include { standardize_smiles }          from '../../../modules/standardize_smiles/standardize_smiles.nf'
+include { make_fingerprints }           from '../../../modules/make_fingerprints/make_fingerprints.nf'
+// Renamed/Expanded module to include Weights + QED + Ionization
+include { engineer_features }           from '../../../modules/engineer_features/engineer_features.nf' 
+
+// 2. Splitting
+include { stratified_split }            from '../../../modules/stratified_split/stratified_split.nf'
+
+// 3. Feature Calculation (Aliased for clarity in DAG)
+include { make_features_mordred as calc_mordred_train } from '../../../modules/make_features_mordred/make_features_mordred.nf'
+include { make_features_mordred as calc_mordred_test  } from '../../../modules/make_features_mordred/make_features_mordred.nf'
+include { make_features_rdkit   as calc_rdkit_train   } from '../../../modules/make_features_rdkit/make_features_rdkit.nf'
+include { make_features_rdkit   as calc_rdkit_test    } from '../../../modules/make_features_rdkit/make_features_rdkit.nf'
+
+// 4. Feature Processing (Cleaning & Alignment)
+include { filter_features       as filter_feat_train  } from '../../../modules/filter_features/filter_features.nf'
+include { filter_features       as filter_feat_test   } from '../../../modules/filter_features/filter_features.nf'
+include { align_feature_columns as align_mordred      } from '../../../modules/align_feature_columns/align_feature_columns.nf'
+include { align_feature_columns as align_rdkit        } from '../../../modules/align_feature_columns/align_feature_columns.nf'
+include { dropnan_rows          as dropnan_train      } from '../../../modules/dropnan_rows/dropnan_rows.nf'
+include { dropnan_rows          as dropnan_test       } from '../../../modules/dropnan_rows/dropnan_rows.nf'
 
 
 /**
- * Workflow: prepare_data
- * Toma un dataset unificado, añade flags, limpia, hace split y prepara features train/test alineadas.
+ * WORKFLOW: prepare_data
+ * ----------------------
+ * Purpose: 
+ * 1. Standardize SMILES.
+ * 2. Calculate physical features (Weights, QED, Ionization).
+ * 3. Split Data (Research Mode).
+ * 4. Generate & Align Descriptors (Mordred/RDKit).
  */
 workflow prepare_data {
 
-  take:
-    FILTER_O    
-    OUTDIR_VAL    // val con el outdir
-    CHEMBL        // base de referencia para merge_drug_flag
+    take:
+        ch_filtered_data   // Input parquet from Curate
+        outdir_val         // Output directory
 
-  main: 
+    main: 
+        // --- Define Scripts (Binaries) ---
+        def script_std     = file("${baseDir}/bin/standardize_smiles.py")
+        def script_eng     = file("${baseDir}/bin/engineer_features.py")
+        def script_fp      = file("${baseDir}/bin/make_fingerprints.py")
+        def script_split   = file("${baseDir}/bin/stratified_split.py")
+        def script_mordred = file("${baseDir}/bin/make_features_mordred.py")
+        def script_rdkit   = file("${baseDir}/bin/make_features_rdkit.py")
+        def script_filter  = file("${baseDir}/bin/filter_features.py")
+        def script_align   = file("${baseDir}/bin/align_feature_columns.py")
+        def script_drop    = file("${baseDir}/bin/dropnan_rows.py")
 
-    def ES_PY = Channel.value( file("${baseDir}/bin/stratified_split.py") )
-    def MFM_PY = Channel.value( file("${baseDir}/bin/make_features_mordred.py") )
-    def MFR_PY = Channel.value( file("${baseDir}/bin/make_features_rdkit.py") )
-    def AL_PY = Channel.value( file("${baseDir}/bin/align_feature_columns.py") )
-    def DN_PY = Channel.value( file("${baseDir}/bin/dropnan_rows.py") )
-    def FN_PY = Channel.value( file("${baseDir}/bin/make_fingerprints.py") )
-    def EIF_PY = Channel.value( file("${baseDir}/bin/enrich_ionization_features.py") )
-    def STD_PY = Channel.value( file("${baseDir}/bin/standardize_smiles.py") )
-    def MERG_PY = Channel.value( file("${baseDir}/bin/merge_drug_flag.py") )
-    def FF_PY = Channel.value( file("${baseDir}/bin/filter_features.py") )
-    def mode = params.mode
-    def input_val  = params.input
-    def hasInput   = (input_val && input_val.toString().trim() && input_val.toString().trim() != '-')
-    def FINAL_TRAIN_GBM   = Channel.empty()
-    def FINAL_TEST_GBM    = Channel.empty()
-    def FINAL_TRAIN_SMILE = Channel.empty()
-    def FINAL_TEST_SMILE  = Channel.empty() 
-    
-    // --- Estandarizar SMILES / InChIKey ---
-    standardize_smiles( FILTER_O, OUTDIR_VAL, STD_PY )
-    def CURATED = standardize_smiles.out
+        // ============================================================
+        // 1. COMMON PRE-PROCESSING
+        // ============================================================
 
-    // --- Flag de fármaco (merge con CHEMBL) ---
-    merge_drug_flag( CURATED, CHEMBL, OUTDIR_VAL, MERG_PY )
-    def MERGED = merge_drug_flag.out
+        // A. Standardize SMILES (Canonicalize, Salts, etc.)
+        standardize_smiles(ch_filtered_data, outdir_val, script_std)
+        
+        // B. Feature Engineering (The "Physics" Step)
+        // Calculates: Gaussian Weights, QED (Drug-likeness), Ionization
+        engineer_features(standardize_smiles.out, outdir_val, script_eng)
+        
+        // C. Fingerprints (needed for Stratified Split)
+        make_fingerprints(engineer_features.out, outdir_val, script_fp, "cluster_ecfp4_0p7")
+        def ch_ready_to_split = make_fingerprints.out
 
-    enrich_ionization_features(MERGED, OUTDIR_VAL, EIF_PY )
-    def IONIZATED = enrich_ionization_features.out
 
-    make_fingerprints(IONIZATED, OUTDIR_VAL, FN_PY, "cluster_ecfp4_0p7")
-    def FINGER = make_fingerprints.out
+        // ============================================================
+        // 2. BRANCHING LOGIC
+        // ============================================================
+        
+        // Initialize empty channels for outputs
+        def ch_final_train_gbm   = Channel.empty()
+        def ch_final_test_gbm    = Channel.empty()
+        def ch_final_train_smile = Channel.empty()
+        def ch_final_test_smile  = Channel.empty() 
 
-    if (mode != 'execution') {
-      // --- 1) Split estratificado por grupo ---
-      stratified_split( FINGER, OUTDIR_VAL, ES_PY )
-      def TRAIN = stratified_split.out.train
-      def TEST  = stratified_split.out.test
+        if (params.mode == 'research') {
+            
+            // --- RESEARCH MODE: SPLIT TRAIN/TEST ---
 
-      // ===========GBM==============
+            // 1. Stratified Scaffold Split
+            stratified_split(ch_ready_to_split, outdir_val, script_split)
+            def ch_train = stratified_split.out.train
+            def ch_test  = stratified_split.out.test
 
-      // --- 2) Features (Mordred) para train y test ---
-      make_features_mordred_train( TRAIN, OUTDIR_VAL, MFM_PY, "train" )
-      make_features_mordred_test(  TEST,  OUTDIR_VAL, MFM_PY, "test"  )
-      def FEAT_TRAIN_MR = make_features_mordred_train.out
-      def FEAT_TEST_MR  = make_features_mordred_test.out
+            // ----------------------------------------------------
+            // PATH A: GBM Models (Mordred Descriptors)
+            // ----------------------------------------------------
+            
+            // Calculate Raw Features
+            calc_mordred_train(ch_train, outdir_val, script_mordred, "train")
+            calc_mordred_test(ch_test,   outdir_val, script_mordred, "test")
 
-      filter_features_train( FEAT_TRAIN_MR, OUTDIR_VAL, FF_PY, "train")
-      filter_features_test( FEAT_TEST_MR, OUTDIR_VAL, FF_PY, "test")
-      def FEAT_FILTER_TRAIN = filter_features_train.out
-      def FEAT_FILTER_TEST = filter_features_test.out
+            // Filter Low Variance / Correlated Features
+            filter_feat_train(calc_mordred_train.out, outdir_val, script_filter, "train")
+            filter_feat_test(calc_mordred_test.out,   outdir_val, script_filter, "test")
 
-      def feat_train_align_mr = FEAT_FILTER_TRAIN
-      def feat_train_drop_mr  = FEAT_FILTER_TRAIN
-      def PAIRS_CH = feat_train_align_mr.combine( FEAT_FILTER_TEST )
+            // Align Test columns to match Train columns exactly
+            def ch_mordred_pairs = filter_feat_train.out.combine(filter_feat_test.out)
+            align_mordred(ch_mordred_pairs, outdir_val, script_align)
 
-      // --- 3) Alinear columnas (test respecto a train)
-      align_feature_columns_mordred( PAIRS_CH, OUTDIR_VAL, AL_PY )
-      def AL_TEST_CH = align_feature_columns_mordred.out
+            // Drop NaNs (Final Cleanup)
+            dropnan_train(filter_feat_train.out, outdir_val, script_drop, "final_train_gbm", "train")
+            dropnan_test(align_mordred.out,      outdir_val, script_drop, "final_test_gbm",  "test")
 
-      // --- 4) Drop NaN (train sin alinear, test ya alineado)
-      dropnan_rows_train( feat_train_drop_mr, OUTDIR_VAL, DN_PY, "final_train", "train" )
-      dropnan_rows_test(  AL_TEST_CH, OUTDIR_VAL, DN_PY, "final_test",  "test"  )
+            ch_final_train_gbm = dropnan_train.out
+            ch_final_test_gbm  = dropnan_test.out
 
-      FINAL_TRAIN_GBM = dropnan_rows_train.out
-      FINAL_TEST_GBM  = dropnan_rows_test.out
+            // ----------------------------------------------------
+            // PATH B: GNN Models (SMILES + RDKit Features)
+            // ----------------------------------------------------
+            
+            // Calculate RDKit features (lighter than Mordred, often used as auxiliary for GNNs)
+            calc_rdkit_train(ch_train, outdir_val, script_rdkit, "train")
+            calc_rdkit_test(ch_test,   outdir_val, script_rdkit, "test")
 
-      // ===========GNN Y TPSA==============
+            // Align RDKit columns
+            def ch_rdkit_pairs = calc_rdkit_train.out.combine(calc_rdkit_test.out)
+            align_rdkit(ch_rdkit_pairs, outdir_val, script_align)
 
-      // --- 2) Features (RDKit) para train y test ---
-      make_features_rdkit_train( TRAIN, OUTDIR_VAL, MFR_PY, "train" )
-      make_features_rdkit_test(  TEST,  OUTDIR_VAL, MFR_PY, "test"  )
-      def FEAT_TRAIN_RD = make_features_rdkit_train.out
-      def FEAT_TEST_RD  = make_features_rdkit_test.out
+            // Finalizing GNN Inputs (Usually just SMILES + Target + Weight, but we keep features if needed)
+            dropnan_rows_train(calc_rdkit_train.out, outdir_val, script_drop, "final_train_gnn", "train")
+            dropnan_rows_test(align_rdkit.out,       outdir_val, script_drop, "final_test_gnn",  "test")
 
-      def feat_train_align_rd = FEAT_TRAIN_RD
-      def feat_train_drop_rd  = FEAT_TRAIN_RD
-      def PAIRS_RD = feat_train_align_rd.combine( FEAT_TEST_RD )
+            ch_final_train_smile = dropnan_rows_train.out
+            ch_final_test_smile  = dropnan_rows_test.out
 
-      // --- 3) Alinear columnas (test respecto a train)
-      align_feature_columns_rdkit( PAIRS_RD, OUTDIR_VAL, AL_PY )
-      def AL_TEST_RD = align_feature_columns_rdkit.out
 
-      // --- 4) Drop NaN (train sin alinear, test ya alineado)
-      dropnan_rows_train_smile( feat_train_drop_rd, OUTDIR_VAL, DN_PY, "final_train_smile", "train" )
-      dropnan_rows_test_smile(  AL_TEST_RD, OUTDIR_VAL, DN_PY, "final_test_smile",  "test"  )
-      
-      FINAL_TRAIN_SMILE = dropnan_rows_train_smile.out
-      FINAL_TEST_SMILE  = dropnan_rows_test_smile.out
+        } else {
+            
+            // --- EXECUTION MODE: INFERENCE ONLY ---
+            // Input data is treated entirely as "TEST" data.
+            // We must load "TRAIN" reference artifacts (column names, scalers) from resources/
 
-    } else {
+            def ch_input_test = ch_ready_to_split
 
-      // Genera features de TEST (solo test en ejecución)
-      make_features_mordred_test( FINGER, OUTDIR_VAL, MFM_PY, "test" )
-      def FEAT_TEST_MR = make_features_mordred_test.out
+            // 1. Calculate Features
+            calc_mordred_test(ch_input_test, outdir_val, script_mordred, "test")
+            calc_rdkit_test(ch_input_test,   outdir_val, script_rdkit,   "test")
+            
+            // 2. Filter (Test only needs to remove its own infinities, column selection happens in align)
+            filter_feat_test(calc_mordred_test.out, outdir_val, script_filter, "test")
 
-      make_features_rdkit_test( FINGER, OUTDIR_VAL, MFR_PY, "test" )
-      def FEAT_TEST_RD = make_features_rdkit_test.out   
+            // 3. Load Reference Artifacts (Trained Feature Lists)
+            def ref_train_mordred = Channel.fromPath("${baseDir}/resources/train_features_mordred_filtered.parquet", checkIfExists: true)
+            def ref_train_rdkit   = Channel.fromPath("${baseDir}/resources/train_rdkit_featured.parquet",   checkIfExists: true)
 
-      // Filtra Mordred (solo test), y alinea contra TRAIN precomputado en resources
-      filter_features_test( FEAT_TEST_MR, OUTDIR_VAL, FF_PY, "test" )
-      def FEAT_FILTER_TEST = filter_features_test.out
+            // 4. Align Test against Reference Train
+            align_mordred(ref_train_mordred.combine(filter_feat_test.out), outdir_val, script_align)
+            align_rdkit(ref_train_rdkit.combine(calc_rdkit_test.out),      outdir_val, script_align)
 
-      def feat_train_align_mr = Channel.value( file("${baseDir}/resources/train_mordred_featured.parquet") )
-      def PAIRS_MR = feat_train_align_mr.combine( FEAT_FILTER_TEST )
+            // 5. Drop NaNs
+            dropnan_test(align_mordred.out, outdir_val, script_drop, "final_test_gbm", "test")
+            dropnan_rows_test(align_rdkit.out, outdir_val, script_drop, "final_test_gnn", "test")
 
-      def feat_train_align_rd = Channel.value( file("${baseDir}/resources/train_rdkit_featured.parquet") )
-      def PAIRS_RD = feat_train_align_rd.combine( FEAT_TEST_RD )
+            ch_final_test_gbm   = dropnan_test.out
+            ch_final_test_smile = dropnan_rows_test.out
+        }
 
-      // Alinear columnas (test respecto a train)
-      align_feature_columns_mordred( PAIRS_MR, OUTDIR_VAL, AL_PY )
-      def AL_TEST_MR = align_feature_columns_mordred.out   
-
-      align_feature_columns_rdkit( PAIRS_RD, OUTDIR_VAL, AL_PY )
-      def AL_TEST_RD = align_feature_columns_rdkit.out     
-
-      // Drop NaN en test
-      dropnan_rows_test( AL_TEST_MR, OUTDIR_VAL, DN_PY, "final_test", "test" )
-      dropnan_rows_test_smile( AL_TEST_RD, OUTDIR_VAL, DN_PY, "final_test_smile", "test" )
-
-      FINAL_TEST_GBM   = dropnan_rows_test.out
-      FINAL_TEST_SMILE = dropnan_rows_test_smile.out
-  }
-
-emit:
-  train = FINAL_TRAIN_GBM
-  test  = FINAL_TEST_GBM
-  train_smiles = FINAL_TRAIN_SMILE
-  test_smiles = FINAL_TEST_SMILE
-
+    emit:
+        train_gbm    = ch_final_train_gbm
+        test_gbm     = ch_final_test_gbm
+        train_smiles = ch_final_train_smile
+        test_smiles  = ch_final_test_smile
 }

@@ -1,44 +1,41 @@
+nextflow.enable.dsl = 2
+
 process make_features_mordred {
-  tag "make_features_mordred"
-  label 'cpu_small'
-  publishDir path: { "${outdir}/prepare_data" }, mode: 'copy', overwrite: true
+    tag "Mordred Descriptors (${dataset_name})"
+    label 'cpu_medium'
+    
+    conda "${baseDir}/envs/drugsol-data.yml"
+    
+    // Publish results. If it's the training set, we might want to keep it as a resource resource
+    publishDir "${params.outdir}/prepare_data/features", mode: 'copy', overwrite: true
+    publishDir "${baseDir}/resources", mode: 'copy', overwrite: true, enabled: (dataset_name == 'train')
 
-  input:
-    path file      
-    val  outdir
-    path features_py
-    val  name_out
+    input:
+        path input_file    // Input parquet file
+        val  outdir_val
+        path script_py     // Python script
+        val  dataset_name  // "train" or "test"
 
-  output:
-    path "${name_out}_mordred_featured.parquet", emit: out
+    output:
+        path "${dataset_name}_mordred_featured.parquet", emit: out
 
-  script:
-  """
-  set -euo pipefail
-
-  PREFIX="\$HOME/.conda_nf/prepare_data"
-  YAML="${baseDir}/envs/prepare_data.yml"
-
-  if [[ ! -d "\$PREFIX" ]]; then
-    ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
-  fi
-
-  # Ejecución directa (Bypass micromamba run)
-  "\$PREFIX/bin/python" "${features_py}" --input "${file}" \\
-                                    --out_parquet "${name_out}_mordred_featured.parquet" \\
-                                    --smiles_source neutral \\
-                                    --keep-smiles \\
-                                    --include_3d \\
-                                    --ff uff \\
-                                    --seed_3d 42 \\
-                                    --max_atoms_3d 200 \
-                                    --max_iters_3d 200 \\
-                                    --nproc 4 \\
-                                    --inchikey_col cluster_ecfp4_0p7 \\
-                                    --ik14_hash_bins 128 \\
-                                    --keep_inchikey_as_group \\
-                                    --save_csv 
-
-  cp -v "${name_out}_mordred_featured.parquet" "${baseDir}/resources"                               
-  """
+    script:
+    """
+    # Calculate Mordred Descriptors
+    # We dynamically pass the number of CPUs allocated to this task
+    
+    python ${script_py} \\
+        --input ${input_file} \\
+        --out_parquet "${dataset_name}_mordred_featured.parquet" \\
+        --smiles_source neutral \\
+        --keep-smiles \\
+        --inchikey_col cluster_ecfp4_0p7 \\
+        --ik14_hash_bins 128 \\
+        --keep_inchikey_as_group \\
+        --nproc ${task.cpus} \\
+        --include_3d \\
+        --ff uff \\
+        --max_atoms_3d 200 \\
+        --save_csv
+    """
 }

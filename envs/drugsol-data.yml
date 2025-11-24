@@ -1,0 +1,15 @@
+name: drugsol-data
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10           # Fixed version for compatibility
+  - rdkit=2023.09.*       # Version compatible with other deps
+  - mordred               # Generator of molecular descriptors
+  - pandas=2.1.*          # For data manipulation
+  - numpy<2.0             #   Numerical operations
+  - pyarrow
+  - scikit-learn          # For data preprocessing
+  - matplotlib            # Basic plotting
+  - seaborn               # Advanced visualization
+  - requests              # HTTP requests
+  - pip

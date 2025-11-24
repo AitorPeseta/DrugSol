@@ -1,10 +1,26 @@
-# Nextflow / temporales
+# --- Nextflow & Temporary Files ---
 work/
 .nextflow/
-.nextflow.log
+# Captures .nextflow.log, .nextflow.log.1, .nextflow.log.2, etc.
+.nextflow.log*
+trace.txt*
+report.html*
+timeline.html*
+dag.png*
 
-# Datos y modelos grandes
+# --- Python & Jupyter ---
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# --- Data & Large Models ---
 bin_pruebas/
 *.parquet
 *.csv
 *.pkl
+*.h5
+*.pt
+*.pth
+
+# --- System Specific ---
+.DS_Store

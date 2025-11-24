@@ -1,32 +1,26 @@
+nextflow.enable.dsl = 2
+
 process measurement_counts_histogram {
-  tag "measurement_counts_histogram"
-  label 'cpu_small'
-  publishDir path: { "${outdir}/analysis" }, mode: 'copy', overwrite: true
-
-  input:
-    path file
-    val  outdir
-    path counts_py
-
-  output:
-    path "meas_dual_combined", emit: COUNTS_DIR
+    tag "EDA: Measurements per Molecule"
+    label 'cpu_small'
     
-  script:
-  """
-  set -euo pipefail
+    conda "${baseDir}/envs/drugsol-data.yml"
+    
+    publishDir "${params.outdir}/analysis", mode: 'copy', overwrite: true
 
-  PREFIX="\$HOME/.conda_nf/analysis"
-  YAML="${baseDir}/envs/analysis.yml"
+    input:
+        path file      // Parquet file
+        val  outdir
+        path script_py      // Python script
 
-  if [[ ! -d "\$PREFIX" ]]; then
-    ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
-  fi
-
-  # Ejecución directa (Bypass micromamba run)
-  "\$PREFIX/bin/python" "${counts_py}" --input "${file}" \\
-                                    --id_col smiles_original \\
-                                    --xminor 0.5 --grid-alpha 0.4\\
-                                    --outdir meas_dual_combined
-
-  """
+    output:
+        path "meas_dual_combined", emit: COUNTS_DIR
+    
+    script:
+    """
+    python ${script_py} \\
+        --input "${file}" \\
+        --id_col smiles_original \\
+        --outdir meas_dual_combined
+    """
 }

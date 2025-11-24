@@ -1,280 +1,197 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+filter_features.py
+------------------
+Advanced feature selection pipeline:
+1. Removes Constant and Near-Zero Variance (NZV) columns.
+2. Clusters highly correlated features (graph-based).
+3. Selects one representative per cluster using LightGBM/XGBoost Feature Importance (Gain).
+"""
 
 import argparse
-import os
+import sys
+import warnings
 from pathlib import Path
-from typing import List, Tuple, Set, Dict
+from typing import List, Dict, Set
 
 import numpy as np
 import pandas as pd
 
-# Modelos opcionales
-_HAS_LGBM = False
-_HAS_XGB  = False
+# Optional LightGBM/XGBoost support
 try:
     import lightgbm as lgb
     _HAS_LGBM = True
-except Exception:
-    pass
+except ImportError:
+    _HAS_LGBM = False
 
 try:
     import xgboost as xgb
     _HAS_XGB = True
-except Exception:
-    pass
-
+except ImportError:
+    _HAS_XGB = False
 
 def read_any(path: str) -> pd.DataFrame:
-    p = Path(path)
-    if p.suffix.lower() == ".parquet":
-        return pd.read_parquet(p)
-    elif p.suffix.lower() in (".csv", ".txt"):
-        return pd.read_csv(p)
-    raise SystemExit(f"Formato no soportado: {p.suffix}")
+    if path.endswith(".parquet"):
+        return pd.read_parquet(path)
+    return pd.read_csv(path)
 
-
-def write_like_input(df: pd.DataFrame, out_path: str):
-    p = Path(out_path)
-    p.parent.mkdir(parents=True, exist_ok=True)
-    suf = p.suffix.lower()
-    if suf == ".parquet":
-        df.to_parquet(p, index=False)
-    elif suf in (".csv", ".txt"):
-        df.to_csv(p, index=False)
-    else:
-        # por defecto parquet
-        out_parquet = str(p) + ".parquet"
-        df.to_parquet(out_parquet, index=False)
-
-
-def drop_constant_and_nzv(X: pd.DataFrame, nzv_thresh: float = 0.01) -> pd.DataFrame:
-    """Elimina columnas constantes y near-zero variance."""
-    Xn = X.select_dtypes(include=[np.number])
-    keep = []
-    for c in Xn.columns:
-        col = Xn[c]
-        # constante
-        if col.nunique(dropna=True) <= 1:
+def drop_constant_and_nzv(df: pd.DataFrame, nzv_thresh: float = 0.01) -> pd.DataFrame:
+    """Drops constant and near-zero variance numerical columns."""
+    numeric_df = df.select_dtypes(include=[np.number])
+    keep_cols = []
+    
+    for col in numeric_df.columns:
+        series = numeric_df[col]
+        # Constant check
+        if series.nunique(dropna=True) <= 1:
             continue
-        # near-zero variance (proporción de la clase mayoritaria muy alta)
-        vc = col.value_counts(dropna=True)
-        major_ratio = (vc.iloc[0] / float(len(col))) if len(vc) else 1.0
-        if major_ratio >= (1.0 - nzv_thresh):
-            # si el 99% de filas tienen un único valor ≈ no informativa
+            
+        # NZV Check (dominance ratio)
+        vc = series.value_counts(normalize=True, dropna=True)
+        if not vc.empty and vc.iloc[0] >= (1.0 - nzv_thresh):
             continue
-        keep.append(c)
-    return Xn[keep]
+            
+        keep_cols.append(col)
+        
+    return numeric_df[keep_cols]
 
-
-def correlation_clusters(X: pd.DataFrame, corr_thresh: float) -> List[List[str]]:
-    """Forma clústeres de alta correlación usando un grafo (threshold sobre |rho|)."""
-    if X.shape[1] <= 1:
-        return [X.columns.tolist()]
-    corr = X.corr().abs().fillna(0.0)
-    cols = corr.columns.tolist()
-    # grafo por umbral
+def correlation_clusters(df: pd.DataFrame, corr_thresh: float) -> List[List[str]]:
+    """
+    Groups features into clusters based on absolute correlation > threshold.
+    Returns a list of lists (clusters).
+    """
+    if df.shape[1] <= 1:
+        return [df.columns.tolist()]
+        
+    # Calculate correlation matrix
+    corr_matrix = df.corr().abs().fillna(0.0)
+    cols = corr_matrix.columns.tolist()
+    
+    # Build adjacency graph
     adj: Dict[str, Set[str]] = {c: set() for c in cols}
-    for i, ci in enumerate(cols):
+    for i, c1 in enumerate(cols):
         for j in range(i+1, len(cols)):
-            cj = cols[j]
-            if corr.iloc[i, j] >= corr_thresh:
-                adj[ci].add(cj)
-                adj[cj].add(ci)
-    # BFS para componentes conexas
+            c2 = cols[j]
+            if corr_matrix.iloc[i, j] >= corr_thresh:
+                adj[c1].add(c2)
+                adj[c2].add(c1)
+                
+    # Find connected components (clusters)
     visited = set()
     clusters = []
-    for c in cols:
-        if c in visited:
-            continue
-        comp = []
-        stack = [c]
-        visited.add(c)
+    for node in cols:
+        if node in visited: continue
+        
+        component = []
+        stack = [node]
+        visited.add(node)
+        
         while stack:
-            u = stack.pop()
-            comp.append(u)
-            for v in adj[u]:
-                if v not in visited:
-                    visited.add(v)
-                    stack.append(v)
-        clusters.append(sorted(comp))
+            curr = stack.pop()
+            component.append(curr)
+            for neighbor in adj[curr]:
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    stack.append(neighbor)
+        clusters.append(sorted(component))
+        
     return clusters
 
-
-def quick_gain_importance(
-    X: pd.DataFrame,
-    y: pd.Series,
-    algo: str = "auto",
-    time_limit: int = 60,
-    seed: int = 42
-) -> pd.Series:
-    """
-    Entrena un modelo muy rápido y devuelve importancia por 'gain'.
-    Si no hay target o falla el modelo -> devuelve varianza normalizada como respaldo.
-    """
+def get_feature_importance_gain(X: pd.DataFrame, y: pd.Series, algo="lgbm") -> pd.Series:
+    """Calculates feature importance (Gain) using a quick GBM model."""
     if y is None or y.isna().all():
-        # respaldo: varianza
-        var = X.var(ddof=0).fillna(0.0)
-        scl = var.sum() or 1.0
-        return (var / scl)
+        # Fallback to variance
+        return X.var() / (X.var().sum() or 1.0)
 
-    algo = algo.lower()
-    use_lgb = (algo in ("auto", "lgbm")) and _HAS_LGBM
-    use_xgb = (algo in ("auto", "xgb")) and _HAS_XGB and (not use_lgb)
+    # LightGBM
+    if algo == "lgbm" and _HAS_LGBM:
+        dtrain = lgb.Dataset(X, label=y, free_raw_data=False)
+        params = {
+            "objective": "regression", "metric": "rmse", "verbosity": -1,
+            "num_leaves": 31, "learning_rate": 0.05, "seed": 42
+        }
+        model = lgb.train(params, dtrain, num_boost_round=100)
+        gain = model.feature_importance(importance_type="gain")
+        return pd.Series(gain, index=X.columns)
 
-    try:
-        if use_lgb:
-            dtrain = lgb.Dataset(X, label=y, free_raw_data=False)
-            params = dict(
-                objective="regression",
-                metric="rmse",
-                learning_rate=0.05,
-                num_leaves=64,
-                feature_fraction=0.8,
-                bagging_fraction=0.8,
-                bagging_freq=1,
-                min_data_in_leaf=10,
-                seed=seed,
-                verbose=-1,
-                device_type="cpu",
-            )
-            bst = lgb.train(params, dtrain, num_boost_round=200)
-            imp = bst.feature_importance(importance_type="gain")
-            s = pd.Series(imp, index=X.columns, dtype=float)
-            if s.sum() == 0:
-                # fallback a split count
-                imp = bst.feature_importance(importance_type="split")
-                s = pd.Series(imp, index=X.columns, dtype=float)
-            tot = s.sum() or 1.0
-            return s / tot
+    # XGBoost
+    if algo == "xgb" and _HAS_XGB:
+        model = xgb.XGBRegressor(n_estimators=100, learning_rate=0.05, random_state=42, n_jobs=1)
+        model.fit(X, y)
+        gain = model.feature_importances_ # XGB uses gain by default in sklearn API usually
+        return pd.Series(gain, index=X.columns)
 
-        if use_xgb:
-            dtrain = xgb.DMatrix(X, label=y)
-            params = dict(
-                objective="reg:squarederror",
-                tree_method="hist",
-                learning_rate=0.05,
-                max_depth=6,
-                subsample=0.8,
-                colsample_bytree=0.8,
-                seed=seed,
-                verbosity=0,
-            )
-            bst = xgb.train(params, dtrain, num_boost_round=200)
-            score = bst.get_score(importance_type="gain")
-            s = pd.Series(score, dtype=float)
-            # ensure all columns present
-            s = s.reindex(X.columns).fillna(0.0)
-            tot = s.sum() or 1.0
-            return s / tot
+    # Fallback
+    return X.var()
 
-    except Exception:
-        pass
-
-    # respaldo: varianza
-    var = X.var(ddof=0).fillna(0.0)
-    scl = var.sum() or 1.0
-    return (var / scl)
-
-
-def select_medoids_by_gain(
-    X: pd.DataFrame,
-    y: pd.Series,
-    clusters: List[List[str]],
-    algo: str,
-) -> List[str]:
-    """Para cada clúster, elige 1 medoid según importancia media (gain); 
-       si el clúster tiene 1, lo deja tal cual."""
-    selected = []
-    # Importancia global como guía; si falla, varianza
-    global_imp = quick_gain_importance(X, y, algo=algo)
-
-    for group in clusters:
-        if len(group) == 1:
-            selected.append(group[0])
+def select_medoids(X: pd.DataFrame, y: pd.Series, clusters: List[List[str]], algo="lgbm") -> List[str]:
+    """Selects the 'best' feature from each correlated cluster based on Gain."""
+    selected_features = []
+    
+    # Calculate global importance once
+    importances = get_feature_importance_gain(X, y, algo)
+    
+    for cluster in clusters:
+        if len(cluster) == 1:
+            selected_features.append(cluster[0])
             continue
-        sub = global_imp.reindex(group).fillna(0.0)
-        # si todas cero, usar varianza como desempate
-        if sub.sum() == 0:
-            var = X[group].var(ddof=0).fillna(0.0)
-            sub = var / (var.sum() or 1.0)
-        # medoid = argmax de la importancia/varianza
-        medoid = sub.sort_values(ascending=False).index[0]
-        selected.append(medoid)
-    return selected
-
-
-def front_columns(df: pd.DataFrame, order: List[str]) -> pd.DataFrame:
-    front = [c for c in order if c in df.columns]
-    rest  = [c for c in df.columns if c not in front]
-    return df[front + rest]
-
+            
+        # Pick feature with max importance in this cluster
+        best_feat = importances.reindex(cluster).fillna(0.0).idxmax()
+        selected_features.append(best_feat)
+        
+    return selected_features
 
 def main():
-    ap = argparse.ArgumentParser("Filtra Mordred manteniendo TODO lo demás")
-    ap.add_argument("-i", "--input", required=True, help="Entrada .parquet o .csv")
-    ap.add_argument("-o", "--output", required=True, help="Salida .parquet o .csv")
-    ap.add_argument("--target", default=None, help="Columna target (para importancia de ganancia)")
-    ap.add_argument("--id-col", default="row_uid")
-    ap.add_argument("--mordred-prefix", default="mordred__")
+    ap = argparse.ArgumentParser(description="Filter Features by Correlation & Importance.")
+    ap.add_argument("-i", "--input", required=True)
+    ap.add_argument("-o", "--output", required=True)
+    ap.add_argument("--target", default="logS", help="Target column for importance calculation.")
+    ap.add_argument("--mordred-prefix", default="mordred__", help="Prefix of columns to filter.")
     ap.add_argument("--corr-thresh", type=float, default=0.99)
-    ap.add_argument("--nzv-thresh",  type=float, default=0.01)
-    ap.add_argument("--algo", choices=["auto", "lgbm", "xgb"], default="auto")
-    ap.add_argument("--time-limit", type=int, default=60)
-    ap.add_argument("--force-keep", nargs="*", default=[], help="Columnas a blindar (no filtrar/quitar)")
-
+    ap.add_argument("--algo", default="lgbm", choices=["lgbm", "xgb"])
+    
     args = ap.parse_args()
 
+    # 1. Load
+    print(f"[Filter] Loading {args.input}...")
     df = read_any(args.input)
-    all_cols = df.columns.tolist()
-
-    # Separar Mordred vs Resto
-    mordred_cols = [c for c in all_cols if c.startswith(args.mordred_prefix)]
-    passthrough_cols = [c for c in all_cols if c not in mordred_cols]
-
-    # Blindaje de columnas marcadas
-    force_keep = set(args.force_keep or [])
-    passthrough_cols = list(dict.fromkeys(list(force_keep) + passthrough_cols))
-
-    # Trabajar SOLO en Mordred numéricos
-    X_mord = df[mordred_cols].select_dtypes(include=[np.number])
-    if X_mord.shape[1] == 0:
-        # No hay Mordred numéricos -> devolvemos igual
-        out = df.copy()
-        out = front_columns(out, [args.id-col if hasattr(args, "id-col") else args.id_col, args.target or "", "smiles_neutral", "smiles_original"])
-        write_like_input(out, args.output)
+    
+    # Identify feature columns vs meta columns
+    feat_cols = [c for c in df.columns if c.startswith(args.mordred_prefix)]
+    meta_cols = [c for c in df.columns if c not in feat_cols]
+    
+    print(f"[Filter] Found {len(feat_cols)} candidate features (prefix '{args.mordred_prefix}').")
+    
+    if len(feat_cols) == 0:
+        print("[Filter] No features found to filter. Saving copy.")
+        df.to_parquet(args.output, index=False)
         return
 
-    # 1) constantes / NZV
-    X_step1 = drop_constant_and_nzv(X_mord, nzv_thresh=args.nzv_thresh)
-    if X_step1.shape[1] == 0:
-        # Nada útil -> devuelve solo passthrough
-        out = df[passthrough_cols].copy()
-        out = front_columns(out, [args.id_col, args.target or "", "smiles_neutral", "smiles_original"])
-        write_like_input(out, args.output)
-        return
+    # 2. Drop Constant/NZV
+    X = df[feat_cols]
+    X_clean = drop_constant_and_nzv(X)
+    print(f"[Filter] Dropped constant/NZV: {X.shape[1]} -> {X_clean.shape[1]} cols")
 
-    # 2) clústeres por alta correlación
-    clusters = correlation_clusters(X_step1, corr_thresh=args.corr_thresh)
+    # 3. Correlation Clustering
+    clusters = correlation_clusters(X_clean, args.corr_thresh)
+    print(f"[Filter] Found {len(clusters)} clusters (corr > {args.corr_thresh})")
 
-    # 3) seleccionar medoid por importancia de ganancia
+    # 4. Selection by Importance
     y = None
-    if args.target and args.target in df.columns:
-        y = pd.to_numeric(df[args.target], errors="coerce")
+    if args.target in df.columns:
+        y = pd.to_numeric(df[args.target], errors="coerce").fillna(0.0)
+    
+    selected_cols = select_medoids(X_clean, y, clusters, args.algo)
+    print(f"[Filter] Selected {len(selected_cols)} final features.")
 
-    keep_mord = select_medoids_by_gain(X_step1, y, clusters, algo=args.algo)
-
-    # Recombinar: TODO lo no-Mordred + Mordred filtradas
-    out = pd.concat([df[passthrough_cols], X_step1[keep_mord]], axis=1)
-
-    # Orden “front” útil
-    out = front_columns(out, [args.id_col, args.target or "", "smiles_neutral", "smiles_original"])
-
-    write_like_input(out, args.output)
-    print(f"[OK] Mordred in: {len(mordred_cols)}  -> kept: {len(keep_mord)}")
-    print(f"[OK] Passthrough cols: {len(passthrough_cols)}")
-    print(f"[OK] Guardado en: {args.output}")
-
+    # 5. Reassemble & Save
+    # Keep all meta columns + selected features
+    final_df = pd.concat([df[meta_cols], X_clean[selected_cols]], axis=1)
+    
+    final_df.to_parquet(args.output, index=False)
+    print(f"[Filter] Saved to {args.output}")
 
 if __name__ == "__main__":
     main()

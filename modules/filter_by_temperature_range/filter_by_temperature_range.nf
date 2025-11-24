@@ -1,32 +1,30 @@
+nextflow.enable.dsl = 2
+
 process filter_by_temperature_range {
-  tag "filter_by_temperature_range"
-  label 'cpu_small'
-  publishDir path: { "${outdir}/curate" }, mode: 'copy', overwrite: true
+    tag "Filter Temp [${min}, ${max}]"
+    label 'cpu_small'
+    
+    conda "${baseDir}/envs/drugsol-data.yml"
+    
+    publishDir "${params.outdir}/curate", mode: 'copy', overwrite: true
 
-  input:
-    path source      
-    val  outdir
-    path filter_t_py
-    val min
-    val max
+    input:
+        path source_file      // Parquet file to filter
+        val  outdir_val
+        path script_py        // Python script
+        val  min_val          // Minimum temperature
+        val  max_val          // Maximum temperature
 
-  output:
-    path "filter_temp.parquet", emit: out
+    output:
+        path "filter_temp.parquet", emit: out
 
-  script:
-  """
-  set -euo pipefail
-
-  PREFIX="\$HOME/.conda_nf/curate"
-  YAML="${baseDir}/envs/curate.yml"
-
-  if [[ ! -d "\$PREFIX" ]]; then
-    ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
-  fi
-
-  # Ejecución directa (Bypass micromamba run)
-  "\$PREFIX/bin/python" "${filter_t_py}" --input "${source}" \\
-                                    --out filter_temp.parquet \\
-                                    --min-k "${min}" --max-k "${max}"
-  """
+    script:
+    """
+    python ${script_py} \\
+        --input ${source_file} \\
+        --out filter_temp.parquet \\
+        --temp-col temp_C \\
+        --min ${min_val} \\
+        --max ${max_val}
+    """
 }

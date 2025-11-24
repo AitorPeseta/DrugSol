@@ -1,28 +1,25 @@
+nextflow.enable.dsl = 2
+
 process filter_water {
-  tag "filter_water"
-  label 'cpu_small'
-  publishDir path: { "${outdir}/curate" }, mode: 'copy', overwrite: true
+    tag "Filter Water"
+    label 'cpu_small'
+    
+    conda "${baseDir}/envs/drugsol-data.yml"
+    
+    publishDir "${params.outdir}/curate", mode: 'copy', overwrite: true
 
-  input:
-    path source      
-    val  outdir
-    path filter_py
+    input:
+        path source_file   // Unified parquet file
+        val  outdir_val    
+        path script_py     // Python script
 
-  output:
-    path "filter_water.parquet", emit: out
+    output:
+        path "filter_water.parquet", emit: out
 
-  script:
-  """
-  set -euo pipefail
-
-  PREFIX="\$HOME/.conda_nf/curate"
-  YAML="${baseDir}/envs/curate.yml"
-
-  if [[ ! -d "\$PREFIX" ]]; then
-    ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
-  fi
-
-  # Ejecución directa (Bypass micromamba run)
-  "\$PREFIX/bin/python" "${filter_py}" "${source}"
-  """
+    script:
+    """
+    python ${script_py} \\
+        --input ${source_file} \\
+        --output filter_water.parquet
+    """
 }

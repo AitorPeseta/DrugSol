@@ -1,99 +1,111 @@
 nextflow.enable.dsl = 2
 
 /*
- * DrugSol - Main entrypoint (módulo)
- * Estructura tipo nf-core: este workflow enruta según --mode
- *
- * NOTA: este archivo define un workflow NOMBRADO `drugsol`
- * para poder ser incluido desde el main raíz.
+ * DrugSol - Main Workflow Entrypoint
+ * Structure: Routing based on --mode parameter (research vs. execution)
  */
 
-println "[DrugSol] Nextflow ${nextflow.version} | DSL2 enabled"
+log.info "[DrugSol] Nextflow ${nextflow.version} | DSL2 enabled"
 
 /************************************
- *              PARAMS
+ * PARAMS
  ************************************/
-params.mode          = params.mode ?: 'research'          // 'research' | 'execution'
-params.input         = params.input ?: null               // ruta a tabla unificada (CSV/TSV/Parquet)
-params.model         = params.model ?: null               // artifact .pkl (solo para execution)
-params.outdir        = params.outdir ?: "${baseDir}/results"   // carpeta de salida (en raíz del repo)
-params.stratify      = params.stratify ?: 'solvent,T_bin' // lista csv
-params.exp           = params.exp ?: null                 // experimento en execution: 't-sweep' | 'ph-sweep' | ...
 
-// argumentos típicos de execution (opcionales; los recogerá el subworkflow)
-params.smiles        = params.smiles ?: null
-params.solvent       = params.solvent ?: null
+// --- General Parameters ---
+params.mode      = params.mode      ?: 'research'           // Options: 'research', 'execution'
+params.outdir    = params.outdir    ?: "${baseDir}/results" // Output directory
+params.input     = params.input     ?: null                 // Path to unified table (CSV/TSV/Parquet)
+
+// --- Research Specific ---
+params.stratify  = params.stratify  ?: 'solvent,T_bin'      // Columns for stratified splitting
+
+// --- Execution (Inference) Specific ---
+params.model             = params.model             ?: null // Specific .pkl artifact (optional override)
+params.solvent           = params.solvent           ?: null
 params.temperature_K_Min = params.temperature_K_Min ?: null
 params.temperature_K_Max = params.temperature_K_Max ?: null
 
 /************************************
- *           INCLUDES
- *  Usa rutas robustas con baseDir (raíz del repo)
+ * INCLUDES
  ************************************/
-include { research }   from "${baseDir}/subworkflows/modes/research/research.nf"
-include { execution }  from "${baseDir}/subworkflows/modes/execution/execution.nf"
+include { research }  from "${baseDir}/subworkflows/modes/research/research.nf"
+include { execution } from "${baseDir}/subworkflows/modes/execution/execution.nf"
 
 /************************************
- *        HELPERS & VALIDATION
+ * HELPERS & VALIDATION
  ************************************/
 
-def _print_header() {
+def print_header() {
     log.info """\
-    ================== DrugSol Pipeline ==================
-    mode                : ${params.mode}
-    input               : ${params.input ?: '-'}
-    model (exec)        : ${params.model ?: '-'}
-    outdir              : ${params.outdir}
-    stratify            : ${params.stratify}
-    exp (execution)     : ${params.exp ?: '-'}
-    smiles              : ${params.smiles ?: '-'}
-    solvent             : ${params.solvent ?: '-'}
-    temperature_K_Min   : ${params.temperature_K_Min ?: '-'}
-    temperature_K_Max   : ${params.temperature_K_Max ?: '-'}
-    grid (execution)    : ${params.grid ?: '-'}
-    ======================================================
+    ==========================================================
+      D R U G S O L   P I P E L I N E
+    ==========================================================
+    Mode                : ${params.mode}
+    Input Data          : ${params.input ?: 'N/A'}
+    Output Dir          : ${params.outdir}
+    ----------------------------------------------------------
+    [Execution Params]
+    Model Override      : ${params.model ?: 'Auto-detect from results'}
+    Solvent             : ${params.solvent ?: 'N/A'}
+    Temp Range (K)      : ${params.temperature_K_Min ?: '-'} to ${params.temperature_K_Max ?: '-'}
+    ==========================================================
     """.stripIndent()
 }
 
-/************************************
- *            MAIN WORKFLOW (nombrado)
- ************************************/
-workflow drugsol {
+// Function to validate execution requirements
+def validate_execution_environment() {
+    // 1. If a specific model is provided, we are good.
+    if (params.model) return
 
-    _print_header()
+    // 2. If no model provided, check if 'research' results exist in the output directory
+    def gnn_path = file("${params.outdir}/research/training/models_GNN")
+    def gbm_path = file("${params.outdir}/research/training/models_GBM")
+
+    boolean models_exist = gnn_path.isDirectory() && gbm_path.isDirectory()
+
+    if (!models_exist) {
+        error """
+        [ERROR] Execution mode requires trained models.
+        
+        Reason:
+        1. No '--model' parameter was provided.
+        2. Previous research results were not found at:
+           - ${gnn_path}
+           - ${gbm_path}
+        
+        Solution:
+        - Run with '--mode research' first.
+        - OR provide a specific model path with '--model'.
+        - OR ensure '--outdir' points to where previous research results are stored.
+        """
+    } else {
+        log.info "[INFO] Models found in ${params.outdir}. Proceeding with execution."
+    }
+}
+
+/************************************
+ * MAIN WORKFLOW
+ ************************************/
+
+workflow drugsol {
     
-    // Despacho según modo
+    print_header()
+    
+    // Pass all parameters as a single map to subworkflows
+    def run_params = Channel.value(params)
+
     if (params.mode == 'research') {
-        research(
-            Channel.value(params)  // pasar todos los params como un único mapa
-        )
+        
+        research(run_params)
+
     } else if (params.mode == 'execution') {
         
-        def gnn = "${baseDir}/results/research/training/models_GNN"
-        def gbm = "${baseDir}/results/research/training/models_GBM"
+        // Validate before running
+        validate_execution_environment()
+        
+        execution(run_params)
 
-        // Solo verificamos la existencia de estos directorios si estamos en 'execution'
-        def hasPKLGNN = (params.mode == 'execution' && gnn &&
-                        java.nio.file.Files.isDirectory(
-                            (gnn instanceof java.nio.file.Path) ? gnn
-                                                                    : java.nio.file.Paths.get(gnn.toString().trim())
-                        )
-                        )
-        def hasPKLGBM = (params.mode == 'execution' && gbm &&
-                        java.nio.file.Files.isDirectory(
-                            (gbm instanceof java.nio.file.Path) ? gbm
-                                                                    : java.nio.file.Paths.get(gbm.toString().trim())
-                        )
-                        )
-
-        if (!(params.model || (hasPKLGNN && hasPKLGBM))) {
-            if (params.mode == 'execution') {
-                _die("Para --mode execution debes proporcionar un modelo con --model o haber ejecutado antes --research.")
-            } else {
-                println "[INFO] Modo research: No se necesita modelo, continuando con investigación."
-            }
-        }else  execution(
-                    Channel.value(params)
-                )
+    } else {
+        error "[ERROR] Invalid mode: '${params.mode}'. Valid options are: 'research', 'execution'."
     }
 }

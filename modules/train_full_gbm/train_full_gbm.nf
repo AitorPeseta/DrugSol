@@ -1,36 +1,34 @@
+nextflow.enable.dsl = 2
+
 process train_full_gbm {
-  tag "train_full_gbm"
-  label 'cpu_small'
-  publishDir path: { "${outdir}/training" }, mode: 'copy', overwrite: true
+    tag "Train Full GBM"
+    label 'process_gpu' 
+    accelerator 1, type: 'nvidia' // Explicitly ask for NVIDIA GPU
+    
+    conda "${baseDir}/envs/drugsol-train.yml"
+    
+    publishDir "${params.outdir}/training/models_GBM", mode: 'copy', overwrite: true
 
-  input:
-    path train
-    val  outdir
-    path train_full_py
-    path hp_dir
+    input:
+        path train_file  // Training data file
+        val  outdir_val
+        path script_py   // Python script
+        path hp_dir // Directory containing best params from OOF
 
-  output:
-    path "models_GBM",                   emit: MODELS_DIR
+    output:
+        path ".", emit: MODELS_DIR // Publish the whole folder content
 
-
-  script:
-  """
-  set -euo pipefail
-
-  PREFIX="\$HOME/.conda_nf/train_methods"
-  YAML="${baseDir}/envs/train_methods.yml"
-
-  if [[ ! -d "\$PREFIX" ]]; then
-    ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
-  fi
-
-  # Ejecución directa (Bypass micromamba run)
-  "\$PREFIX/bin/python" "${train_full_py}" \\
-                                    --train "${train}" \\
-                                    --target logS \\
-                                    --hp-dir "${hp_dir}" \\
-                                    --use-gpu \\
-                                    --sample-weight-col sw_temp37 \\
-                                    --save-dir models_GBM
-  """
+    script:
+    """
+    # Retrain XGBoost & LightGBM on 100% data using best hyperparameters
+    # Uses GPU if available
+    
+    python ${script_py} \\
+        --train "${train_file}" \\
+        --target logS \\
+        --hp-dir "${hp_dir}" \\
+        --use-gpu \\
+        --sample-weight-col sw_temp37 \\
+        --save-dir .
+    """
 }

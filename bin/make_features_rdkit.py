@@ -1,125 +1,104 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+make_features_rdkit.py
+----------------------
+Calculates basic RDKit features (TPSA, logP, HBD, HBA, MW, FractionCSP3).
+Optimized for performance using batch processing.
+"""
 
 import argparse
 from pathlib import Path
-import math
 import numpy as np
 import pandas as pd
 
-# RDKit: solo para descriptores
+# RDKit
 from rdkit import Chem
 from rdkit.Chem import Descriptors, rdMolDescriptors
 
 # ---------------- I/O helpers ----------------
 
 def read_any(path: str) -> pd.DataFrame:
+    """Reads Parquet or CSV."""
     p = Path(path)
     if p.suffix.lower() == ".parquet":
         return pd.read_parquet(p)
     elif p.suffix.lower() in (".csv", ".txt"):
         return pd.read_csv(p)
     else:
-        raise SystemExit(f"Formato no soportado: {p.suffix}")
-
-def write_like_input(df: pd.DataFrame, out_path: str):
-    p = Path(out_path)
-    p.parent.mkdir(parents=True, exist_ok=True)
-    if p.suffix.lower() == ".parquet":
-        df.to_parquet(p, index=False)
-    elif p.suffix.lower() in (".csv", ".txt"):
-        df.to_csv(p, index=False)
-    else:
-        raise SystemExit(f"Formato de salida no soportado: {p.suffix}")
-
-# ---------------- RDKit helpers ----------------
-
-def safe_mol_from_smiles(smi):
-    try:
-        if smi is None or (isinstance(smi, float) and math.isnan(smi)):
-            return None
-        smi = str(smi).strip()
-        if not smi:
-            return None
-        mol = Chem.MolFromSmiles(smi)
-        return mol
-    except Exception:
-        return None
+        raise SystemExit(f"[ERROR] Unsupported format: {p.suffix}")
 
 def compute_rdkit_basic(mol):
     """
-    Devuelve dict con:
-      TPSA, logP, HBD, HBA, FractionCSP3, MW
-    Si mol es None, devuelve todo NaN.
+    Returns a dictionary with basic physicochemical properties.
+    Returns NaNs if mol is None.
     """
     if mol is None:
         return {
-            "TPSA": np.nan,
-            "logP": np.nan,
-            "HBD": np.nan,
-            "HBA": np.nan,
-            "FractionCSP3": np.nan,
-            "MW": np.nan,
+            "rdkit__TPSA": np.nan,
+            "rdkit__logP": np.nan,
+            "rdkit__HBD": np.nan,
+            "rdkit__HBA": np.nan,
+            "rdkit__FractionCSP3": np.nan,
+            "rdkit__MW": np.nan,
         }
     try:
-        # TPSA
-        tpsa = rdMolDescriptors.CalcTPSA(mol)
-        # logP (Crippen)
-        logp = Descriptors.MolLogP(mol)
-        # Donors/Acceptors (Lipinski-like)
-        hbd = rdMolDescriptors.CalcNumHBD(mol)
-        hba = rdMolDescriptors.CalcNumHBA(mol)
-        # FractionCSP3
-        fsp3 = rdMolDescriptors.CalcFractionCSP3(mol)
-        # Peso molecular exacto “estándar” (no exact mass)
-        mw = Descriptors.MolWt(mol)
-
         return {
-            "TPSA": float(tpsa),
-            "logP": float(logp),
-            "HBD": int(hbd),
-            "HBA": int(hba),
-            "FractionCSP3": float(fsp3),
-            "MW": float(mw),
+            "rdkit__TPSA": float(rdMolDescriptors.CalcTPSA(mol)),
+            "rdkit__logP": float(Descriptors.MolLogP(mol)),
+            "rdkit__HBD": int(rdMolDescriptors.CalcNumHBD(mol)),
+            "rdkit__HBA": int(rdMolDescriptors.CalcNumHBA(mol)),
+            "rdkit__FractionCSP3": float(rdMolDescriptors.CalcFractionCSP3(mol)),
+            "rdkit__MW": float(Descriptors.MolWt(mol)),
         }
     except Exception:
         return {
-            "TPSA": np.nan,
-            "logP": np.nan,
-            "HBD": np.nan,
-            "HBA": np.nan,
-            "FractionCSP3": np.nan,
-            "MW": np.nan,
+            "rdkit__TPSA": np.nan,
+            "rdkit__logP": np.nan,
+            "rdkit__HBD": np.nan,
+            "rdkit__HBA": np.nan,
+            "rdkit__FractionCSP3": np.nan,
+            "rdkit__MW": np.nan,
         }
 
-# ---------------- Main ----------------
-
 def main():
-    ap = argparse.ArgumentParser("Añade features RDKit básicas (TPSA, logP, HBD, HBA, FractionCSP3, MW)")
-    ap.add_argument("--in", dest="inp", required=True, help="CSV/Parquet de entrada")
-    ap.add_argument("--out", dest="out", required=True, help="CSV/Parquet de salida")
-    ap.add_argument("--smiles-col", default="smiles_neutral", help="Columna con SMILES (por defecto: smiles_neutral)")
+    ap = argparse.ArgumentParser(description="Add basic RDKit features.")
+    ap.add_argument("--input", required=True, help="Input Parquet/CSV")
+    ap.add_argument("--out", required=True, help="Output Parquet filename")
+    ap.add_argument("--smiles-col", default="smiles_neutral", help="SMILES column name")
     args = ap.parse_args()
 
-    df = read_any(args.inp).copy()
+    # 1. Load
+    print(f"[RDKit Features] Loading {args.input}...")
+    df = read_any(args.input)
+    
     if args.smiles_col not in df.columns:
-        raise SystemExit(f"Falta columna {args.smiles_col}")
+        raise SystemExit(f"[ERROR] Column '{args.smiles_col}' not found.")
 
-    # Pre-crear columnas (numéricas)
-    target_cols = ["TPSA", "logP", "HBD", "HBA", "FractionCSP3", "MW"]
-    for c in target_cols:
-        if c not in df.columns:
-            df[c] = np.nan
+    # 2. Calculate Features
+    print(f"[RDKit Features] Computing descriptors for {len(df)} molecules...")
+    
+    # Prepare molecules generator (lazy evaluation)
+    # We use a simple apply to convert to Mol objects first
+    mols = df[args.smiles_col].apply(lambda x: Chem.MolFromSmiles(str(x)) if pd.notna(x) else None)
+    
+    # Calculate descriptors as a list of dicts (Faster than df.at loop)
+    # We add the prefix 'rdkit__' to avoid collisions
+    descriptors_list = mols.apply(compute_rdkit_basic).tolist()
+    
+    # Convert to DataFrame
+    df_desc = pd.DataFrame(descriptors_list, index=df.index)
+    
+    # 3. Merge
+    df_final = pd.concat([df, df_desc], axis=1)
 
-    # Calcular fila a fila (robusto)
-    smiles_iter = df[args.smiles_col].values
-    for i, smi in enumerate(smiles_iter):
-        mol = safe_mol_from_smiles(smi)
-        vals = compute_rdkit_basic(mol)
-        for k, v in vals.items():
-            df.at[i, k] = v
-
-    write_like_input(df, args.out)
+    # 4. Save
+    p = Path(args.out)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    
+    print(f"[RDKit Features] Saving to {p}...")
+    df_final.to_parquet(p, index=False)
+    print("[RDKit Features] Done.")
 
 if __name__ == "__main__":
     main()

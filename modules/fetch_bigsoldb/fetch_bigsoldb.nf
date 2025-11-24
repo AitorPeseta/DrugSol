@@ -1,42 +1,27 @@
 nextflow.enable.dsl = 2
 
 process fetch_bigsoldb {
-  tag "BigSolDB"
-  label 'cpu_small'
-  publishDir path: { "${outdir}/ingest" }, mode: 'copy', overwrite: true
+    tag "BigSolDB-${record_id}"
+    label 'cpu_small'
+    
+    conda "${baseDir}/envs/drugsol-data.yml"
+    
+    publishDir "${params.outdir}/ingest", mode: 'copy', overwrite: true
 
-  input:
-    val  outdir
-    val  record_id
-    path dl_py
+    input:
+        val  outdir_val  
+        val  record_id    // Zenodo record ID
+        path script_py    // Python script
 
-  output:
-    path "bigsoldb.csv", emit: out
+    output:
+        path "bigsoldb.csv", emit: out
 
-  script:
-  """
-  set -euo pipefail
-  PREFIX="\$HOME/.conda_nf/common_ingest"
-  YAML="${baseDir}/envs/common_ingest.yml"
-
-  # 1. Creación del entorno (se mantiene igual)
-  if [[ ! -d "\$PREFIX" ]]; then
-    ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
-  fi
-
-  # 2. EJECUCIÓN DIRECTA: Descarga
-  "\$PREFIX/bin/python" ${dl_py} --record ${record_id} --kind main --out bigsoldb.csv
-
-  # 3. EJECUCIÓN DIRECTA: Normalización
-  # normaliza a CSV LF/UTF-8
-  "\$PREFIX/bin/python" - <<'PY'
-  import pandas as pd, os
-  f="bigsoldb.csv"
-  df=pd.read_csv(f)
-  tmp=f+".norm"
-  df.to_csv(tmp,index=False,encoding="utf-8",lineterminator="\\n")
-  os.replace(tmp,f)
-  print(f"[BigSolDB] OK rows={len(df)}")
-  PY
-  """
+    script:
+    """
+    python ${script_py} \\
+        --record ${record_id} \\
+        --kind main \\
+        --out bigsoldb.csv \\
+        --normalize
+    """
 }

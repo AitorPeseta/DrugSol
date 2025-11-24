@@ -1,131 +1,154 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+make_fingerprints.py
+--------------------
+Generates Morgan Fingerprints (ECFP4) as bit columns.
+Performs Butina Clustering based on Tanimoto similarity.
+"""
 
-import argparse, os, sys
-from pathlib import Path
-
+import argparse
+import os
+import sys
 import numpy as np
 import pandas as pd
+from pathlib import Path
+from tqdm import tqdm
 
+# RDKit
 from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem
 from rdkit.ML.Cluster import Butina
 
-
-def _to_mol(s: str):
-    if pd.isna(s):
-        return None
+def to_mol(s: str):
+    """Safely converts SMILES to Mol."""
+    if pd.isna(s): return None
     try:
         return Chem.MolFromSmiles(str(s))
-    except Exception:
+    except:
         return None
 
-
-def _cluster_labels_from_bitvects(bitvects, cutoff: float):
+def cluster_fingerprints(bitvects, cutoff: float):
     """
-    Devuelve un vector con IDs de cluster para los índices válidos.
-    `bitvects` debe ser una lista de RDKit ExplicitBitVect (solo válidos).
+    Performs Butina clustering on a list of RDKit ExplicitBitVects.
+    Returns an array of cluster IDs (-1 for errors).
     """
     n = len(bitvects)
-    if n == 0:
-        return np.array([], dtype=int)
+    if n == 0: return np.array([], dtype=int)
 
-    # Distancias condensadas para Butina: 1 - Tanimoto
+    print(f"[Fingerprints] Calculating distance matrix for {n} molecules...")
+    
+    # Calculate condensed distance matrix (Upper Triangle)
+    # Memory usage grows N^2. For >50k molecules, this might OOM on small machines.
     dists = []
-    for i in range(1, n):
+    
+    # Optimized bulk calculation
+    for i in tqdm(range(1, n), desc="Similarity Matrix"):
+        # BulkTanimoto is much faster than python loops
         sims = DataStructs.BulkTanimotoSimilarity(bitvects[i], bitvects[:i])
+        # Convert similarity to distance (1 - sim)
         dists.extend([1.0 - s for s in sims])
 
+    print(f"[Fingerprints] Clustering (Butina, cutoff={cutoff})...")
+    # Run clustering
     clusters = Butina.ClusterData(dists, nPts=n, distThresh=1.0 - cutoff, isDistData=True)
+    
+    # Assign labels
     labels = np.full(n, -1, dtype=int)
     for cid, members in enumerate(clusters):
         for m in members:
             labels[m] = cid
+            
     return labels
 
-
 def main():
-    ap = argparse.ArgumentParser("Genera ECFP4 como columnas de bits + cluster Butina por Tanimoto (añadiendo sin borrar).")
-    ap.add_argument("--input", "-i", required=True, help="Entrada .parquet o .csv")
-    ap.add_argument("--smiles-col", default="smiles_neutral", help="Columna con SMILES (default: smiles_neutral)")
-    ap.add_argument("--n-bits", type=int, default=2048, help="Tamaño del fingerprint (default: 2048)")
-    ap.add_argument("--radius", type=int, default=2, help="Radio para Morgan/ECFP (default: 2 ≡ ECFP4)")
-    ap.add_argument("--cluster-cutoff", type=float, default=0.7, help="Umbral Tanimoto para Butina (default: 0.7)")
-    ap.add_argument("--bits-prefix", default="ecfp4_b", help="Prefijo para las columnas de bits (default: ecfp4_b)")
-    ap.add_argument("--out-parquet", default="with_ecfp4_bits.parquet", help="Salida Parquet")
-    ap.add_argument("--save-csv", action="store_true", help="Guardar también CSV")
+    ap = argparse.ArgumentParser(description="Generate ECFP4 bits and Butina Clusters.")
+    ap.add_argument("--input", "-i", required=True, help="Input Parquet/CSV")
+    ap.add_argument("--out-parquet", required=True, help="Output Parquet")
+    ap.add_argument("--smiles-col", default="smiles_neutral", help="SMILES column name")
+    
+    # Fingerprint params
+    ap.add_argument("--n-bits", type=int, default=2048, help="Fingerprint length (default: 2048)")
+    ap.add_argument("--radius", type=int, default=2, help="Morgan radius (2 = ECFP4)")
+    ap.add_argument("--bits-prefix", default="ecfp4_b", help="Prefix for bit columns")
+    
+    # Clustering params
+    ap.add_argument("--cluster-cutoff", type=float, default=0.7, help="Tanimoto cutoff (1-dist) for clustering")
+    
+    ap.add_argument("--save-csv", action="store_true", help="Also save CSV")
+    
     args = ap.parse_args()
 
-    # --- carga ---
-    if not os.path.exists(args.input):
-        print(f"[ERROR] No se encontró: {args.input}", file=sys.stderr)
-        sys.exit(1)
-
-    if args.input.lower().endswith(".parquet"):
+    # 1. Load Data
+    print(f"[Fingerprints] Loading {args.input}...")
+    if args.input.endswith(".parquet"):
         df = pd.read_parquet(args.input)
-    elif args.input.lower().endswith(".csv"):
-        df = pd.read_csv(args.input)
     else:
-        print("[ERROR] La entrada debe ser .parquet o .csv", file=sys.stderr)
-        sys.exit(1)
+        df = pd.read_csv(args.input)
 
-    assert args.smiles_col in df.columns, f"Falta columna SMILES: {args.smiles_col}"
+    if args.smiles_col not in df.columns:
+        sys.exit(f"[ERROR] Column '{args.smiles_col}' not found.")
 
-    # --- RDKit mols y fingerprints ---
-    mols = df[args.smiles_col].apply(_to_mol)
-    valid_idx = mols.notna().to_numpy().nonzero()[0]
-
-    # lista de bitvect (solo válidos)
+    # 2. Generate Fingerprints
+    print("[Fingerprints] Generating Morgan Fingerprints...")
+    mols = df[args.smiles_col].apply(to_mol)
+    
+    # Identify valid molecules
+    valid_mask = mols.notna()
+    valid_idx = np.where(valid_mask)[0]
+    mols_valid = mols.iloc[valid_idx]
+    
     bitvects_valid = []
-    for i in valid_idx:
-        m = mols.iat[i]
-        bv = AllChem.GetMorganFingerprintAsBitVect(m, radius=int(args.radius), nBits=int(args.n_bits))
+    for m in mols_valid:
+        bv = AllChem.GetMorganFingerprintAsBitVect(m, radius=args.radius, nBits=args.n_bits)
         bitvects_valid.append(bv)
 
-    # volcamos bits a una matriz numpy (n_valid, n_bits) de uint8
-    bits_valid = np.zeros((len(valid_idx), int(args.n_bits)), dtype=np.uint8)
-    for row, bv in enumerate(bitvects_valid):
-        # rellenamos bits_valid[row, :] in-place desde ExplicitBitVect
-        DataStructs.ConvertToNumpyArray(bv, bits_valid[row, :])  # recomendado por RDKit
-        # ConvertToNumpyArray devuelve 0/1 en el array destino
+    # 3. Expand Bits to Columns (for GBM models)
+    # We create a numpy matrix first for speed
+    print("[Fingerprints] Expanding bits to columns...")
+    n_valid = len(bitvects_valid)
+    bits_matrix = np.zeros((n_valid, args.n_bits), dtype=np.uint8)
+    
+    for i, bv in enumerate(bitvects_valid):
+        # RDKit's fast conversion to numpy
+        DataStructs.ConvertToNumpyArray(bv, bits_matrix[i])
 
-    # matriz completa (n, n_bits) con ceros para inválidos
-    n = len(df)
-    bits_full = np.zeros((n, int(args.n_bits)), dtype=np.uint8)
-    bits_full[valid_idx, :] = bits_valid
+    # Create DataFrame for bits (Sparse-ish)
+    bit_cols = [f"{args.bits_prefix}{i}" for i in range(args.n_bits)]
+    
+    # Full size matrix (including invalid rows as 0s)
+    full_bits_matrix = np.zeros((len(df), args.n_bits), dtype=np.uint8)
+    full_bits_matrix[valid_idx] = bits_matrix
+    
+    df_bits = pd.DataFrame(full_bits_matrix, columns=bit_cols, index=df.index)
 
-    # dataframe de bits, un bit por columna
-    bit_cols = [f"{args.bits_prefix}{i:04d}" for i in range(int(args.n_bits))]
-    df_bits = pd.DataFrame(bits_full, columns=bit_cols, index=df.index)
+    # 4. Perform Clustering (Only on valid molecules)
+    labels_valid = cluster_fingerprints(bitvects_valid, cutoff=args.cluster_cutoff)
+    
+    # Map back to full length
+    cluster_full = np.full(len(df), -1, dtype=int)
+    cluster_full[valid_idx] = labels_valid
 
-    # --- clusters (solo válidos) ---
-    lab_valid = _cluster_labels_from_bitvects(bitvects_valid, cutoff=float(args.cluster_cutoff))
-    cluster_full = np.full(n, -1, dtype=int)
-    cluster_full[valid_idx] = lab_valid
-
-    # nombre de la columna de cluster con sufijo del cutoff (p. ej. 0p7)
-    cutoff_tag = str(args.cluster_cutoff).replace(".", "p")
-    cluster_col = f"cluster_ecfp4_{cutoff_tag}"
-
+    # Add Cluster Column
+    # e.g. cluster_ecfp4_0p7
+    cutoff_str = str(args.cluster_cutoff).replace(".", "p")
+    cluster_col = f"cluster_ecfp4_{cutoff_str}"
+    
+    # 5. Merge and Save
     out = pd.concat([df, df_bits], axis=1)
     out[cluster_col] = cluster_full
 
-    # --- limpieza opcional (no dejar columna empaquetada si llegó de otra etapa)
+    # Cleanup legacy columns if they exist
     if "ecfp4_bits" in out.columns:
-        out = out.drop(columns=["ecfp4_bits"])
+        out.drop(columns=["ecfp4_bits"], inplace=True)
 
-    # --- guardar: siempre parquet; CSV opcional ---
-    out_parquet = Path(args.out_parquet)
-    out_parquet.parent.mkdir(parents=True, exist_ok=True)
-    out.to_parquet(out_parquet, index=False)
-    print(f"[OK] Guardado Parquet: {out_parquet}")
+    print(f"[Fingerprints] Saving to {args.out_parquet}...")
+    out.to_parquet(args.out_parquet, index=False)
 
     if args.save_csv:
-        out_csv = out_parquet.with_suffix(".csv")
-        out.to_csv(out_csv, index=False)
-        print(f"[OK] Guardado CSV: {out_csv}")
-
-
+        csv_path = Path(args.out_parquet).with_suffix(".csv")
+        out.to_csv(csv_path, index=False)
+        print(f"[Fingerprints] Saved CSV to {csv_path}")
 
 if __name__ == "__main__":
     main()

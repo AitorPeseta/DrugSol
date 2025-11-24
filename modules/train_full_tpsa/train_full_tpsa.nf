@@ -1,35 +1,30 @@
+nextflow.enable.dsl = 2
+
 process train_full_tpsa {
-  tag "train_full_tpsa"
-  label 'cpu_small'
-  publishDir path: { "${outdir}/training" }, mode: 'copy', overwrite: true
+    tag "Train Full Baseline (Ridge)"
+    label 'cpu_small'
+    
+    conda "${baseDir}/envs/drugsol-data.yml"
+    
+    publishDir "${params.outdir}/training/models_TPSA", mode: 'copy', overwrite: true
 
-  input:
-    path train
-    val  outdir
-    path train_full_py
+    input:
+        path train_file   // Training data file
+        val  outdir_val
+        path script_py    // Python script
 
-  output:
-    path "models_TPSA/tpsa_model.json",               emit: TPSA_MODEL
+    output:
+        path "tpsa_model.json", emit: TPSA_MODEL
+        path "tpsa_phys.pkl",   emit: TPSA_PKL
 
-
-  script:
-  """
-  set -euo pipefail
-
-  PREFIX="\$HOME/.conda_nf/train_methods"
-  YAML="${baseDir}/envs/train_methods.yml"
-
-  if [[ ! -d "\$PREFIX" ]]; then
-    ${params.MAMBA} create -y -p "\$PREFIX" -f "\$YAML" --strict-channel-priority
-  fi
-
-  # Ejecución directa (Bypass micromamba run)
-  "\$PREFIX/bin/python" "${train_full_py}" \\
-                                    --train "${train}" \\
-                                    --target logS \\
-                                    --tpsa-col TPSA \\
-                                    --phenol-col n_phenol \\
-                                    --save-dir models_TPSA \\
-
-  """
+    script:
+    """
+    # Train the final Ridge Regression model on 100% of the data.
+    # Exports both a Python pickle (sklearn) and a JSON with raw weights (portable).
+    
+    python ${script_py} \\
+        --train "${train_file}" \\
+        --target logS \\
+        --save-dir .
+    """
 }
