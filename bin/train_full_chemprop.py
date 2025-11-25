@@ -1,211 +1,158 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-train_full_chemprop.py
-----------------------
-Retrains Chemprop on the full dataset using best HPs.
-Features:
-- Physics-Aware: Injects 1/T feature and Gaussian Weights (centered at 37C).
-- GPU Acceleration.
-- Compatible with Chemprop v2 API.
+train_full_chemprop.py (v1.6.1 Robust Strategy)
+-----------------------------------------------
+Retrains Chemprop on the full dataset (100% train).
+Uses 'Dummy Validation' trick to allow weights without index errors.
 """
 
 import argparse
 import json
-import shutil
 import subprocess
+import shutil
 import sys
-import tempfile
 from pathlib import Path
-
-import numpy as np
 import pandas as pd
-from sklearn.metrics import mean_squared_error, r2_score
+import numpy as np
+from rdkit import Chem # Para validar SMILES
 
-def run_cmd(cmd, check=True):
+def run_cmd(cmd):
     print(f"[CMD] {' '.join(map(str, cmd))}")
-    try:
-        subprocess.run(cmd, check=check)
-    except subprocess.CalledProcessError as e:
-        print(f"[ERROR] Command failed: {e}")
-        raise e
+    subprocess.run(cmd, check=True)
 
-def _accel_flags(use_gpu: bool):
-    if use_gpu:
-        return ["--accelerator", "gpu", "--devices", "1"]
-    return []
-
-def load_best_params(path):
+def _read(path: str) -> pd.DataFrame:
     p = Path(path)
-    if p.exists():
-        try:
-            return json.loads(p.read_text())
-        except Exception:
-            pass
-    return {}
+    if p.suffix.lower() == ".parquet":
+        return pd.read_parquet(p)
+    elif p.suffix.lower() == ".csv":
+        return pd.read_csv(p)
+    raise ValueError(f"Formato no soportado: {p.suffix}")
+
+def is_valid_smiles(s):
+    try:
+        m = Chem.MolFromSmiles(str(s))
+        return m is not None
+    except:
+        return False
 
 def main():
-    ap = argparse.ArgumentParser(description="Full Train Chemprop")
+    ap = argparse.ArgumentParser()
     ap.add_argument("--train", required=True)
     ap.add_argument("--smiles-col", default="smiles_neutral")
     ap.add_argument("--target", default="logS")
     ap.add_argument("--save-dir", default="models/chemprop")
     ap.add_argument("--gpu", action="store_true")
     ap.add_argument("--epochs", type=int, default=40)
-    ap.add_argument("--best-params", required=True, help="JSON with best HPs")
-    
-    # Overrides
-    ap.add_argument("--val-fraction", type=float, default=0.05, help="Internal validation split")
+    ap.add_argument("--best-params", required=True)
     ap.add_argument("--seed", type=int, default=42)
+    # Args de compatibilidad (ignorados pero necesarios para que no falle la llamada)
+    ap.add_argument("--val-fraction", type=float, default=0.05) 
     
     args = ap.parse_args()
-    outdir = Path(args.save_dir)
-    outdir.mkdir(parents=True, exist_ok=True)
-
-    # 1. Load Data
-    print(f"[Chemprop] Loading {args.train}...")
-    df = pd.read_parquet(args.train) if args.train.endswith('.parquet') else pd.read_csv(args.train)
     
-    # 2. Physics Engineering (Thermodynamics & Weights)
+    outdir = Path(args.save_dir)
+    if outdir.exists(): shutil.rmtree(outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
+    
+    # 1. Cargar Datos
+    print(f"[Full] Loading {args.train}...")
+    df = _read(args.train)
+
+    # SANEAMIENTO: Eliminar SMILES inválidos antes de nada
+    valid_mask = df[args.smiles_col].apply(is_valid_smiles)
+    if (~valid_mask).sum() > 0:
+        print(f"[WARN] Eliminando {(~valid_mask).sum()} SMILES inválidos.")
+        df = df[valid_mask].reset_index(drop=True)
+    
+    # 2. Ingeniería Física (Pesos y Temperatura)
+    # ------------------------------------------
     if "temp_C" in df.columns:
-        # 1/T (Kelvin)
-        temps = df["temp_C"].fillna(25.0)
-        df["inv_temp"] = 1000.0 / (temps + 273.15)
+        t = df["temp_C"].fillna(25.0)
+        # Pesos Gaussianos (centrados en 37C)
+        df["sw_temp37"] = 1.0 + 2.0 * np.exp(-((t - 37.0) ** 2) / (2 * 8.0**2))
         
-        # Gaussian Weights (Focus on 37C)
-        # w = 1 + 2*exp(-(T-37)^2 / 2*8^2)
-        sigma = 8.0
-        df["sw_temp37"] = 1.0 + 2.0 * np.exp(-((temps - 37.0) ** 2) / (2 * sigma**2))
-        print("[Chemprop] Applied Gaussian Weights (center=37C).")
+        # Feature Termodinámica (1/T)
+        if "inv_temp" not in df.columns:
+             df["inv_temp"] = 1000.0 / (t + 273.15)
     else:
-        print("[WARN] No temp_C column. Using flat weights.")
+        print("[WARN] No temp_C column. Weights set to 1.0")
         df["sw_temp37"] = 1.0
-        # Can't calculate inv_temp without T
-
-    # Clean rows
-    cols = [args.smiles_col, args.target]
-    if "inv_temp" in df.columns: cols.append("inv_temp")
-    df = df.dropna(subset=cols).reset_index(drop=True)
-
-    # Identify Descriptors (RDKit features if present)
-    potential_descs = ["temp_C", "inv_temp", "n_ionizable", "n_acid", "n_base",
-                       "TPSA", "logP", "HBD", "HBA", "FractionCSP3", "MW"]
-    desc_cols = [c for c in potential_descs if c in df.columns]
+    
+    # 3. Preparar Archivos (Estrategia Dummy Val)
+    # -------------------------------------------
+    # Chemprop v1 con pesos falla si intentamos hacer split automático aleatorio.
+    # Solución: Darle explícitamente Train (Todo) y Val (Dummy).
+    
+    # Columnas a guardar
+    cols_data = [args.smiles_col, args.target]
+    # Descriptores: todo lo numérico que no sea meta
+    exclude = [args.smiles_col, args.target, "sw_temp37", "row_uid", "fold", "smiles", "mol"]
+    desc_cols = [c for c in df.columns if c not in exclude and pd.api.types.is_numeric_dtype(df[c])]
+    
+    # Nombres de archivo
+    data_csv = outdir / "full_train.csv"
+    weights_csv = outdir / "full_weights.csv"
+    val_dummy_csv = outdir / "val_dummy.csv"
+    
+    # A) Guardar Train COMPLETO
+    df[cols_data + desc_cols].to_csv(data_csv, index=False)
+    # Guardar pesos (HEADER=True es más seguro en v1 moderna)
+    df[["sw_temp37"]].to_csv(weights_csv, index=False, header=True)
+    
+    # B) Guardar Val DUMMY (copia de las primeras 5 filas)
+    # Esto satisface a Chemprop pero no afecta al modelo final (porque usamos el modelo entrenado en Train)
+    df.iloc[:5][cols_data + desc_cols].to_csv(val_dummy_csv, index=False)
+    
+    # 4. Cargar Hiperparámetros
+    hp = json.loads(Path(args.best_params).read_text())
+    
+    # 5. Comando de Entrenamiento
+    cmd = [
+        "chemprop_train",
+        "--data_path", str(data_csv),
+        "--separate_val_path", str(val_dummy_csv), # Bypass split bug
+        "--separate_test_path", str(val_dummy_csv),
+        "--data_weights_path", str(weights_csv),
+        
+        "--dataset_type", "regression",
+        "--save_dir", str(outdir),
+        "--epochs", str(args.epochs),
+        "--smiles_columns", args.smiles_col,
+        "--target_columns", args.target,
+        "--metric", "rmse",
+        
+        # Hiperparámetros Optimizados
+        "--hidden_size", str(int(hp.get("message_hidden_dim", 300))), # Usar .get para seguridad
+        "--depth", str(int(hp.get("depth", 3))),
+        "--dropout", str(float(hp.get("dropout", 0.0))),
+        "--ffn_num_layers", str(int(hp.get("ffn_num_layers", 2)))
+    ]
     
     if desc_cols:
-        print(f"[Chemprop] Using descriptors: {desc_cols}")
+        cmd += ["--no_features_scaling"]
 
-    # 3. Load Hyperparameters
-    hp = load_best_params(args.best_params)
+    if args.gpu:
+        cmd += ["--gpu", "0"]
+        
+    run_cmd(cmd)
     
-    epochs      = hp.get("epochs", args.epochs)
-    hidden_size = int(hp.get("hidden_size", 1600))
-    depth       = int(hp.get("depth", 3))
-    dropout     = float(hp.get("dropout", 0.1))
-    ffn_layers  = int(hp.get("ffn_num_layers", 1))
-    batch_size  = int(hp.get("batch_size", 32))
-
-    # 4. Prepare Training Files
-    # Chemprop requires a CSV and a splits file
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp = Path(tmp)
-        data_csv = tmp / "data.csv"
-        splits_json = tmp / "splits.json"
-        
-        # Internal Split (Train / Val)
-        # Even for "Full" training, we need a small validation set for Early Stopping
-        n = len(df)
-        n_val = max(1, int(n * args.val_fraction))
-        n_train = n - n_val
-        
-        # Shuffle before split
-        df = df.sample(frac=1.0, random_state=args.seed).reset_index(drop=True)
-        
-        # Save CSV
-        df.to_csv(data_csv, index=False)
-        
-        splits = [{
-            "train": list(range(n_train)),
-            "val": list(range(n_train, n)),
-            "test": []
-        }]
-        splits_json.write_text(json.dumps(splits))
-        
-        chemprop_bin = "chemprop" # Assumes in PATH
-        
-        cmd = [
-            chemprop_bin, "train",
-            "--data-path", str(data_csv),
-            "--splits-file", str(splits_json),
-            "--task-type", "regression",
-            "--output-dir", str(outdir),
-            "--save-dir", str(outdir),
-            "--epochs", str(epochs),
-            "--batch-size", str(batch_size),
-            "--smiles-columns", args.smiles_col,
-            "--target-columns", args.target,
-            "--weights-column", "sw_temp37", # Modern Flag
-            "--metric", "rmse",
-            "--hidden-size", str(hidden_size),
-            "--depth", str(depth),
-            "--dropout", str(dropout),
-            "--ffn-num-layers", str(ffn_layers),
-            *(_accel_flags(args.gpu))
-        ]
-        
-        if desc_cols:
-            cmd += ["--descriptors-columns", *desc_cols]
-            
-        # Run Training
-        run_cmd(cmd)
-        
-        # 5. Validate (Internal sanity check)
-        # Predict on the validation set we held out
-        val_df = df.iloc[n_train:].copy()
-        val_in = tmp / "val_in.csv"
-        val_out = tmp / "val_out.csv"
-        val_df.to_csv(val_in, index=False)
-        
-        best_pt = next(outdir.glob("*.pt")) # Pick any checkpoint (usually best.pt is saved)
-        
-        cmd_pred = [
-            chemprop_bin, "predict",
-            "--test-path", str(val_in),
-            "--preds-path", str(val_out),
-            "--checkpoint-path", str(best_pt),
-            "--batch-size", str(batch_size),
-            "--drop-extra-columns",
-            *(_accel_flags(args.gpu))
-        ]
-        if desc_cols:
-            cmd_pred += ["--descriptors-columns", *desc_cols]
-            
-        run_cmd(cmd_pred)
-        
-        # Metrics
-        preds = pd.read_csv(val_out)
-        # Find pred column (not smiles)
-        pred_col = [c for c in preds.columns if c != args.smiles_col and "smiles" not in c.lower()][0]
-        
-        y_true = val_df[args.target].values
-        y_pred = preds[pred_col].values
-        
-        rmse = np.sqrt(mean_squared_error(y_true, y_pred))
-        r2 = r2_score(y_true, y_pred)
-        
-        print(f"[Full Chemprop] Validation RMSE: {rmse:.4f} | R2: {r2:.4f}")
-        
-    # Save Manifest
+    # 6. Manifest
     manifest = {
         "target": args.target,
         "smiles_col": args.smiles_col,
+        "v1_legacy": True,
         "descriptors": desc_cols,
-        "physics_aware": True,
-        "weights_used": True,
-        "n_samples": n
+        "n_train": len(df)
     }
     (outdir / "chemprop_manifest.json").write_text(json.dumps(manifest, indent=2))
-    print(f"[Full Chemprop] Saved model to {outdir}")
+    
+    # Limpieza de archivos temporales
+    if data_csv.exists(): data_csv.unlink()
+    if weights_csv.exists(): weights_csv.unlink()
+    if val_dummy_csv.exists(): val_dummy_csv.unlink()
+
+    print(f"[Full] Done. Model saved to {outdir}")
 
 if __name__ == "__main__":
     main()

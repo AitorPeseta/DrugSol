@@ -21,9 +21,12 @@ process train_full_chemprop {
 
     script:
     """
-    # Retrain Chemprop on 100% data using best hyperparameters found in OOF
-    # Injects Physics (1/T) and Weights (Gaussian around 37C)
-    
+    export LD_PRELOAD=\$(find "\$PREFIX/lib" -name "libmkl_core.so*" | head -n 1)
+    if [ -z "\$LD_PRELOAD" ]; then
+        export LD_PRELOAD=\$(find "\$PREFIX/lib" -name "libmkl_intel_lp64.so*" | head -n 1)
+    fi
+    echo "LD_PRELOAD set to: \$LD_PRELOAD"
+
     python ${script_py} \\
         --train "${train_file}" \\
         --smiles-col smiles_neutral \\

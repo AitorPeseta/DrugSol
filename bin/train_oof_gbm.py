@@ -6,7 +6,7 @@ train_oof_gbm.py
 Trains XGBoost and LightGBM models using Pre-computed Folds.
 Features:
 - Nested Cross-Validation (Inner loop for Optuna, Outer loop for OOF).
-- GPU Acceleration (with automatic fallback to CPU).
+- GPU Acceleration (Compatible with XGBoost 2.0+).
 - Sample Weighting (Gaussian weights).
 - ASHA Pruning for efficient tuning.
 """
@@ -21,9 +21,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import KFold
-from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
-from sklearn.pipeline import Pipeline
 
 import xgboost as xgb
 import lightgbm as lgb
@@ -96,7 +94,6 @@ def load_data(train_path, folds_path, id_col, target_col, weight_col=None):
     if weight_col in X.columns: X = X.drop(columns=[weight_col])
     
     # Simple Imputation (Median) for safety
-    # Although XGB/LGBM handle NaNs, it's safer for Optuna stability
     imputer = SimpleImputer(strategy='median')
     X_np = imputer.fit_transform(X)
     X = pd.DataFrame(X_np, columns=X.columns)
@@ -121,9 +118,10 @@ def train_xgb(X_tr, y_tr, w_tr, X_va, y_va, w_va, params, use_gpu=False):
         'nthread': 4
     }
     
-    # GPU Config
+    # GPU Config (XGBoost 2.0+ syntax)
+    # 'gpu_hist' is deprecated. Use 'hist' + device='cuda'
     if use_gpu:
-        p.update({'tree_method': 'gpu_hist', 'device': 'cuda'})
+        p.update({'tree_method': 'hist', 'device': 'cuda'})
     else:
         p.update({'tree_method': 'hist', 'device': 'cpu'})
         
@@ -133,7 +131,7 @@ def train_xgb(X_tr, y_tr, w_tr, X_va, y_va, w_va, params, use_gpu=False):
     # Train
     model = xgb.train(
         p, dtrain,
-        num_boost_round=10000,
+        num_boost_round=3000,
         evals=[(dvalid, 'valid')],
         early_stopping_rounds=100,
         verbose_eval=False
@@ -150,7 +148,7 @@ def train_lgbm(X_tr, y_tr, w_tr, X_va, y_va, w_va, params, use_gpu=False):
         'verbosity': -1,
         'seed': RANDOM_STATE,
         'n_jobs': 4,
-        'n_estimators': 10000
+        'n_estimators': 3000
     }
     
     # GPU Config attempt
@@ -188,24 +186,26 @@ def train_lgbm(X_tr, y_tr, w_tr, X_va, y_va, w_va, params, use_gpu=False):
 
 def get_space_xgb(trial):
     return {
-        'learning_rate': trial.suggest_float('lr', 1e-3, 0.3, log=True),
-        'max_depth': trial.suggest_int('depth', 3, 10),
-        'subsample': trial.suggest_float('subsample', 0.5, 1.0),
-        'colsample_bytree': trial.suggest_float('colsample', 0.5, 1.0),
-        'reg_alpha': trial.suggest_float('alpha', 1e-8, 10.0, log=True),
-        'reg_lambda': trial.suggest_float('lambda', 1e-8, 10.0, log=True),
+        # CAMBIO CLAVE: Mínimo 0.05 en vez de 0.001
+        'learning_rate': trial.suggest_float('lr', 0.05, 0.3, log=True), 
+        'max_depth': trial.suggest_int('depth', 3, 9),
+        'subsample': trial.suggest_float('subsample', 0.6, 1.0),
+        'colsample_bytree': trial.suggest_float('colsample', 0.6, 1.0),
+        'reg_alpha': trial.suggest_float('alpha', 1e-3, 10.0, log=True),
+        'reg_lambda': trial.suggest_float('lambda', 1e-3, 10.0, log=True),
         'min_child_weight': trial.suggest_int('min_child', 1, 20)
     }
 
 def get_space_lgbm(trial):
     return {
-        'learning_rate': trial.suggest_float('lr', 1e-3, 0.3, log=True),
-        'num_leaves': trial.suggest_int('leaves', 20, 256),
-        'subsample': trial.suggest_float('subsample', 0.5, 1.0),
-        'colsample_bytree': trial.suggest_float('colsample', 0.5, 1.0),
-        'reg_alpha': trial.suggest_float('alpha', 1e-8, 10.0, log=True),
-        'reg_lambda': trial.suggest_float('lambda', 1e-8, 10.0, log=True),
-        'min_child_samples': trial.suggest_int('min_child', 5, 100)
+        # CAMBIO CLAVE: Mínimo 0.05
+        'learning_rate': trial.suggest_float('lr', 0.05, 0.3, log=True),
+        'num_leaves': trial.suggest_int('leaves', 20, 128), # Reducido max de 256 a 128
+        'subsample': trial.suggest_float('subsample', 0.6, 1.0),
+        'colsample_bytree': trial.suggest_float('colsample', 0.6, 1.0),
+        'reg_alpha': trial.suggest_float('alpha', 1e-3, 10.0, log=True),
+        'reg_lambda': trial.suggest_float('lambda', 1e-3, 10.0, log=True),
+        'min_child_samples': trial.suggest_int('min_child', 10, 100)
     }
 
 def optimize_fold(algo, X, y, w, train_idx, fold_idx, args):

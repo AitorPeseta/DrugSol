@@ -2,18 +2,18 @@ nextflow.enable.dsl = 2
 
 process train_oof_chemprop {
     tag "Train Chemprop (OOF)"
-    label 'process_gpu'
-    accelerator 1, type: 'nvidia'   // Explicitly ask for NVIDIA GPU
+    label 'process_gpu' 
+    accelerator 1, type: 'nvidia'
     
     conda "${baseDir}/envs/drugsol-train.yml"
     
     publishDir "${params.outdir}/training", mode: 'copy', overwrite: true
 
     input:
-        path train_file   // Training data file
+        path train_file
         val  outdir_val
-        path script_py    // Python script
-        path folds_file   // Cross-validation folds file
+        path script_py
+        path folds_file
 
     output:
         path "oof_gnn/chemprop.parquet", emit: OFF_GNN
@@ -22,8 +22,11 @@ process train_oof_chemprop {
 
     script:
     """
-    # Train Chemprop GNN with OOF prediction
-    # Uses GPU and Optuna
+    export LD_PRELOAD=\$(find "\$PREFIX" -name "libmkl_core.so*" | head -n 1)
+    if [ -z "\$LD_PRELOAD" ]; then
+        export LD_PRELOAD=\$(find "\$PREFIX" -name "libmkl_intel_lp64.so*" | head -n 1)
+    fi
+    echo "LD_PRELOAD set to: \$LD_PRELOAD"
     
     python ${script_py} \\
         --train "${train_file}" \\
@@ -32,11 +35,10 @@ process train_oof_chemprop {
         --id-col row_uid \\
         --target logS \\
         --weight-col sw_temp37 \\
-        --tune-trials 20 \\
+        --tune-trials 15 \\
         --epochs 40 \\
         --tune-pruner asha \\
         --asha-rungs 5 10 15 \\
-        --gpu \\
         --save-dir ./oof_gnn
     """
 }

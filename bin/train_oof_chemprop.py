@@ -1,304 +1,299 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-train_oof_chemprop.py
----------------------
-Trains Chemprop GNN using Out-of-Fold strategy.
-Includes Optuna tuning for architecture hyperparameters.
-Compatible with Chemprop v2.
+train_oof_chemprop.py (Robust v1.6.1 Fix)
 """
 
-import argparse
-import json
-import shutil
-import subprocess
-import sys
+import argparse, json, shutil, subprocess, sys
 from pathlib import Path
-
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_squared_error, r2_score
 import optuna
 from optuna.pruners import HyperbandPruner, SuccessiveHalvingPruner, NopPruner
+from rdkit import Chem # Para validar SMILES
 
-def run_cmd(cmd, check=True):
-    """Runs a subprocess command."""
-    print(f"[CMD] {' '.join(map(str, cmd))}")
+def _read(path: str) -> pd.DataFrame:
+    p = Path(path)
+    if p.suffix.lower() == ".parquet": return pd.read_parquet(p)
+    elif p.suffix.lower() == ".csv": return pd.read_csv(p)
+    raise ValueError(f"Formato no soportado: {p.suffix}")
+
+def _metrics(y_true, y_pred):
+    rmse = mean_squared_error(y_true, y_pred, squared=False)
+    r2 = r2_score(y_true, y_pred)
+    return {"rmse": float(rmse), "r2": float(r2), "n": int(len(y_true))}
+
+def _run(cmd, check=True):
+    print("CMD:", " ".join(map(str, cmd)))
+    subprocess.run(cmd, check=check)
+
+def is_valid_smiles(s):
     try:
-        subprocess.run(cmd, check=check)
-    except subprocess.CalledProcessError as e:
-        print(f"[ERROR] Command failed with return code {e.returncode}")
-        raise e
+        m = Chem.MolFromSmiles(str(s))
+        return m is not None
+    except:
+        return False
 
-def get_metrics(y_true, y_pred):
-    return {
-        "rmse": float(np.sqrt(mean_squared_error(y_true, y_pred))),
-        "r2": float(r2_score(y_true, y_pred)),
-        "n": len(y_true)
-    }
+def _chemprop_train(train_csv, val_csv, out_dir, hp, use_gpu, epochs, seed, batch_size, target_col, weight_col=None, use_weights=True):
+    out_dir = Path(out_dir); out_dir.mkdir(parents=True, exist_ok=True)
+    
+    # 1. Cargar y Combinar
+    df_tr = pd.read_csv(train_csv)
+    
+    # Si no estamos en modo weights (Optuna), combinamos con val para tener más datos
+    # Si estamos en modo weights (Final), ya le pasamos todo lo que queremos usar en train_csv
+    if not use_weights and val_csv:
+         df_va = pd.read_csv(val_csv)
+         df = pd.concat([df_tr, df_va], ignore_index=True)
+    else:
+         df = df_tr.copy()
 
-def chemprop_train_wrapper(train_df, val_df, out_dir, hp, use_gpu, epochs, seed, batch_size, target_col, weight_col=None):
-    """Wrapper to call chemprop train CLI."""
-    out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Combine Train+Val into one file for Chemprop's splitting logic
-    # Chemprop needs a single file and a splits file
-    comb_csv = out_dir / "data.csv"
-    splits_json = out_dir / "splits.json"
-    
-    # Ensure weight column exists if requested
-    if weight_col:
-        if weight_col not in train_df.columns: train_df[weight_col] = 1.0
-        if weight_col not in val_df.columns: val_df[weight_col] = 1.0
-    
-    df_comb = pd.concat([train_df, val_df], ignore_index=True)
-    df_comb.to_csv(comb_csv, index=False)
-    
-    # Create explicit split indices
-    n_tr = len(train_df)
-    n_va = len(val_df)
-    splits = [{
-        "train": list(range(0, n_tr)),
-        "val": list(range(n_tr, n_tr + n_va)),
-        "test": [] # No test set during OOF training
-    }]
-    splits_json.write_text(json.dumps(splits))
-    
-    # Feature columns (RDKit descriptors if present)
-    # We look for common descriptor names
-    desc_cols = [c for c in df_comb.columns if c not in [target_col, "smiles", "mol", weight_col or "", "id"]]
-    # Filter numeric only just in case
-    desc_cols = [c for c in desc_cols if pd.api.types.is_numeric_dtype(df_comb[c])]
+    # 2. SANEAMIENTO CRÍTICO: Filtrar SMILES inválidos AHORA
+    # Esto evita que Chemprop los borre silenciosamente y desalinee los pesos
+    valid_mask = df["smiles_neutral"].apply(is_valid_smiles)
+    n_dropped = (~valid_mask).sum()
+    if n_dropped > 0:
+        print(f"[WARN] Descartados {n_dropped} SMILES inválidos antes de entrenar para asegurar alineación.")
+        df = df[valid_mask].reset_index(drop=True)
 
-    chemprop_bin = "chemprop" # Assumes it's in PATH from conda env
+    # 3. Preparar Archivos
+    data_path = out_dir / "data.csv"
+    weights_path = out_dir / "weights.csv"
     
+    # Columnas
+    cols_data = ["smiles_neutral", target_col]
+    exclude = ["smiles_neutral", target_col, "row_uid", "fold", "smiles", "mol", weight_col or ""]
+    desc_cols = [c for c in df.columns if c not in exclude and pd.api.types.is_numeric_dtype(df[c])]
+    
+    # Guardar Datos
+    df[cols_data + desc_cols].to_csv(data_path, index=False)
+
     cmd = [
-        chemprop_bin, "train",
-        "--data-path", str(comb_csv),
-        "--splits-file", str(splits_json),
-        "--task-type", "regression",
-        "--output-dir", str(out_dir),
+        "chemprop_train",
+        "--data_path", str(data_path),
+        "--dataset_type", "regression",
+        "--save_dir", str(out_dir),
         "--epochs", str(epochs),
-        "--batch-size", str(batch_size),
+        "--batch_size", str(batch_size),
         "--seed", str(seed),
-        "--save-dir", str(out_dir)
+        "--smiles_columns", "smiles_neutral",
+        "--target_columns", target_col,
+        "--metric", "rmse",
     ]
-    
-    # Weights logic (Modern Chemprop uses column name)
-    if weight_col:
-        cmd += ["--weights-column", weight_col]
+
+    # 4. Gestión de Pesos (Con Header y Split Automático)
+    if weight_col and use_weights:
+        # Asegurar que existe
+        if weight_col not in df.columns: df[weight_col] = 1.0
+        # Guardar con HEADER=True (estándar)
+        df[[weight_col]].to_csv(weights_path, index=False, header=True)
+        cmd += ["--data_weights_path", str(weights_path)]
         
-    # Target columns logic (can specify multiple, here just one)
-    # Chemprop v2 might infer, but better explicit
-    # NOTE: If using V1 CLI syntax, it might be --target-columns. 
-    # We assume V1 syntax compatibility as most wrappers do.
-    # cmd += ["--target-columns", target_col] 
+        # TRUCO: Usar un split minúsculo para validación (1%)
+        # Esto evita bugs de "no validation data" y permite que Chemprop gestione los índices de pesos
+        cmd += ["--split_type", "random", "--split_sizes", "0.99", "0.01", "0.0"]
+    
+    else:
+        # Sin pesos (Optuna), split 80/20 estándar
+        cmd += ["--split_type", "random", "--split_sizes", "0.8", "0.2", "0.0"]
 
     if use_gpu:
-        # Chemprop v2 / Lightning style
-        cmd += ["--accelerator", "gpu", "--devices", "1"]
-        
-    # Hyperparams
-    if "hidden_size" in hp: cmd += ["--hidden-size", str(hp["hidden_size"])]
-    if "depth" in hp:       cmd += ["--depth", str(hp["depth"])]
-    if "dropout" in hp:     cmd += ["--dropout", str(hp["dropout"])]
-    if "ffn_num_layers" in hp: cmd += ["--ffn-num-layers", str(hp["ffn_num_layers"])]
-    
-    # Run
-    run_cmd(cmd)
+        cmd += ["--gpu", "0"]
 
-def chemprop_predict_wrapper(test_df, model_path, out_csv, use_gpu, batch_size):
-    """Wrapper for chemprop predict."""
-    input_csv = Path(out_csv).with_suffix(".in.csv")
-    test_df.to_csv(input_csv, index=False)
+    if "message_hidden_dim" in hp: cmd += ["--hidden_size", str(int(hp["message_hidden_dim"]))]
+    if "depth" in hp:              cmd += ["--depth", str(int(hp["depth"]))]
+    if "dropout" in hp:            cmd += ["--dropout", str(float(hp["dropout"]))]
+    if "ffn_num_layers" in hp:     cmd += ["--ffn_num_layers", str(int(hp["ffn_num_layers"]))]
     
+    if desc_cols:
+        cmd += ["--no_features_scaling"]
+
+    _run(cmd, check=True)
+
+def _chemprop_predict(val_in_csv, model_path, out_csv, gpu, batch_size, smiles_col):
+    df = pd.read_csv(val_in_csv)
+    tmp_in = Path(out_csv).parent / "pred_in.csv"
+    
+    exclude = [smiles_col, "logS", "row_uid", "fold", "smiles", "mol"]
+    desc_cols = [c for c in df.columns if c not in exclude and pd.api.types.is_numeric_dtype(df[c])]
+    
+    df[[smiles_col] + desc_cols].to_csv(tmp_in, index=False)
+
     cmd = [
-        "chemprop", "predict",
-        "--test-path", str(input_csv),
-        "--checkpoint-path", str(model_path),
-        "--preds-path", str(out_csv),
-        "--batch-size", str(batch_size)
+        "chemprop_predict",
+        "--test_path", str(tmp_in),
+        "--preds_path", str(out_csv),
+        "--checkpoint_path", str(model_path),
+        "--batch_size", str(batch_size),
+        "--smiles_columns", smiles_col
     ]
     
-    if use_gpu:
-        cmd += ["--accelerator", "gpu", "--devices", "1"]
-        
-    run_cmd(cmd)
+    if desc_cols:
+        cmd += ["--no_features_scaling"]
 
-def select_best_checkpoint(run_dir):
-    """Finds the best .pt checkpoint file."""
-    p = Path(run_dir)
-    # Chemprop usually saves 'model.pt' or 'fold_0/model_0/model.pt'
-    candidates = list(p.rglob("*.pt"))
-    if not candidates:
-        raise FileNotFoundError(f"No .pt checkpoints found in {run_dir}")
-    # Prefer 'best.pt' or similar if exists, else take the first one
-    best = [x for x in candidates if "best" in x.name]
-    return best[0] if best else candidates[0]
+    if gpu:
+        cmd += ["--gpu", "0"]
 
-# -------------------- OPTUNA --------------------
+    _run(cmd, check=True)
 
-def sample_hp(trial):
-    return {
-        "hidden_size": trial.suggest_int("hidden_size", 300, 1200, step=100),
-        "depth": trial.suggest_int("depth", 2, 6),
-        "dropout": trial.suggest_float("dropout", 0.0, 0.4),
-        "ffn_num_layers": trial.suggest_int("ffn_num_layers", 1, 3)
-    }
+def _select_best_pt(run_dir: Path) -> Path:
+    run_dir = Path(run_dir)
+    ckpts = sorted(list(run_dir.rglob("*.pt")))
+    if not ckpts:
+         if (run_dir / "model.pt").exists(): return run_dir / "model.pt"
+         raise FileNotFoundError(f"No .pt found in {run_dir}")
+    best = [c for c in ckpts if c.name == "model.pt"]
+    return best[0] if best else ckpts[0]
 
-def optimize_fold(train_df, val_df, fold_idx, args):
-    """Runs Optuna optimization for a single fold."""
-    
-    def objective(trial):
-        hp = sample_hp(trial)
-        
-        # Create temporary directory for this trial
-        trial_dir = Path(args.save_dir) / f"fold_{fold_idx}" / f"trial_{trial.number}"
-        if trial_dir.exists(): shutil.rmtree(trial_dir)
-        
-        # Train with small epochs for pruning or full for final
-        # ASHA logic would go here (training for partial epochs), 
-        # but calling CLI repeatedly is slow. 
-        # Simplified: Train once for fixed small epochs
-        epochs = args.epochs // 2 if args.tune_trials > 5 else args.epochs
-        
-        try:
-            chemprop_train_wrapper(
-                train_df, val_df, trial_dir, hp, args.gpu, 
-                epochs=epochs, seed=args.seed, batch_size=args.batch_size,
-                target_col=args.target, weight_col=args.weight_col
-            )
-            
-            # Predict on Val
-            ckpt = select_best_checkpoint(trial_dir)
-            preds_csv = trial_dir / "preds.csv"
-            chemprop_predict_wrapper(val_df, ckpt, preds_csv, args.gpu, args.batch_size)
-            
-            # Score
-            preds = pd.read_csv(preds_csv)
-            # Assume only one prediction column if target is scalar
-            y_pred = preds.iloc[:, 0].values 
-            y_true = val_df[args.target].values
-            rmse = np.sqrt(mean_squared_error(y_true, y_pred))
-            
-            return rmse
-            
-        except Exception as e:
-            print(f"[WARN] Trial failed: {e}")
-            return 9999.0
-        finally:
-            # Cleanup to save space
-            if trial_dir.exists(): shutil.rmtree(trial_dir)
+def _hp_sample_optuna(trial: optuna.Trial):
+    hp = dict(
+        message_hidden_dim = trial.suggest_int("message_hidden_dim", 300, 600, step=100),
+        depth              = trial.suggest_int("depth", 2, 4),
+        dropout            = trial.suggest_float("dropout", 0.0, 0.2),
+        ffn_num_layers     = trial.suggest_int("ffn_num_layers", 1, 2)
+    )
+    trial.set_user_attr("hp", hp)
+    return hp
 
-    study = optuna.create_study(direction="minimize")
-    study.optimize(objective, n_trials=args.tune_trials)
-    return study.best_params
+def _default_rungs(max_epochs: int):
+     e1 = max(1, int(round(max_epochs * 0.25)))
+     e2 = max(2, int(round(max_epochs * 0.50)))
+     e3 = max_epochs
+     return sorted(set([e1, e2, e3]))
 
-# -------------------- MAIN --------------------
+def _get_pruner(name: str):
+     return NopPruner() # Simplificamos para evitar líos
+
+def _write_fold_csv(df_tr, df_va, smiles_col, target, out_train: Path, out_val: Path):
+     needed = [smiles_col, target]
+     for c in needed:
+         if c not in df_tr.columns or c not in df_va.columns:
+             raise ValueError(f"Falta columna requerida en train/val: {c}")
+     df_tr.to_csv(out_train, index=False)
+     df_va.to_csv(out_val, index=False)
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--train", required=True)
     ap.add_argument("--folds", required=True)
+    ap.add_argument("--smiles-col", required=True)
+    ap.add_argument("--id-col", required=True)
+    ap.add_argument("--target", required=True)
     ap.add_argument("--save-dir", required=True)
-    
-    ap.add_argument("--smiles-col", default="smiles_neutral")
-    ap.add_argument("--target", default="logS")
-    ap.add_argument("--id-col", default="row_uid")
     ap.add_argument("--weight-col", default=None)
-    
-    ap.add_argument("--gpu", action="store_true")
-    ap.add_argument("--epochs", type=int, default=30)
-    ap.add_argument("--batch-size", type=int, default=50)
-    ap.add_argument("--seed", type=int, default=42)
-    
-    # Tuning
+    ap.add_argument("--epochs", type=int, default=40)
+    ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--gpu", action="store_true", default=False)
+    ap.add_argument("--batch-size", type=int, default=32)
     ap.add_argument("--tune-trials", type=int, default=0)
+    ap.add_argument("--tune-timeout", type=int, default=None)
     ap.add_argument("--tune-pruner", default="asha")
-    ap.add_argument("--asha-rungs", nargs="+", type=int)
-    
-    args = ap.parse_args()
-    
-    # Load
-    df = pd.read_parquet(args.train) if args.train.endswith('.parquet') else pd.read_csv(args.train)
-    folds = pd.read_parquet(args.folds) if args.folds.endswith('.parquet') else pd.read_csv(args.folds)
-    
-    # Merge
-    df = df.merge(folds[[args.id_col, "fold"]], on=args.id_col, how="inner")
-    
-    # Prepare OOF storage
-    oof_preds = np.zeros(len(df))
-    oof_ids = df[args.id_col].values
-    
-    best_hps = []
-    
-    unique_folds = sorted(df["fold"].unique())
-    
-    for fold in unique_folds:
-        print(f"=== FOLD {fold} ===")
-        train_sub = df[df["fold"] != fold].copy()
-        val_sub = df[df["fold"] == fold].copy()
-        
-        # 1. Tune (if requested)
-        if args.tune_trials > 0:
-            print(f"  Tuning ({args.tune_trials} trials)...")
-            best_hp = optimize_fold(train_sub, val_sub, fold, args)
-        else:
-            # Default params
-            best_hp = {"hidden_size": 300, "depth": 3, "dropout": 0.0, "ffn_num_layers": 2}
-            
-        best_hps.append(best_hp)
-        
-        # 2. Final Train
-        print(f"  Training Final Model for Fold {fold}...")
-        fold_dir = Path(args.save_dir) / f"fold_{fold}"
-        if fold_dir.exists(): shutil.rmtree(fold_dir)
-        
-        chemprop_train_wrapper(
-            train_sub, val_sub, fold_dir, best_hp, args.gpu, 
-            args.epochs, args.seed, args.batch_size,
-            args.target, args.weight_col
-        )
-        
-        # 3. Predict OOF
-        ckpt = select_best_checkpoint(fold_dir)
-        preds_file = fold_dir / "val_preds.csv"
-        chemprop_predict_wrapper(val_sub, ckpt, preds_file, args.gpu, args.batch_size)
-        
-        # Store
-        p = pd.read_csv(preds_file)
-        # Robustly find prediction column (first non-smiles/id)
-        pred_col = p.columns[0] # Usually 'logS' or similar
-        # If first col is smiles, take second
-        if "smiles" in pred_col.lower(): pred_col = p.columns[1]
-            
-        val_indices = df.index[df["fold"] == fold]
-        oof_preds[val_indices] = p[pred_col].values
+    ap.add_argument("--asha-rungs", nargs="*", type=int, default=None)
 
-    # Save OOF
-    oof_df = pd.DataFrame({
-        "id": df[args.id_col],
-        "fold": df["fold"],
-        "y_true": df[args.target],
-        "y_pred": oof_preds
-    })
+    args = ap.parse_args()
+    outdir = Path(args.save_dir); outdir.mkdir(parents=True, exist_ok=True)
     
-    out_parquet = Path(args.save_dir) / "chemprop.parquet"
-    oof_df.to_parquet(out_parquet, index=False)
+    df = _read(args.train).copy()
+    folds = _read(args.folds).copy()
+    df = df.merge(folds[[args.id_col,"fold"]], on=args.id_col, how="inner")
     
-    # Save Best HP (Average/Mode or just list)
-    # For simplicity, save the HP of fold 0 as representative
-    hp_file = Path(args.save_dir) / "chemprop_best_params.json"
-    with open(hp_file, "w") as f:
-        json.dump(best_hps[0], f, indent=2)
+    if args.weight_col and args.weight_col not in df.columns:
+        df[args.weight_col] = 1.0
+
+    oof = pd.DataFrame({args.id_col: df[args.id_col], "fold": df["fold"]})
+    oof["y_hat"] = np.nan
+    
+    folds_u = sorted(df["fold"].unique().tolist())
+    rungs = sorted(args.asha_rungs) if args.asha_rungs else _default_rungs(args.epochs)
+    best_by_fold = {}
+
+    for k in folds_u:
+        print(f"\n========== FOLD {k} ==========")
+        fold_dir = outdir / f"fold_{k}"
+        if fold_dir.exists(): shutil.rmtree(fold_dir)
+        fold_dir.mkdir(parents=True, exist_ok=True)
+
+        tr = df[df["fold"] != k].copy()
+        va = df[df["fold"] == k].copy()
         
-    # Save Metrics
-    metrics = get_metrics(df[args.target].values, oof_preds)
-    with open(Path(args.save_dir) / "metrics_oof_chemprop.json", "w") as f:
-        json.dump(metrics, f, indent=2)
+        tr_csv = fold_dir / "train.csv"
+        va_csv = fold_dir / "val.csv"
+        _write_fold_csv(tr, va, args.smiles_col, args.target, tr_csv, va_csv)
+
+        if int(args.tune_trials) > 0:
+            study = optuna.create_study(direction="minimize", pruner=_get_pruner(args.tune_pruner))
+            def objective(trial):
+                hp = _hp_sample_optuna(trial)
+                from sklearn.model_selection import train_test_split
+                tri, vai = train_test_split(tr, test_size=0.2, random_state=args.seed)
+                
+                tdir = fold_dir / f"trial_{trial.number}"
+                if tdir.exists(): shutil.rmtree(tdir)
+                tdir.mkdir(parents=True, exist_ok=True)
+                
+                tri_csv = tdir / "tri.csv"; vai_csv = tdir / "vai.csv"
+                _write_fold_csv(tri, vai, args.smiles_col, args.target, tri_csv, vai_csv)
+                
+                best_rmse = None
+                try:
+                    for r_ep in rungs:
+                        r_dir = tdir / f"e{r_ep}"
+                        # Optuna: Sin pesos, solo datos
+                        _chemprop_train(tri_csv, vai_csv, r_dir, hp, args.gpu, r_ep, args.seed, args.batch_size, args.target, args.weight_col, use_weights=False)
+                        
+                        pt = _select_best_pt(r_dir)
+                        p_out = r_dir / "pred.csv"
+                        _chemprop_predict(vai_csv, pt, p_out, args.gpu, args.batch_size, args.smiles_col)
+                        
+                        pred = pd.read_csv(p_out)
+                        if args.target in pred.columns: vals = pred[args.target].values
+                        else: vals = pred.iloc[:,0].values
+                        
+                        rmse = mean_squared_error(vai[args.target].values, vals, squared=False)
+                        best_rmse = rmse
+                        trial.report(rmse, r_ep)
+                        if trial.should_prune(): raise optuna.TrialPruned()
+                finally:
+                    shutil.rmtree(tdir, ignore_errors=True)
+                return best_rmse
+            
+            study.optimize(objective, n_trials=int(args.tune_trials))
+            best_hp = study.best_trial.user_attrs["hp"]
+            best_by_fold[k] = best_hp
+        else:
+            best_hp = {"message_hidden_dim": 300, "depth": 3, "dropout": 0.0, "ffn_num_layers": 2}
+            best_by_fold[k] = best_hp
+            
+        # Final Train (Con pesos)
+        fin_dir = fold_dir / "final"
+        # Pasamos 'tr' y 'None' (no validación explícita, se usa split interno 99/1)
+        # Esto es CLAVE: No pasamos 'va' a train, solo 'tr' para que aprenda de todo.
+        # Validamos luego con 'va' en el predict.
+        tr_csv_full = fold_dir / "train_full_fold.csv"
+        tr.to_csv(tr_csv_full, index=False)
         
-    print(f"[Done] OOF RMSE: {metrics['rmse']:.4f}")
+        _chemprop_train(tr_csv_full, None, fin_dir, best_hp, args.gpu, args.epochs, args.seed, args.batch_size, args.target, args.weight_col, use_weights=True)
+        
+        pt = _select_best_pt(fin_dir)
+        oof_out = fold_dir / "oof_pred.csv"
+        _chemprop_predict(va_csv, pt, oof_out, args.gpu, args.batch_size, args.smiles_col)
+        
+        pred = pd.read_csv(oof_out)
+        if args.target in pred.columns: vals = pred[args.target].values
+        else: vals = pred.iloc[:,0].values
+        oof.loc[oof["fold"]==k, "y_hat"] = vals
+
+    common = pd.DataFrame({"id": df[args.id_col], "fold": df["fold"], "y_true": df[args.target], "y_pred": oof["y_hat"]})
+    common.to_parquet(outdir / "chemprop.parquet", index=False)
+    
+    with open(outdir / "chemprop_best_params.json", "w") as f:
+        json.dump(list(best_by_fold.values())[0], f, indent=2)
+    
+    m = _metrics(common["y_true"], common["y_pred"])
+    with open(outdir / "metrics_oof_chemprop.json", "w") as f:
+        json.dump(m, f, indent=2)
+    print(f"[DONE] OOF RMSE: {m['rmse']:.4f}")
 
 if __name__ == "__main__":
     main()

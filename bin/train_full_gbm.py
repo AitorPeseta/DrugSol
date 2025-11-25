@@ -3,10 +3,8 @@
 """
 train_full_gbm.py
 -----------------
-Retrains XGBoost and LightGBM on the full dataset using optimized hyperparameters.
-- Aggregates best HPs from OOF folds (median/mode).
-- Supports GPU acceleration.
-- Exports complete Pipelines (Preprocessing + Model) as pickles.
+Retrains XGBoost and LightGBM on the full dataset.
+Updated for XGBoost 2.0+ (tree_method='hist' + device='cuda').
 """
 
 import argparse
@@ -34,7 +32,7 @@ def read_any(path):
     return pd.read_csv(p)
 
 def get_aggregated_params(hp_dir, prefix):
-    """Aggregates params from multiple fold JSONs (median for float, mode for int/str)."""
+    """Aggregates params from multiple fold JSONs."""
     p = Path(hp_dir)
     files = sorted(p.glob(f"{prefix}_fold*.json"))
     if not files: return {}
@@ -48,20 +46,15 @@ def get_aggregated_params(hp_dir, prefix):
     for k in keys:
         vals = [d[k] for d in all_params if k in d]
         if not vals: continue
-        
-        # Check type of first value
         if isinstance(vals[0], float):
             agg[k] = float(np.median(vals))
         elif isinstance(vals[0], int) and not isinstance(vals[0], bool):
-             # Integers (like max_depth) should be rounded median or mode
              agg[k] = int(round(np.median(vals)))
         else:
-            # Strings/Bools -> Mode
             try:
                 agg[k] = statistics.mode(vals)
             except:
-                agg[k] = vals[0] # Fallback
-                
+                agg[k] = vals[0]
     return agg
 
 def get_pipeline_xgb(params, use_gpu):
@@ -71,9 +64,9 @@ def get_pipeline_xgb(params, use_gpu):
         'subsample': 0.8, 'colsample_bytree': 0.8,
         'random_state': RANDOM_STATE, 'n_jobs': 4, 'verbosity': 0
     }
-    # GPU
+    # GPU Config (XGBoost 2.0+)
     if use_gpu:
-        p.update({'tree_method': 'gpu_hist', 'device': 'cuda'})
+        p.update({'tree_method': 'hist', 'device': 'cuda'})
     else:
         p.update({'tree_method': 'hist', 'device': 'cpu'})
         
@@ -108,63 +101,45 @@ def main():
     outdir = Path(args.save_dir)
     outdir.mkdir(parents=True, exist_ok=True)
 
-    # 1. Load Data
     print("[Full GBM] Loading data...")
     df = read_any(args.train)
-    
     y = df[args.target].values
     
-    # Weights
     if args.sample_weight_col and args.sample_weight_col in df.columns:
         w = df[args.sample_weight_col].fillna(1.0).values
     else:
         w = None
 
-    # Drop non-features
     drop_cols = [args.target, args.sample_weight_col, "row_uid", "fold", "smiles_neutral"]
     X = df.drop(columns=[c for c in drop_cols if c in df.columns]).select_dtypes(include=np.number)
     
-    # 2. Preprocessing Pipeline
-    # It's critical to save the imputer logic
     preprocessor = Pipeline([
         ('imputer', SimpleImputer(strategy='median')),
         ('var_thresh', VarianceThreshold(threshold=0.0))
     ])
 
-    # 3. Load Hyperparams
     hp_xgb = get_aggregated_params(args.hp_dir, "xgb")
     hp_lgb = get_aggregated_params(args.hp_dir, "lgbm")
     
-    print(f"[Full GBM] Best XGB Params: {hp_xgb}")
-    print(f"[Full GBM] Best LGB Params: {hp_lgb}")
-
-    # 4. Train XGBoost
+    # Train XGBoost
     print("[Full GBM] Training XGBoost...")
     xgb_model = get_pipeline_xgb(hp_xgb, args.use_gpu)
-    
     xgb_pipe = Pipeline([('pre', preprocessor), ('model', xgb_model)])
-    
-    # XGBoost supports sample_weight in fit
     fit_params = {}
     if w is not None: fit_params['model__sample_weight'] = w
-    
     xgb_pipe.fit(X, y, **fit_params)
     
     with open(outdir / "xgb.pkl", "wb") as f:
         pickle.dump(xgb_pipe, f)
 
-    # 5. Train LightGBM
+    # Train LightGBM
     print("[Full GBM] Training LightGBM...")
-    # Fallback logic for GPU failure
     try:
         lgb_model = get_pipeline_lgbm(hp_lgb, args.use_gpu)
         lgb_pipe = Pipeline([('pre', preprocessor), ('model', lgb_model)])
-        
         fit_params_lgb = {}
         if w is not None: fit_params_lgb['model__sample_weight'] = w
-        
         lgb_pipe.fit(X, y, **fit_params_lgb)
-        
     except Exception as e:
         if args.use_gpu:
             print(f"[WARN] LightGBM GPU failed ({e}). Retrying on CPU...")
@@ -177,7 +152,6 @@ def main():
     with open(outdir / "lgbm.pkl", "wb") as f:
         pickle.dump(lgb_pipe, f)
 
-    # Save Metadata
     manifest = {
         "features": list(X.columns),
         "n_train": len(df),

@@ -9,7 +9,7 @@ process filter_features {
     // Publish Logic:
     publishDir "${params.outdir}/prepare_data/filtered", mode: 'copy', overwrite: true
     
-    publishDir "${baseDir}/resources", mode: 'copy', overwrite: true, enabled: (dataset_name == 'train')
+    publishDir "${baseDir}/resources", mode: 'copy', overwrite: true, enabled: {dataset_name == 'train'}
 
     input:
         path input_file    // Parquet file with features to filter

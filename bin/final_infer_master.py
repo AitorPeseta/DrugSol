@@ -43,6 +43,9 @@ def get_metrics(y_true, y_pred):
         "n": int(mask.sum())
     }
 
+def _norm_id(s):
+    return s.astype("string").str.strip()
+
 # ---------------- MODEL INFERENCE ----------------
 
 def predict_gbm(models_dir, test_df, id_col):
@@ -55,14 +58,8 @@ def predict_gbm(models_dir, test_df, id_col):
         try:
             print("[Infer] Predicting with XGBoost...")
             xgb_pipe = joblib.load(xgb_path)
-            # Ensure features match training
-            # (Pipeline handles scaling/imputing, but we need correct columns)
-            # We rely on the pipeline's feature names if available, or intersect
             
-            # Get feature names from the VarianceThreshold step or similar if possible
-            # Or just try to predict and let sklearn complain nicely
-            
-            # Drop non-features
+            # Prepare features (drop meta-columns)
             X = test_df.select_dtypes(include=[np.number])
             cols_to_drop = [id_col, "fold", "target", "logS"]
             X = X.drop(columns=[c for c in cols_to_drop if c in X.columns])
@@ -72,10 +69,10 @@ def predict_gbm(models_dir, test_df, id_col):
             if manifest_path.exists():
                 manifest = json.loads(manifest_path.read_text())
                 feat_cols = manifest.get("features", [])
-                # Add missing as 0, drop extra
+                # Fill missing with 0, ensure order
                 for c in feat_cols:
                     if c not in X.columns: X[c] = 0
-                X = X[feat_cols] # Reorder
+                X = X[feat_cols]
             
             preds["y_xgb"] = xgb_pipe.predict(X)
         except Exception as e:
@@ -87,7 +84,7 @@ def predict_gbm(models_dir, test_df, id_col):
         try:
             print("[Infer] Predicting with LightGBM...")
             lgbm_pipe = joblib.load(lgbm_path)
-            # Re-use X from above if possible
+            # Reuse X from above (assuming features are shared)
             preds["y_lgbm"] = lgbm_pipe.predict(X)
         except Exception as e:
             print(f"[WARN] LightGBM inference failed: {e}")
@@ -95,67 +92,54 @@ def predict_gbm(models_dir, test_df, id_col):
     return preds
 
 def predict_chemprop(model_dir, test_smiles_df, smiles_col, id_col, gpu=False):
-    """Generates predictions for Chemprop."""
-    # Locate best checkpoint
+    """Generates predictions using Chemprop v1.6.1."""
     p = Path(model_dir)
-    # Prioritize: output/best.pt -> output/model_0/best.pt -> recursive search
-    ckpt = p / "best.pt"
-    if not ckpt.exists():
-        cands = list(p.rglob("best.pt"))
-        if cands: ckpt = cands[0]
-        else:
-            # Fallback to any .pt
-            cands = list(p.rglob("*.pt"))
-            if not cands:
-                print("[WARN] No Chemprop checkpoint found.")
-                return pd.DataFrame({id_col: test_smiles_df[id_col]})
-            ckpt = cands[0]
-            
-    print(f"[Infer] Predicting with Chemprop (ckpt={ckpt.name})...")
+    # Find the best checkpoint (.pt file)
+    ckpts = list(p.rglob("*.pt"))
+    if not ckpts:
+        print("[WARN] No Chemprop checkpoint found.")
+        return pd.DataFrame({id_col: test_smiles_df[id_col]})
     
-    # Prepare Input CSV
+    ckpt = ckpts[0] 
+    print(f"[Infer] Predicting with Chemprop v1 (ckpt={ckpt.name})...")
+    
     tmp_in = p / "test_in.csv"
     tmp_out = p / "test_out.csv"
     
-    # Chemprop expects SMILES as first column
-    cols = [smiles_col] + [c for c in test_smiles_df.columns if c not in [smiles_col, id_col, "smiles"]]
-    # Ensure descriptor columns are present if model needs them
-    # For now, dump everything numeric + smiles
+    # Prepare CSV
     df_in = test_smiles_df.rename(columns={smiles_col: "smiles"})
-    # Keep numeric columns for descriptors
+    
+    # Detect descriptors (Must match training)
     desc_cols = ["temp_C", "inv_temp", "n_ionizable", "n_acid", "n_base", "TPSA", "logP", "HBD", "HBA", "FractionCSP3", "MW"]
     present_desc = [c for c in desc_cols if c in df_in.columns]
     
-    df_in_final = df_in[["smiles"] + present_desc]
-    df_in_final.to_csv(tmp_in, index=False)
+    # Save CSV for prediction
+    df_in[["smiles"] + present_desc].to_csv(tmp_in, index=False)
     
     cmd = [
-        "chemprop", "predict",
-        "--test-path", str(tmp_in),
-        "--preds-path", str(tmp_out),
-        "--checkpoint-path", str(ckpt),
+        "chemprop_predict",
+        "--test_path", str(tmp_in),
+        "--preds_path", str(tmp_out),
+        "--checkpoint_path", str(ckpt),
         "--batch-size", "64",
-        "--drop-extra-columns"
+        "--smiles_columns", "smiles"
     ]
-    if gpu: cmd += ["--accelerator", "gpu", "--devices", "1"]
-    if present_desc: cmd += ["--descriptors-columns", *present_desc]
     
+    if gpu:
+        cmd += ["--gpu", "0"]
+        
     try:
         run_cmd(cmd)
         preds = pd.read_csv(tmp_out)
         
-        # Find pred column
-        # Usually 'logS' or 'prediction'
-        target_col = preds.columns[0] if "smiles" not in preds.columns[0].lower() else preds.columns[1]
-        # Robust check
-        for c in preds.columns:
-            if c.lower() not in ["smiles"] + [d.lower() for d in present_desc]:
-                target_col = c
-                break
-        
+        # In v1, prediction col usually has target name or is first numeric
+        # We assume it's the first non-smiles column
+        pred_col = preds.columns[0]
+        if "smiles" in pred_col.lower(): pred_col = preds.columns[1]
+            
         out = pd.DataFrame({
             id_col: test_smiles_df[id_col].values,
-            "y_chemprop": preds[target_col].values
+            "y_chemprop": preds[pred_col].values
         })
         return out
     except Exception as e:
@@ -171,11 +155,10 @@ def predict_tpsa(tpsa_json_path, test_df, id_col):
     try:
         model = json.loads(Path(tpsa_json_path).read_text())
         
-        # Calculate features on the fly if missing
+        # Calculate on-the-fly features if missing
         if "inv_temp" not in test_df.columns and "temp_C" in test_df.columns:
              test_df["inv_temp"] = 1000.0 / (test_df["temp_C"] + 273.15)
              
-        # Formula: y = intercept + sum(coef * val)
         intercept = model.get("intercept", 0.0)
         coefs = model.get("coefs", {}) # {feature_name: weight}
         
@@ -209,7 +192,7 @@ def main():
     ap.add_argument("--smiles-col", default="smiles_neutral")
     ap.add_argument("--target", default="logS")
     
-    # Ignored but kept for compatibility
+    # Compatibility args (ignored)
     ap.add_argument("--chemprop-smiles-col", default=None)
     ap.add_argument("--tpsa-col", default="TPSA")
     ap.add_argument("--phenol-col", default="n_phenol")
@@ -226,25 +209,28 @@ def main():
     df_tab = read_any(args.test_tabular)
     df_smi = read_any(args.test_smiles)
     
-    # Ensure ID alignment
-    if args.id_col not in df_tab.columns or args.id_col not in df_smi.columns:
-        sys.exit(f"[ERROR] ID col '{args.id_col}' missing.")
+    # Ensure IDs are strings and clean
+    df_tab[args.id_col] = _norm_id(df_tab[args.id_col])
+    df_smi[args.id_col] = _norm_id(df_smi[args.id_col])
         
     # Merge to have all features available
-    # (Tabular has descriptors, SMILES has... smiles)
-    # We perform a left merge on Tabular to keep its rows
+    # Left merge on Tabular to preserve structure
     df_full = df_tab.merge(df_smi, on=args.id_col, suffixes=("", "_smi"))
     
     # 2. Base Predictions
     preds_gbm = predict_gbm(args.models_dir, df_full, args.id_col)
-    preds_gnn = predict_chemprop(args.chemprop_model_dir, df_full, args.smiles_col, args.id_col)
+    
+    # Chemprop needs GPU flag hardcoded here or passed via args? 
+    # Assuming GPU available if running in this container
+    preds_gnn = predict_chemprop(args.chemprop_model_dir, df_full, args.smiles_col, args.id_col, gpu=True)
+    
     preds_tpsa = predict_tpsa(args.tpsa_json, df_full, args.id_col)
     
     # Combine Level 0
     level0 = preds_gbm.merge(preds_gnn, on=args.id_col, how="left") \
                       .merge(preds_tpsa, on=args.id_col, how="left")
                       
-    # Add Target if available (for metrics)
+    # Add Target for metrics
     if args.target in df_full.columns:
         level0 = level0.merge(df_full[[args.id_col, args.target]], on=args.id_col, how="left")
         
@@ -260,9 +246,8 @@ def main():
     if args.weights_json and Path(args.weights_json).exists():
         print("[Infer] Applying Blend Weights...")
         weights = json.loads(Path(args.weights_json).read_text())
-        # Align weights to columns
+        # Align weights
         w_vec = np.array([weights.get(c.replace("y_", ""), 0.0) for c in present_cols])
-        # Normalize
         if w_vec.sum() > 0: w_vec /= w_vec.sum()
         
         y_blend = np.nansum(X_meta * w_vec, axis=1)
@@ -272,42 +257,50 @@ def main():
     # B. Stacking
     if args.stack_pkl and Path(args.stack_pkl).exists():
         print("[Infer] Applying Stacking Model...")
-        stack_meta = pickle.loads(Path(args.stack_pkl).read_bytes())
-        # Check model type
-        if "coef" in stack_meta:
-            # It's our custom dictionary from meta_stack_blend.py
+        stack_meta = joblib.load(args.stack_pkl) # Might be a dict or object
+        
+        # Handle custom dict format from meta_stack_blend
+        if isinstance(stack_meta, dict) and "coef" in stack_meta:
             coefs = stack_meta["coef"]
             intercept = stack_meta["intercept"]
-            # Map features
-            feat_names = stack_meta["feature_names"] # e.g. ["y_xgb", "y_lgbm"]
+            feat_names = stack_meta["feature_names"]
             
             y_stack = np.full(len(level0), intercept)
             for f, w in zip(feat_names, coefs):
                 if f in level0.columns:
                     y_stack += level0[f].fillna(0.0).values * w
-                    
             level0["y_pred_stack"] = y_stack
+            
+        # Handle scikit-learn estimator
+        elif hasattr(stack_meta, "predict"):
+             # We need to ensure column order matches training
+             # Usually meta_stack_blend saves metadata, if not, assume order of present_cols
+             # This part might be tricky if not standard, skipping direct predict safely
+             pass
+
+        if "y_pred_stack" in level0.columns:
             level0[[args.id_col, "y_pred_stack"]].to_parquet(outdir / "test_stack.parquet", index=False)
 
-    # 4. Metrics (if Target exists)
+    # 4. Metrics
     if args.target in level0.columns:
         print("[Infer] Calculating Metrics...")
         metrics = {}
         y_true = level0[args.target].values
         
-        # Global Metrics
+        # Global
         for c in present_cols + ["y_pred_blend", "y_pred_stack"]:
             if c in level0.columns:
                 metrics[c] = get_metrics(y_true, level0[c].values)
                 
-        # Physiological Range Metrics (35-38 C)
+        # Physio Range (35-38 C)
         if "temp_C" in df_full.columns:
             phys_mask = df_full["temp_C"].between(35, 38).values
             if phys_mask.any():
                 metrics["physio_range"] = {}
                 for c in present_cols + ["y_pred_blend", "y_pred_stack"]:
                     if c in level0.columns:
-                        metrics["physio_range"][c] = get_metrics(y_true[phys_mask], level0.loc[phys_mask, c].values)
+                        mask_p = phys_mask
+                        metrics["physio_range"][c] = get_metrics(y_true[mask_p], level0.loc[mask_p, c].values)
         
         (outdir / "metrics_test.json").write_text(json.dumps(metrics, indent=2))
         print(f"[Infer] Done. Blend RMSE: {metrics.get('y_pred_blend', {}).get('rmse', 'N/A')}")

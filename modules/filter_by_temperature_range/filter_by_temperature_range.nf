@@ -1,7 +1,7 @@
 nextflow.enable.dsl = 2
 
 process filter_by_temperature_range {
-    tag "Filter Temp [${min}, ${max}]"
+    tag "Filter Temp [${min_val}, ${max_val}]"
     label 'cpu_small'
     
     conda "${baseDir}/envs/drugsol-data.yml"

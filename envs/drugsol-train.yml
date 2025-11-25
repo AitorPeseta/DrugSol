@@ -3,28 +3,22 @@ channels:
   - pytorch
   - nvidia
   - conda-forge
-channel_priority: strict
 dependencies:
-  - python=3.11
-  # --- Core GPU Stack ---
-  - pytorch=2.5.*
-  - pytorch-cuda=12.4
-  - pytorch-lightning
-  
-  # --- Data & Math ---
-  - numpy>=1.26
-  - pandas
+  - python=3.8
+  - pytorch=1.13.*
+  - pytorch-cuda=11.7
+  - numpy<1.24
+  - pandas<2.0.0
+  - rdkit=2022.09.5
   - pyarrow
-  
-  # --- Bio/Cheminformatics ---
-  - rdkit=2023.09.*
-  
-  # --- ML Libraries ---
-  - optuna                # Para optimización de hiperparámetros
-  - shap                  # Para explicabilidad
+  - mkl
+  - mkl-service
+  - matplotlib
+  - seaborn
   - pip
   - pip:
-      - chemprop>=2.0     # Chemprop v2
+      - chemprop==1.6.1
       - xgboost
       - lightgbm
-      - scikit-learn      # Necesario para métricas y regresión lineal
+      - optuna
+      - scikit-learn

@@ -173,3 +173,54 @@
 2025-11-22 11:25:49	-	scruffy_swanson	-	f2b0b83ba60175d4cf087e3263ab3fcb	12f842a8-0375-4b09-be90-75f4eb4f2985	nextflow run main.nf --mode research -resume
 2025-11-22 11:32:24	-	cheeky_kalam	-	f2b0b83ba60175d4cf087e3263ab3fcb	12f842a8-0375-4b09-be90-75f4eb4f2985	nextflow run main.nf --mode research -resume
 2025-11-22 11:38:50	20m 8s	astonishing_agnesi	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	12f842a8-0375-4b09-be90-75f4eb4f2985	nextflow run main.nf --mode research -resume
+2025-11-24 10:02:01	2.3s	spontaneous_ekeblad	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	02db2cf4-6019-4c51-af8b-719d4230e5f4	nextflow run main.nf --mode research
+2025-11-24 10:09:19	-	peaceful_lavoisier	-	f2b0b83ba60175d4cf087e3263ab3fcb	5f31f284-a205-4800-8b3f-b65e4e357f88	nextflow run main.nf --mode research
+2025-11-24 10:12:05	-	angry_stonebraker	-	f2b0b83ba60175d4cf087e3263ab3fcb	06eb5fc7-62b3-4e35-89ae-a274086361dc	nextflow run main.nf --mode research
+2025-11-24 10:12:39	-	soggy_mercator	-	f2b0b83ba60175d4cf087e3263ab3fcb	6ae27fc2-a4a7-4553-b1d7-2052f9653a31	nextflow run main.nf --mode research
+2025-11-24 10:13:40	41.5s	dreamy_pesquet	OK	f2b0b83ba60175d4cf087e3263ab3fcb	acef388e-3fa6-4c05-9137-6cb9a15b71d7	nextflow run main.nf --mode research
+2025-11-24 10:14:50	-	scruffy_booth	-	f2b0b83ba60175d4cf087e3263ab3fcb	ba4b26a6-b050-41f7-9ad1-0fb1790b33fa	nextflow run main.nf --mode research
+2025-11-24 10:19:37	-	adoring_heisenberg	-	f2b0b83ba60175d4cf087e3263ab3fcb	6032a6cb-9c8c-41ef-a799-5b74e2864180	nextflow run main.nf --mode research
+2025-11-24 10:20:26	-	stupefied_yonath	-	f2b0b83ba60175d4cf087e3263ab3fcb	a32d0969-771d-48eb-8833-d45c937c6442	nextflow run main.nf --mode research
+2025-11-24 10:22:47	10m 43s	crazy_cajal	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research
+2025-11-24 10:37:58	7m 31s	small_poitras	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 11:03:13	17m 33s	fervent_bose	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 11:29:04	2m 7s	boring_pike	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 11:33:09	4m 1s	happy_jepsen	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 11:42:50	50.1s	condescending_pike	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 11:51:44	6m 43s	fabulous_sanger	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 11:59:09	8.6s	gigantic_snyder	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 12:00:12	17m 6s	nauseous_mayer	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 12:22:41	11m 27s	exotic_shannon	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 12:35:21	3m 8s	scruffy_lorenz	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 12:40:36	34s	grave_brattain	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 12:43:58	37.6s	sad_wing	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 13:01:32	41s	gloomy_almeida	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 13:10:19	23.5s	golden_blackwell	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 13:13:29	8.9s	voluminous_solvay	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 13:15:39	3m 30s	backstabbing_wozniak	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 13:19:14	55.7s	elated_angela	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 13:21:41	1m 30s	chaotic_williams	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 13:27:26	1m 10s	tender_kirch	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 13:30:31	17s	dreamy_engelbart	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 13:31:07	1m 8s	sharp_mcclintock	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 13:43:01	1m 16s	gloomy_faggin	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 13:46:21	18.8s	deadly_colden	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 13:49:34	17.7s	gloomy_church	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 13:52:35	6.8s	high_mclean	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 13:55:22	6m 7s	gloomy_crick	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 14:01:35	7.2s	high_fermat	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 14:02:52	-	extravagant_knuth	-	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 14:03:49	18.5s	romantic_baekeland	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 14:05:38	2m 19s	sharp_euclid	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 14:14:49	14.6s	disturbed_faggin	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 14:20:47	30.8s	maniac_galileo	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 14:21:23	21m 3s	magical_torricelli	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 15:04:59	13.9s	loquacious_mercator	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 15:07:25	10m 59s	agitated_brattain	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 15:21:13	2m 36s	trusting_ritchie	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 15:23:56	14m 52s	crazy_leavitt	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 15:41:31	2.8s	special_torvalds	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-24 15:42:31	17h 35m 49s	pedantic_marconi	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-25 09:22:52	1h 39m 32s	nice_panini	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-25 11:09:51	8m 58s	romantic_dubinsky	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume
+2025-11-25 11:23:48	1h 46m 36s	backstabbing_lattes	OK	f2b0b83ba60175d4cf087e3263ab3fcb	929d98cd-9565-4b58-b70a-3fbcb5fd3c9d	nextflow run main.nf --mode research -resume

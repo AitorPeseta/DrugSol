@@ -14,8 +14,8 @@ process train_full_tpsa {
         path script_py    // Python script
 
     output:
-        path "tpsa_model.json", emit: TPSA_MODEL
-        path "tpsa_phys.pkl",   emit: TPSA_PKL
+        path "models_TPSA/tpsa_model.json", emit: TPSA_MODEL
+        path "models_TPSA/tpsa_phys.pkl",   emit: TPSA_PKL
 
     script:
     """
@@ -25,6 +25,6 @@ process train_full_tpsa {
     python ${script_py} \\
         --train "${train_file}" \\
         --target logS \\
-        --save-dir .
+        --save-dir models_TPSA
     """
 }

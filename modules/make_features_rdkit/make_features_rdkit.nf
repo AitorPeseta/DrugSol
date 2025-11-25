@@ -8,14 +8,13 @@ process make_features_rdkit {
     
     // Publish results. If it's the training set, we might want to keep it as a resource resource
     publishDir "${params.outdir}/prepare_data/features", mode: 'copy', overwrite: true
-  
-    publishDir "${baseDir}/resources", mode: 'copy', overwrite: true, enabled: (dataset_name == 'train')
+    publishDir "${baseDir}/resources", mode: 'copy', overwrite: true, enabled: {dataset_name == 'train'}
 
     input:
-        path input_file
+        path input_file        // Input parquet file
         val  outdir_val
-        path script_py
-        val  dataset_name
+        path script_py         // Python script
+        val  dataset_name      // "train" or "test"
 
     output:
         path "${dataset_name}_rdkit_featured.parquet", emit: out

@@ -35,8 +35,7 @@ workflow curate {
         // --- 1. Filter Water / Solvents ---
         filter_water(ch_unified_data, outdir_val, script_filter_water)
         
-        // --- 2. Filter Temperature Range (25°C - 49°C) ---
-        // We capture RTP (25°C) up to high physiological stress (49°C)
+        // --- 2. Filter Temperature Range ---
         filter_by_temperature_range(
             filter_water.out, 
             outdir_val, 

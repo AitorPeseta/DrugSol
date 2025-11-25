@@ -31,7 +31,7 @@ workflow research {
         COMMON_INGEST( ch_outdir_val )
 
         def ch_unified_raw = COMMON_INGEST.out.unify
-/*
+
         // ---------------------------------------------------------
         // 2. Curation & Cleaning
         //    - Filter solvents, temperature range and outliers
@@ -49,8 +49,8 @@ workflow research {
         // ---------------------------------------------------------
         PREPARE( ch_curated_data, ch_outdir_val)
         
-        def ch_train_csv    = PREPARE.out.train
-        def ch_test_csv     = PREPARE.out.test
+        def ch_train_csv    = PREPARE.out.train_gbm
+        def ch_test_csv     = PREPARE.out.test_gbm
         def ch_train_smiles = PREPARE.out.train_smiles
         def ch_test_smiles  = PREPARE.out.test_smiles
 
@@ -72,5 +72,5 @@ workflow research {
             ch_train_smiles, 
             ch_test_smiles, 
             ch_outdir_val 
-        )*/
+        )
 }

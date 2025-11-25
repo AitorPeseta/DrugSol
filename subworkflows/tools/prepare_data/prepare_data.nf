@@ -20,12 +20,14 @@ include { make_features_rdkit   as calc_rdkit_train   } from '../../../modules/m
 include { make_features_rdkit   as calc_rdkit_test    } from '../../../modules/make_features_rdkit/make_features_rdkit.nf'
 
 // 4. Feature Processing (Cleaning & Alignment)
-include { filter_features       as filter_feat_train  } from '../../../modules/filter_features/filter_features.nf'
-include { filter_features       as filter_feat_test   } from '../../../modules/filter_features/filter_features.nf'
-include { align_feature_columns as align_mordred      } from '../../../modules/align_feature_columns/align_feature_columns.nf'
-include { align_feature_columns as align_rdkit        } from '../../../modules/align_feature_columns/align_feature_columns.nf'
-include { dropnan_rows          as dropnan_train      } from '../../../modules/dropnan_rows/dropnan_rows.nf'
-include { dropnan_rows          as dropnan_test       } from '../../../modules/dropnan_rows/dropnan_rows.nf'
+include { filter_features       as filter_feat_train             } from '../../../modules/filter_features/filter_features.nf'
+include { filter_features       as filter_feat_test              } from '../../../modules/filter_features/filter_features.nf'
+include { align_feature_columns as align_mordred                 } from '../../../modules/align_feature_columns/align_feature_columns.nf'
+include { align_feature_columns as align_rdkit                   } from '../../../modules/align_feature_columns/align_feature_columns.nf'
+include { dropnan_rows          as dropnan_rows_train            } from '../../../modules/dropnan_rows/dropnan_rows.nf'
+include { dropnan_rows          as dropnan_rows_test             } from '../../../modules/dropnan_rows/dropnan_rows.nf'
+include { dropnan_rows          as dropnan_rows_train_smile      } from '../../../modules/dropnan_rows/dropnan_rows.nf'
+include { dropnan_rows          as dropnan_rows_test_smile       } from '../../../modules/dropnan_rows/dropnan_rows.nf'
 
 
 /**
@@ -107,11 +109,11 @@ workflow prepare_data {
             align_mordred(ch_mordred_pairs, outdir_val, script_align)
 
             // Drop NaNs (Final Cleanup)
-            dropnan_train(filter_feat_train.out, outdir_val, script_drop, "final_train_gbm", "train")
-            dropnan_test(align_mordred.out,      outdir_val, script_drop, "final_test_gbm",  "test")
+            dropnan_rows_train(filter_feat_train.out, outdir_val, script_drop, "final_train_gbm", "train")
+            dropnan_rows_test(align_mordred.out,      outdir_val, script_drop, "final_test_gbm",  "test")
 
-            ch_final_train_gbm = dropnan_train.out
-            ch_final_test_gbm  = dropnan_test.out
+            ch_final_train_gbm = dropnan_rows_train.out
+            ch_final_test_gbm  = dropnan_rows_test.out
 
             // ----------------------------------------------------
             // PATH B: GNN Models (SMILES + RDKit Features)
@@ -126,11 +128,11 @@ workflow prepare_data {
             align_rdkit(ch_rdkit_pairs, outdir_val, script_align)
 
             // Finalizing GNN Inputs (Usually just SMILES + Target + Weight, but we keep features if needed)
-            dropnan_rows_train(calc_rdkit_train.out, outdir_val, script_drop, "final_train_gnn", "train")
-            dropnan_rows_test(align_rdkit.out,       outdir_val, script_drop, "final_test_gnn",  "test")
+            dropnan_rows_train_smile(calc_rdkit_train.out, outdir_val, script_drop, "final_train_gnn", "train")
+            dropnan_rows_test_smile(align_rdkit.out,       outdir_val, script_drop, "final_test_gnn",  "test")
 
-            ch_final_train_smile = dropnan_rows_train.out
-            ch_final_test_smile  = dropnan_rows_test.out
+            ch_final_train_smile = dropnan_rows_train_smile.out
+            ch_final_test_smile  = dropnan_rows_test_smile.out
 
 
         } else {
@@ -157,11 +159,11 @@ workflow prepare_data {
             align_rdkit(ref_train_rdkit.combine(calc_rdkit_test.out),      outdir_val, script_align)
 
             // 5. Drop NaNs
-            dropnan_test(align_mordred.out, outdir_val, script_drop, "final_test_gbm", "test")
-            dropnan_rows_test(align_rdkit.out, outdir_val, script_drop, "final_test_gnn", "test")
+            dropnan_rows_test(align_mordred.out, outdir_val, script_drop, "final_test_gbm", "test")
+            dropnan_rows_test_smile(align_rdkit.out, outdir_val, script_drop, "final_test_gnn", "test")
 
-            ch_final_test_gbm   = dropnan_test.out
-            ch_final_test_smile = dropnan_rows_test.out
+            ch_final_test_gbm   = dropnan_rows_test.out
+            ch_final_test_smile = dropnan_rows_test_smile.out
         }
 
     emit:

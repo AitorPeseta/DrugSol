@@ -16,7 +16,7 @@ process train_full_gbm {
         path hp_dir // Directory containing best params from OOF
 
     output:
-        path ".", emit: MODELS_DIR // Publish the whole folder content
+        path "models_GBM", emit: MODELS_DIR // Publish the whole folder content
 
     script:
     """
@@ -29,6 +29,6 @@ process train_full_gbm {
         --hp-dir "${hp_dir}" \\
         --use-gpu \\
         --sample-weight-col sw_temp37 \\
-        --save-dir .
+        --save-dir models_GBM
     """
 }

@@ -18,6 +18,7 @@ include { train_full_tpsa }      from '../../../modules/train_full_tpsa/train_fu
 
 // --- Inference ---
 include { final_infer_master }   from '../../../modules/final_infer_master/final_infer_master.nf'
+include { final_report }         from '../../../modules/final_report/final_report.nf'
 
 /**
  * WORKFLOW: train_methods
@@ -51,6 +52,7 @@ workflow train_methods {
         def script_full_tpsa  = file("${baseDir}/bin/train_full_tpsa.py")
         def script_full_gbm   = file("${baseDir}/bin/train_full_gbm.py")
         def script_infer      = file("${baseDir}/bin/final_infer_master.py")
+        def script_report     = file("${baseDir}/bin/final_report.py")
 
 
         // ============================================================
@@ -130,5 +132,22 @@ workflow train_methods {
             script_infer,
             ch_weights_json,    // Ensemble weights
             ch_stack_model      // (Optional) Stacking meta-model
+        )
+        def level0 = final_infer_master.out.LEVEL0
+        def blend = final_infer_master.out.BLEND
+        def stack = final_infer_master.out.STACK.ifEmpty([])
+
+
+        // ============================================================
+        // 6. FINAL REPORT
+        // ============================================================
+
+        final_report(
+            level0,
+            blend,
+            stack,
+            ch_test_gbm, 
+            params.outdir,
+            script_report
         )
 }

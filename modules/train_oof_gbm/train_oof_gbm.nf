@@ -33,8 +33,8 @@ process train_oof_gbm {
         --id-col row_uid \\
         --sample-weight-col sw_temp37 \\
         --use-gpu \\
-        --tune-trials 60 \\
-        --inner-splits 3 \\
+        --tune-trials 15 \\
+        --inner-splits 2 \\
         --pruner asha \\
         --asha-min-resource 1 \\
         --asha-reduction-factor 3 \\

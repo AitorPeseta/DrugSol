@@ -1,8 +1,0 @@
-{
-  "batch_size": 32,
-  "hidden_size": 2360,
-  "depth": 6,
-  "dropout": 0.15380070920766642,
-  "ffn_num_layers": 3,
-  "epochs": 40
-}
