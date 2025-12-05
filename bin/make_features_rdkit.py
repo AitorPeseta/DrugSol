@@ -3,7 +3,7 @@
 """
 make_features_rdkit.py
 ----------------------
-Calculates basic RDKit features (TPSA, logP, HBD, HBA, MW, FractionCSP3).
+Calculates basic RDKit features (TPSA, logP, MW).
 Optimized for performance using batch processing.
 """
 
@@ -37,27 +37,18 @@ def compute_rdkit_basic(mol):
         return {
             "rdkit__TPSA": np.nan,
             "rdkit__logP": np.nan,
-            "rdkit__HBD": np.nan,
-            "rdkit__HBA": np.nan,
-            "rdkit__FractionCSP3": np.nan,
             "rdkit__MW": np.nan,
         }
     try:
         return {
             "rdkit__TPSA": float(rdMolDescriptors.CalcTPSA(mol)),
             "rdkit__logP": float(Descriptors.MolLogP(mol)),
-            "rdkit__HBD": int(rdMolDescriptors.CalcNumHBD(mol)),
-            "rdkit__HBA": int(rdMolDescriptors.CalcNumHBA(mol)),
-            "rdkit__FractionCSP3": float(rdMolDescriptors.CalcFractionCSP3(mol)),
             "rdkit__MW": float(Descriptors.MolWt(mol)),
         }
     except Exception:
         return {
             "rdkit__TPSA": np.nan,
             "rdkit__logP": np.nan,
-            "rdkit__HBD": np.nan,
-            "rdkit__HBA": np.nan,
-            "rdkit__FractionCSP3": np.nan,
             "rdkit__MW": np.nan,
         }
 

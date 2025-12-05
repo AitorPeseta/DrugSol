@@ -7,18 +7,16 @@ process filter_features {
     conda "${baseDir}/envs/drugsol-data.yml"
     
     // Publish Logic:
-    publishDir "${params.outdir}/prepare_data/filtered", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/prepare_data/${meta_id}/filtered", mode: 'copy', overwrite: true
     
-    publishDir "${baseDir}/resources", mode: 'copy', overwrite: true, enabled: {dataset_name == 'train'}
-
     input:
-        path input_file    // Parquet file with features to filter
+        tuple val(meta_id), path(input_file)
         val  outdir_val
         path script_py     // Python script to run
         val  dataset_name  // "train" or "test"
 
     output:
-        path "${dataset_name}_features_mordred_filtered.parquet", emit: out
+        tuple val(meta_id), path("${dataset_name}_features_mordred_filtered.parquet"), emit: out
     
     script:
     """

@@ -1,0 +1,6 @@
+{
+  "message_hidden_dim": 800,
+  "depth": 4,
+  "dropout": 0.025326814757384842,
+  "ffn_num_layers": 1
+}

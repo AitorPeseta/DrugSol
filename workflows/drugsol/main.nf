@@ -13,7 +13,7 @@ log.info "[DrugSol] Nextflow ${nextflow.version} | DSL2 enabled"
 
 // --- General Parameters ---
 params.mode      = params.mode      ?: 'research'           // Options: 'research', 'execution'
-params.outdir    = params.outdir    ?: "${baseDir}/results" // Output directory
+params.outdir    = params.outdir    ?: "${baseDir}/${params.mode}/results" // Output directory
 params.input     = params.input     ?: null                 // Path to unified table (CSV/TSV/Parquet)
 
 // --- Research Specific ---

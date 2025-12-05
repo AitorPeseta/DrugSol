@@ -6,15 +6,15 @@ process make_folds {
     
     conda "${baseDir}/envs/drugsol-data.yml"
     
-    publishDir "${params.outdir}/training", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/training/${meta_id}", mode: 'copy', overwrite: true
 
     input:
-        path train_file   // Parquet file with training data
+        tuple val(meta_id), path(train_file)
         val  outdir_val
         path script_py    // Python script
 
     output:
-        path "folds.parquet", emit: out
+        tuple val(meta_id), path("folds.parquet"), emit: out
 
     script:
     """

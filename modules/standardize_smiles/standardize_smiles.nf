@@ -23,6 +23,9 @@ process standardize_smiles {
         --in ${source_file} \\
         --out standardize.parquet \\
         --overwrite-inchikey \\
+        --dedup \\
+        --dedup-thresh 0.7 \\
+        --export-csv \\
         --engine auto
     """
 }

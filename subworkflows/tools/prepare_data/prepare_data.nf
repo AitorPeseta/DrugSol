@@ -6,9 +6,8 @@ nextflow.enable.dsl = 2
 
 // 1. Standardization & Engineering
 include { standardize_smiles }          from '../../../modules/standardize_smiles/standardize_smiles.nf'
-include { make_fingerprints }           from '../../../modules/make_fingerprints/make_fingerprints.nf'
-// Renamed/Expanded module to include Weights + QED + Ionization
 include { engineer_features }           from '../../../modules/engineer_features/engineer_features.nf' 
+include { make_fingerprints }           from '../../../modules/make_fingerprints/make_fingerprints.nf'
 
 // 2. Splitting
 include { stratified_split }            from '../../../modules/stratified_split/stratified_split.nf'
@@ -44,6 +43,8 @@ workflow prepare_data {
     take:
         ch_filtered_data   // Input parquet from Curate
         outdir_val         // Output directory
+        n_iterations
+        seed_val
 
     main: 
         // --- Define Scripts (Binaries) ---
@@ -63,13 +64,15 @@ workflow prepare_data {
 
         // A. Standardize SMILES (Canonicalize, Salts, etc.)
         standardize_smiles(ch_filtered_data, outdir_val, script_std)
+        def ch_standardized = standardize_smiles.out
         
         // B. Feature Engineering (The "Physics" Step)
         // Calculates: Gaussian Weights, QED (Drug-likeness), Ionization
-        engineer_features(standardize_smiles.out, outdir_val, script_eng)
-        
-        // C. Fingerprints (needed for Stratified Split)
-        make_fingerprints(engineer_features.out, outdir_val, script_fp, "cluster_ecfp4_0p7")
+        engineer_features(ch_standardized, outdir_val, script_eng)
+        def ch_rich_data = engineer_features.out
+
+        // D. Fingerprints (needed for Stratified Split)
+        make_fingerprints(ch_rich_data, outdir_val, script_fp, "cluster_ecfp4_0p7")
         def ch_ready_to_split = make_fingerprints.out
 
 
@@ -87,25 +90,39 @@ workflow prepare_data {
             
             // --- RESEARCH MODE: SPLIT TRAIN/TEST ---
 
-            // 1. Stratified Scaffold Split
-            stratified_split(ch_ready_to_split, outdir_val, script_split)
-            def ch_train = stratified_split.out.train
-            def ch_test  = stratified_split.out.test
+            // 1. Stratified Scaffold Split + cross-validation
+            stratified_split(ch_ready_to_split, outdir_val, script_split, n_iterations, seed_val)
+            
+            def ch_splits = stratified_split.out.splits
+            .flatten()
+            .map { dir -> 
+                def id = dir.name // "split_1", "split_2"...
+                
+                // Resolvemos los archivos dentro de esa carpeta
+                def train_file = dir.resolve("train.parquet")
+                def test_file  = dir.resolve("test.parquet")
+                
+                // Tupla clave para que todo el pipeline sepa quién es quién
+                return tuple(id, train_file, test_file)
+            }
+            
+            def train_ch = ch_splits.map { id, tr, te -> tuple(id, tr) }
+            def test_ch  = ch_splits.map { id, tr, te -> tuple(id, te) }
 
             // ----------------------------------------------------
             // PATH A: GBM Models (Mordred Descriptors)
             // ----------------------------------------------------
             
             // Calculate Raw Features
-            calc_mordred_train(ch_train, outdir_val, script_mordred, "train")
-            calc_mordred_test(ch_test,   outdir_val, script_mordred, "test")
+            calc_mordred_train(train_ch, outdir_val, script_mordred, "train")
+            calc_mordred_test(test_ch,   outdir_val, script_mordred, "test")
 
             // Filter Low Variance / Correlated Features
             filter_feat_train(calc_mordred_train.out, outdir_val, script_filter, "train")
             filter_feat_test(calc_mordred_test.out,   outdir_val, script_filter, "test")
 
             // Align Test columns to match Train columns exactly
-            def ch_mordred_pairs = filter_feat_train.out.combine(filter_feat_test.out)
+            def ch_mordred_pairs = filter_feat_train.out.join(filter_feat_test.out)
             align_mordred(ch_mordred_pairs, outdir_val, script_align)
 
             // Drop NaNs (Final Cleanup)
@@ -120,11 +137,11 @@ workflow prepare_data {
             // ----------------------------------------------------
             
             // Calculate RDKit features (lighter than Mordred, often used as auxiliary for GNNs)
-            calc_rdkit_train(ch_train, outdir_val, script_rdkit, "train")
-            calc_rdkit_test(ch_test,   outdir_val, script_rdkit, "test")
+            calc_rdkit_train(train_ch, outdir_val, script_rdkit, "train")
+            calc_rdkit_test(test_ch,   outdir_val, script_rdkit, "test")
 
             // Align RDKit columns
-            def ch_rdkit_pairs = calc_rdkit_train.out.combine(calc_rdkit_test.out)
+            def ch_rdkit_pairs = calc_rdkit_train.out.join(calc_rdkit_test.out)
             align_rdkit(ch_rdkit_pairs, outdir_val, script_align)
 
             // Finalizing GNN Inputs (Usually just SMILES + Target + Weight, but we keep features if needed)
@@ -171,4 +188,5 @@ workflow prepare_data {
         test_gbm     = ch_final_test_gbm
         train_smiles = ch_final_train_smile
         test_smiles  = ch_final_test_smile
+        standarized  = ch_standardized
 }

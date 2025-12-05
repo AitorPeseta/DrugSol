@@ -5,9 +5,10 @@ engineer_features.py
 --------------------
 Calculates physical and chemical features for the dataset:
 1. Gaussian Sample Weights (prioritizing 37°C).
-2. Quantitative Estimation of Drug-likeness (QED).
-3. Ionization counts (Acid/Base) using SMARTS.
-4. pKa prediction via MolGpKa API (With imputation for neutrals).
+2. Ionization counts (Acid/Base) using SMARTS.
+3. pKa prediction via MolGpKa API (With imputation for neutrals).
+4. Phenols count.
+(QED has been removed from here to be calculated only during analysis)
 """
 
 import argparse
@@ -23,7 +24,7 @@ from tqdm import tqdm  # Progress bar
 # RDKit
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from rdkit.Chem import QED
+# QED removed
 
 # ============================================================================
 # 1. WEIGHTS (Gaussian Distribution)
@@ -39,23 +40,7 @@ def calculate_gaussian_weights(df, temp_col='temp_C', target_temp=37.0, sigma=8.
     return weights.fillna(1.0)
 
 # ============================================================================
-# 2. DRUG-LIKENESS (QED)
-# ============================================================================
-
-def calculate_qed_features(df, smiles_col):
-    print("[Features] Calculating QED (Drug-likeness)...")
-    def _get_qed(smi):
-        if not smi: return 0.0
-        mol = Chem.MolFromSmiles(smi)
-        if not mol: return 0.0
-        try:
-            return QED.qed(mol)
-        except:
-            return 0.0
-    return df[smiles_col].apply(_get_qed)
-
-# ============================================================================
-# 3. IONIZATION (SMARTS)
+# 2. IONIZATION (SMARTS)
 # ============================================================================
 
 def split_acid_base_pattern(smarts_file):
@@ -114,7 +99,7 @@ def calculate_ionization(smiles, df_acid, df_base):
     })
 
 # ============================================================================
-# 4. PHENOLS
+# 3. PHENOLS
 # ============================================================================
 
 _PHENOL_STRICT = Chem.MolFromSmarts("c[OX2H]")
@@ -127,7 +112,7 @@ def calculate_phenols(smiles):
     return pd.Series({"n_phenol": int(n), "has_phenol": int(n > 0)})
 
 # ============================================================================
-# 5. pKa (MolGpKa API)
+# 4. pKa (MolGpKa API)
 # ============================================================================
 
 def predict_pka_api(smiles, api_url, token):
@@ -194,25 +179,22 @@ def main():
     if args.smiles_col not in df.columns:
         sys.exit(f"[ERROR] SMILES column '{args.smiles_col}' not found.")
 
-    # 2. Gaussian Weights
+    # 1. Gaussian Weights
     df["weight"] = calculate_gaussian_weights(df, args.temp_col)
 
-    # 3. QED
-    df["qed"] = calculate_qed_features(df, args.smiles_col)
-
-    # 4. Ionization
+    # 2. Ionization
     print("[Features] Calculating Ionization (SMARTS)...")
     df_acid, df_base = split_acid_base_pattern(args.smarts)
     tqdm.pandas(desc="Ionization")
     ion_feats = df[args.smiles_col].progress_apply(lambda x: calculate_ionization(x, df_acid, df_base))
     df = pd.concat([df, ion_feats], axis=1)
 
-    # 5. Phenols
+    # 3. Phenols
     print("[Features] Calculating Phenols...")
     phenol_feats = df[args.smiles_col].progress_apply(calculate_phenols)
     df = pd.concat([df, phenol_feats], axis=1)
 
-    # 6. pKa API
+    # 4. pKa API
     if args.pka_token:
         print("[Features] Querying pKa API...")
         cache = {} 
@@ -226,16 +208,11 @@ def main():
             
         pka_df = pd.DataFrame(pka_results)
         
-        # --- IMPUTATION FIX START ---
-        # Fill NaNs with physically meaningful "extreme" values
-        # Acid NaN -> 16.0 (Very weak acid, effectively neutral)
+        # Imputation Fix
         pka_df["pka_acid_min"] = pka_df["pka_acid_min"].fillna(16.0)
         pka_df["pka_acid_max"] = pka_df["pka_acid_max"].fillna(16.0)
-        
-        # Base NaN -> -2.0 (Very weak base, effectively neutral)
         pka_df["pka_base_min"] = pka_df["pka_base_min"].fillna(-2.0)
         pka_df["pka_base_max"] = pka_df["pka_base_max"].fillna(-2.0)
-        # --- IMPUTATION FIX END ---
 
         df = pd.concat([df.reset_index(drop=True), pka_df.reset_index(drop=True)], axis=1)
     else:

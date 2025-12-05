@@ -1,149 +1,127 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-make_folds.py
--------------
-Generates Out-of-Fold (OOF) indices for Cross-Validation.
-Ensures:
-1. Group independence (same scaffold always in same fold).
-2. Stratification by Target (logS) and/or Temperature.
+make_folds.py (Robust Version)
+------------------------------
+Genera 5 folds garantizando que NINGUNA fila se quede sin fold.
+Estrategia: StratifiedKFold con fallback a KFold simple para casos difíciles.
 """
 
 import argparse
-import os
 import sys
 import warnings
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold, KFold
+from collections import Counter
 
-# Suppress split warnings for small classes
-warnings.filterwarnings("ignore", category=UserWarning)
+def read_any(path):
+    if path.endswith(".parquet"): return pd.read_parquet(path)
+    return pd.read_csv(path)
 
-def quantize_target(y, n_bins=5):
-    """Bins continuous target into quantiles for stratification."""
-    y = pd.to_numeric(y, errors='coerce')
+def get_strat_label(df, target_col, n_bins=5):
+    """Crea bines del target para estratificar."""
+    if target_col not in df.columns:
+        return np.zeros(len(df), dtype=int)
+    
+    y = pd.to_numeric(df[target_col], errors='coerce')
+    # Intentamos qcut (cuantiles)
     try:
         return pd.qcut(y, n_bins, labels=False, duplicates='drop').fillna(-1).astype(int)
-    except ValueError:
-        # Fallback to equal-width bins if quantiles fail (e.g. too many ties)
+    except:
+        # Fallback a cut (ancho fijo) si hay muchos repetidos
         return pd.cut(y, n_bins, labels=False, duplicates='drop').fillna(-1).astype(int)
 
-def get_temp_bin(t, step=5):
-    """Bins temperature."""
-    t = pd.to_numeric(t, errors='coerce')
-    return (np.round(t / step) * step).fillna(-999).astype(int)
-
 def main():
-    ap = argparse.ArgumentParser(description="Generate Group Stratified Folds.")
-    ap.add_argument("--input", required=True, help="Train input file")
-    ap.add_argument("--out", default="folds.parquet", help="Output file with 'fold' column")
-    
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--input", required=True)
+    ap.add_argument("--out", required=True)
     ap.add_argument("--id-col", default="row_uid")
     ap.add_argument("--group-col", default="cluster_ecfp4_0p7")
     ap.add_argument("--target", default="logS")
-    ap.add_argument("--temp-col", default="temp_C")
-    
     ap.add_argument("--n-splits", type=int, default=5)
     ap.add_argument("--seed", type=int, default=42)
-    
-    # Stratification params
-    ap.add_argument("--strat-mode", choices=["target", "temp", "both"], default="both")
-    ap.add_argument("--bins", type=int, default=5, help="Target bins")
-    ap.add_argument("--temp-step", type=float, default=5.0, help="Temp bin step")
+    # Argumentos legacy ignorados pero aceptados para compatibilidad
+    ap.add_argument("--strat-mode", default="both")
+    ap.add_argument("--temp-col", default="temp_C")
+    ap.add_argument("--temp-step", default=2)
+    ap.add_argument("--temp-unit", default="auto")
+    ap.add_argument("--bins", default=5)
 
     args = ap.parse_args()
-
-    # 1. Load
-    print(f"[Folds] Loading {args.input}...")
-    if args.input.endswith(".parquet"):
-        df = pd.read_parquet(args.input)
+    
+    df = read_any(args.input)
+    
+    # 1. Preparar datos de agrupación
+    if args.group_col not in df.columns:
+        # Si no hay grupos (no debería pasar), cada fila es un grupo
+        df["_grp"] = df.index
     else:
-        df = pd.read_csv(args.input)
+        df["_grp"] = df[args.group_col].fillna("UNKNOWN")
 
-    # Check columns
-    req_cols = [args.id_col, args.group_col, args.target]
-    if args.strat_mode in ["temp", "both"]:
-        req_cols.append(args.temp_col)
+    # 2. Preparar etiqueta de estratificación (Solo por Target logS para simplificar)
+    # Estratificar por Temp+LogS en 5 folds es demasiado restrictivo y causa los drops.
+    # Solo LogS es suficiente para CV.
+    df["_strata"] = get_strat_label(df, args.target, n_bins=5)
+
+    # 3. Colapsar a nivel de Grupo (Scaffold)
+    # Queremos asignar el fold al GRUPO, no a la molécula
+    grp_meta = df.groupby("_grp")["_strata"].agg(lambda x: Counter(x).most_common(1)[0][0]).reset_index()
     
-    for c in req_cols:
-        if c not in df.columns:
-            sys.exit(f"[ERROR] Missing column: {c}")
-
-    # 2. Create Group Meta-Data
-    # We need one row per group to perform the split
-    grp = df[[args.group_col]].drop_duplicates().reset_index(drop=True)
+    groups = grp_meta["_grp"].values
+    labels = grp_meta["_strata"].values
     
-    # Calculate stratification labels per group (aggregate median/mode)
-    if args.strat_mode in ["target", "both"]:
-        # Median target per group
-        y_med = df.groupby(args.group_col)[args.target].median()
-        grp["y_bin"] = grp[args.group_col].map(y_med).pipe(quantize_target, n_bins=args.bins)
-        
-    if args.strat_mode in ["temp", "both"]:
-        # Mode temp per group (most frequent temp for this scaffold)
-        # If scaffold has multiple temps, pick the most common one
-        t_mode = df.groupby(args.group_col)[args.temp_col].apply(lambda x: x.mode().iloc[0] if not x.mode().empty else x.median())
-        grp["t_bin"] = grp[args.group_col].map(t_mode).pipe(get_temp_bin, step=args.temp_step)
+    # 4. Limpieza de clases raras
+    # Si una clase tiene menos miembros que n_splits, StratifiedKFold fallará.
+    # Las convertimos a una clase "OTHER" (-1)
+    counts = Counter(labels)
+    labels_clean = np.array([l if counts[l] >= args.n_splits else -1 for l in labels])
 
-    # Combine labels
-    if args.strat_mode == "target":
-        grp["strata"] = grp["y_bin"].astype(str)
-    elif args.strat_mode == "temp":
-        grp["strata"] = grp["t_bin"].astype(str)
-    else:
-        grp["strata"] = grp["y_bin"].astype(str) + "|" + grp["t_bin"].astype(str)
-
-    # 3. Perform Split
-    print(f"[Folds] Splitting {len(grp)} groups into {args.n_splits} folds (Strategy: {args.strat_mode})...")
+    # 5. Split (Con Fallback)
+    folds_map = {}
     
-    X = grp[args.group_col].values
-    y = grp["strata"].values
-    
-    # Check if stratification is possible (min 2 members per class)
-    # If a class has fewer members than n_splits, StratifiedKFold warns/fails.
-    # We filter extremely rare classes into 'OTHER' to avoid this.
-    counts = grp["strata"].value_counts()
-    rare_classes = counts[counts < args.n_splits].index
-    y_safe = grp["strata"].mask(grp["strata"].isin(rare_classes), "OTHER").values
-
     try:
+        # Intento 1: Estratificado
         skf = StratifiedKFold(n_splits=args.n_splits, shuffle=True, random_state=args.seed)
-        split_gen = skf.split(X, y_safe)
-    except Exception as e:
-        print(f"[WARN] Stratified Split failed ({e}). Fallback to simple KFold.")
-        kf = KFold(n_splits=args.n_splits, shuffle=True, random_state=args.seed)
-        split_gen = kf.split(X)
+        split_gen = skf.split(groups, labels_clean)
+        mode = "Stratified"
+    except Exception:
+        # Fallback: Aleatorio simple (pero respetando grupos)
+        skf = KFold(n_splits=args.n_splits, shuffle=True, random_state=args.seed)
+        split_gen = skf.split(groups)
+        mode = "Random (Fallback)"
 
-    # Map Fold to Group
-    group_to_fold = {}
-    for fold_id, (_, test_idx) in enumerate(split_gen):
-        test_groups = X[test_idx]
-        for g in test_groups:
-            group_to_fold[g] = fold_id
+    # Asignar folds
+    for fold_idx, (_, test_idx) in enumerate(split_gen):
+        for idx in test_idx:
+            grp_id = groups[idx]
+            folds_map[grp_id] = fold_idx
 
-    # 4. Map Fold to Rows
-    df["fold"] = df[args.group_col].map(group_to_fold)
+    # 6. Mapear de vuelta a las filas
+    df["fold"] = df["_grp"].map(folds_map)
     
-    # Handle any unmapped rows (shouldn't happen, but for safety)
+    # 7. RED DE SEGURIDAD: Rellenar huerfanos
+    # Si por alguna razón matemática extraña alguno quedó NaN
     if df["fold"].isna().any():
-        n_nan = df["fold"].isna().sum()
-        print(f"[WARN] {n_nan} rows have no fold assigned (missing group?). Assigning fold -1.")
-        df["fold"] = df["fold"].fillna(-1)
+        n_missing = df["fold"].isna().sum()
+        print(f"[WARN] {n_missing} filas se quedaron sin fold. Asignando aleatoriamente.")
+        # Asignar aleatoriamente entre 0..4
+        rng = np.random.default_rng(args.seed)
+        df.loc[df["fold"].isna(), "fold"] = rng.integers(0, args.n_splits, size=n_missing)
 
     df["fold"] = df["fold"].astype(int)
 
-    # 5. Save output (Lightweight: only ID, Group, Fold)
-    out_df = df[[args.id_col, "fold", args.group_col]].copy()
+    # Chequeo final
+    dist = df["fold"].value_counts(normalize=True).sort_index()
+    print(f"[Folds] Generados {args.n_splits} folds ({mode}). Distribución:")
+    print(dist)
     
-    Path(args.out).parent.mkdir(parents=True, exist_ok=True)
-    out_df.to_parquet(args.out, index=False)
+    # Guardar
+    # Guardamos row_uid, fold, y group_id por si acaso
+    out_cols = [args.id_col, "fold"]
+    if args.group_col in df.columns: out_cols.append(args.group_col)
     
-    # Stats
-    print(out_df["fold"].value_counts().sort_index().to_string())
-    print(f"[Folds] Saved to {args.out}")
+    df[out_cols].to_parquet(args.out, index=False)
 
 if __name__ == "__main__":
     main()

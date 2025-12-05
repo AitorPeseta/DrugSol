@@ -20,7 +20,7 @@ process measurement_counts_histogram {
     """
     python ${script_py} \\
         --input "${file}" \\
-        --id_col smiles_original \\
+        --id_col smiles_neutral \\
         --outdir meas_dual_combined
     """
 }

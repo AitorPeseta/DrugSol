@@ -1,49 +1,50 @@
 nextflow.enable.dsl = 2
 
-// --- SOLO includes de subworkflows externos ---
+// INCLUDES
 include { common_ingest as COMMON_INGEST } from '../../tools/common_ingest/common_ingest.nf'
 include { curate        as CURATE      }   from '../../tools/curate/curate.nf'
-include { analysis      as ANALYSIS    }   from '../../tools/analysis/analysis.nf'
 include { prepare_data  as PREPARE     }   from '../../tools/prepare_data/prepare_data.nf'
-include { final_infer_master } from '../../../modules/final_infer_master/final_infer_master.nf'
+include { predict_full_pipeline   as PREDICT     }   from '../../../modules/predict_full_pipeline/predict_full_pipeline.nf'
 
 workflow execution {
   take:
-    cfg_ch
+    cfg_ch // params pasados desde main
 
   main:
     def OUTDIR_VAL = Channel.value("${params.outdir}/execution")
 
-    // 1) Ingest
+    // 1) Ingest (Carga archivo usuario o descarga default)
     COMMON_INGEST( OUTDIR_VAL )
     def UNIFIED = COMMON_INGEST.out.unify
-    def CHEMBL  = COMMON_INGEST.out.chembl
 
-    // 2) Curate (desde tools/curate/curate.nf)
+    // 2) Curate (Filtra agua, temperatura, outliers)
     CURATE( UNIFIED, OUTDIR_VAL )
     def FINAL_CURATED = CURATE.out.output
 
-    // 3) Preprocesamiento de los datos antes del entrenamiento
-    PREPARE( FINAL_CURATED, OUTDIR_VAL, CHEMBL )
-    def FINAL_TEST        = PREPARE.out.test
-    def FINAL_TEST_SMILE = PREPARE.out.test_smiles
+    // 3) Preprocesamiento (Cálculo de features Mordred/RDKit)
+    // Pasamos params.iterations/seed aunque no se usen en split de execution
+    PREPARE( FINAL_CURATED, OUTDIR_VAL, 1, 42 )
+    
+    // Obtenemos los datos listos para inferencia
+    def FINAL_TEST_GBM   = PREPARE.out.test_gbm    // Mordred features
+    def FINAL_TEST_SMILE = PREPARE.out.test_smiles // RDKit features + SMILES
 
-    // 5) Predicción
-    def GNN = "${baseDir}/results/research/training/models_GNN"
-    def GBM = "${baseDir}/results/research/training/models_GBM"
-    def WEIGHTS_JSON = "${baseDir}/results/research/training/meta_results/blend/weights*"
-    def STACK_MODEL_CH = "${baseDir}/results/research/training/meta_results/stack/meta_ridge*"
+    // 4) Predicción con final_product
+    // Localizamos la carpeta final_product. 
+    // Asumimos que está en research/results/final_product
+    def final_prod_dir = file("${params.outdir}/research/results/final_product")
+    
+    // Verificación de seguridad
+    if (!final_prod_dir.exists()) {
+        error "[Execution] No se encuentra final_product en: ${final_prod_dir}. \nEjecuta primero el modo 'research'."
+    }
 
-    def FIM_PY = Channel.value( file("${baseDir}/bin/final_infer_master.py") )
-    final_infer_master(
-      FINAL_TEST,       // path
-      FINAL_TEST_SMILE, // path
-      GBM,       // path (dir con xgb.pkl y lgbm.pkl)
-      GNN,     // path (dir de checkpoints chemprop)
-      OUTDIR_VAL,       // val
-      FIM_PY,           // path 
-      WEIGHTS_JSON,     // val (string o null)
-      STACK_MODEL_CH
+    def script_predict = Channel.value(file("${baseDir}/bin/predict_full_pipeline.py"))
+
+    PREDICT(
+        FINAL_TEST_GBM,
+        FINAL_TEST_SMILE,
+        final_prod_dir,
+        script_predict
     )
-
 }

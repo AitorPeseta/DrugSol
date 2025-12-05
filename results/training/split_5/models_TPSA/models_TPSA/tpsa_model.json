@@ -1,0 +1,18 @@
+{
+  "model_type": "Ridge_Physics_Based",
+  "intercept": 8.077752757424673,
+  "coefs": {
+    "inv_temp": -2.4571915039623526,
+    "rdkit__logP": -0.6726959416384316,
+    "rdkit__TPSA": -0.013650989000757544,
+    "rdkit__MW": -0.0005806501393302779
+  },
+  "features": [
+    "inv_temp",
+    "rdkit__logP",
+    "rdkit__TPSA",
+    "rdkit__MW"
+  ],
+  "alpha": 1.0,
+  "training_samples": 2359
+}

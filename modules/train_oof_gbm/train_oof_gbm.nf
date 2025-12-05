@@ -3,23 +3,21 @@ nextflow.enable.dsl = 2
 process train_oof_gbm {
     tag "Train GBM (OOF)"
     label 'process_gpu'
-    accelerator 1, type: 'nvidia' // Explicitly ask for NVIDIA GPU
     
     conda "${baseDir}/envs/drugsol-train.yml"
     
-    publishDir "${params.outdir}/training", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/training/${meta_id}", mode: 'copy', overwrite: true
 
     input:
-        path train_file   // Parquet file with training data
+        tuple val(meta_id), path(train_file), path(folds_file)
         val  outdir_val
         path script_py    // Python script to train GBM models
-        path folds_file   // Parquet file with fold assignments
 
     output:
-        path "oof_gbm/oof/xgb.parquet",   emit: OFF_XGB
-        path "oof_gbm/oof/lgbm.parquet",  emit: OFF_LGBM
-        path "oof_gbm/metrics_tree.json", emit: METRICS_CH
-        path "oof_gbm/hp",                emit: HP_DIR
+        tuple val(meta_id), path("oof_gbm/oof/xgb.parquet"),   emit: OFF_XGB
+        tuple val(meta_id), path("oof_gbm/oof/lgbm.parquet"),  emit: OFF_LGBM
+        tuple val(meta_id), path("oof_gbm/metrics_tree.json"), emit: METRICS_CH
+        tuple val(meta_id), path("oof_gbm/hp"),                emit: HP_DIR
 
     script:
     """
@@ -33,7 +31,7 @@ process train_oof_gbm {
         --id-col row_uid \\
         --sample-weight-col sw_temp37 \\
         --use-gpu \\
-        --tune-trials 15 \\
+        --tune-trials 5 \\
         --inner-splits 2 \\
         --pruner asha \\
         --asha-min-resource 1 \\

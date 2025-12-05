@@ -6,16 +6,16 @@ process train_full_tpsa {
     
     conda "${baseDir}/envs/drugsol-data.yml"
     
-    publishDir "${params.outdir}/training/models_TPSA", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/training/${meta_id}/models_TPSA", mode: 'copy', overwrite: true
 
     input:
-        path train_file   // Training data file
+        tuple val(meta_id), path(train_file)
         val  outdir_val
         path script_py    // Python script
 
     output:
-        path "models_TPSA/tpsa_model.json", emit: TPSA_MODEL
-        path "models_TPSA/tpsa_phys.pkl",   emit: TPSA_PKL
+        tuple val(meta_id), path("models_TPSA/tpsa_model.json"), emit: TPSA_MODEL
+        tuple val(meta_id), path("models_TPSA/tpsa_phys.pkl"),   emit: TPSA_PKL
 
     script:
     """

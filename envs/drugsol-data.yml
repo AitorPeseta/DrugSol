@@ -2,15 +2,25 @@ name: drugsol-data
 channels:
   - conda-forge
 dependencies:
+  # --- Core ---
   - python=3.10
-  - rdkit=2023.09.*
   - pip
-  - pip:
-      - mordredcommunity
+  
+  # --- Ciencia de Datos ---
+  - numpy<2.0         
   - pandas=2.1.*
-  - numpy<2.0
   - pyarrow
   - scikit-learn
   - matplotlib
   - seaborn
   - requests
+  
+  # --- Química ---
+  - rdkit=2023.09.*
+  - mkl 
+  - mkl-service
+  - xtb               
+  
+  # --- Pip (SIEMPRE AL FINAL) ---
+  - pip:
+      - mordredcommunity

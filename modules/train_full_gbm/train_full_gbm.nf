@@ -3,20 +3,18 @@ nextflow.enable.dsl = 2
 process train_full_gbm {
     tag "Train Full GBM"
     label 'process_gpu' 
-    accelerator 1, type: 'nvidia' // Explicitly ask for NVIDIA GPU
     
     conda "${baseDir}/envs/drugsol-train.yml"
     
-    publishDir "${params.outdir}/training/models_GBM", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/training/${meta_id}/models_GBM", mode: 'copy', overwrite: true
 
     input:
-        path train_file  // Training data file
+        tuple val(meta_id), path(train_file), path(hp_dir)
         val  outdir_val
         path script_py   // Python script
-        path hp_dir // Directory containing best params from OOF
 
     output:
-        path "models_GBM", emit: MODELS_DIR // Publish the whole folder content
+        tuple val(meta_id), path("models_GBM"), emit: MODELS_DIR // Publish the whole folder content
 
     script:
     """

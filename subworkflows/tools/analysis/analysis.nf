@@ -28,7 +28,7 @@ workflow analysis {
         def script_counts  = file("${baseDir}/bin/measurement_counts_histogram.py")
 
         // Combine Train and Test into a single tuple for comparison plots
-        def ch_paired_data = ch_train_data.combine(ch_test_data)
+        def ch_paired_data = ch_train_data.join(ch_test_data)
 
         // 1. Compare Distributions (Train vs Test)
         histograms_columns(ch_paired_data, outdir_val, script_hist)

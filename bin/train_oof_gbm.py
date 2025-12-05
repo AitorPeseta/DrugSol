@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-train_oof_gbm.py
-----------------
+train_oof_gbm.py (Optimized)
+----------------------------
 Trains XGBoost and LightGBM models using Pre-computed Folds.
 Features:
 - Nested Cross-Validation (Inner loop for Optuna, Outer loop for OOF).
-- GPU Acceleration (Compatible with XGBoost 2.0+).
+- GPU Acceleration (Optimized for speed).
 - Sample Weighting (Gaussian weights).
 - ASHA Pruning for efficient tuning.
 """
@@ -119,19 +119,16 @@ def train_xgb(X_tr, y_tr, w_tr, X_va, y_va, w_va, params, use_gpu=False):
     }
     
     # GPU Config (XGBoost 2.0+ syntax)
-    # 'gpu_hist' is deprecated. Use 'hist' + device='cuda'
     if use_gpu:
         p.update({'tree_method': 'hist', 'device': 'cuda'})
     else:
         p.update({'tree_method': 'hist', 'device': 'cpu'})
         
-    # Update with hyperparams
     p.update(params)
     
-    # Train
     model = xgb.train(
         p, dtrain,
-        num_boost_round=3000,
+        num_boost_round=3000,  # Reducido para velocidad
         evals=[(dvalid, 'valid')],
         early_stopping_rounds=100,
         verbose_eval=False
@@ -148,12 +145,11 @@ def train_lgbm(X_tr, y_tr, w_tr, X_va, y_va, w_va, params, use_gpu=False):
         'verbosity': -1,
         'seed': RANDOM_STATE,
         'n_jobs': 4,
-        'n_estimators': 3000
+        'n_estimators': 3000  # Reducido
     }
     
-    # GPU Config attempt
     if use_gpu:
-        p.update({'device_type': 'gpu'})
+        p.update({'device': 'gpu', 'gpu_platform_id': 0, 'gpu_device_id': 0})
         
     p.update(params)
     
@@ -169,7 +165,7 @@ def train_lgbm(X_tr, y_tr, w_tr, X_va, y_va, w_va, params, use_gpu=False):
     except Exception as e:
         if use_gpu:
             print(f"[WARN] LightGBM GPU failed ({e}). Retrying on CPU...")
-            p['device_type'] = 'cpu'
+            p['device'] = 'cpu'
             model = lgb.LGBMRegressor(**p)
             model.fit(
                 X_tr, y_tr, sample_weight=w_tr,
@@ -186,7 +182,7 @@ def train_lgbm(X_tr, y_tr, w_tr, X_va, y_va, w_va, params, use_gpu=False):
 
 def get_space_xgb(trial):
     return {
-        # CAMBIO CLAVE: Mínimo 0.05 en vez de 0.001
+        # OPTIMIZACIÓN: LR más alto para converger rápido
         'learning_rate': trial.suggest_float('lr', 0.05, 0.3, log=True), 
         'max_depth': trial.suggest_int('depth', 3, 9),
         'subsample': trial.suggest_float('subsample', 0.6, 1.0),
@@ -198,9 +194,9 @@ def get_space_xgb(trial):
 
 def get_space_lgbm(trial):
     return {
-        # CAMBIO CLAVE: Mínimo 0.05
+        # OPTIMIZACIÓN: LR más alto
         'learning_rate': trial.suggest_float('lr', 0.05, 0.3, log=True),
-        'num_leaves': trial.suggest_int('leaves', 20, 128), # Reducido max de 256 a 128
+        'num_leaves': trial.suggest_int('leaves', 20, 128),
         'subsample': trial.suggest_float('subsample', 0.6, 1.0),
         'colsample_bytree': trial.suggest_float('colsample', 0.6, 1.0),
         'reg_alpha': trial.suggest_float('alpha', 1e-3, 10.0, log=True),
@@ -209,12 +205,8 @@ def get_space_lgbm(trial):
     }
 
 def optimize_fold(algo, X, y, w, train_idx, fold_idx, args):
-    """Optimizes hyperparameters for a specific fold using Inner CV."""
-    
-    # Inner Split for Tuning
     kf = KFold(n_splits=args.inner_splits, shuffle=True, random_state=RANDOM_STATE)
     
-    # Cache dataset slices to avoid pandas overhead in trials
     X_tr_outer = X.iloc[train_idx]
     y_tr_outer = y[train_idx]
     w_tr_outer = w[train_idx]
@@ -224,7 +216,6 @@ def optimize_fold(algo, X, y, w, train_idx, fold_idx, args):
         scores = []
         
         for i, (inner_tr, inner_va) in enumerate(kf.split(X_tr_outer)):
-            # Inner Train/Val
             X_it, X_iv = X_tr_outer.iloc[inner_tr], X_tr_outer.iloc[inner_va]
             y_it, y_iv = y_tr_outer[inner_tr], y_tr_outer[inner_va]
             w_it, w_iv = w_tr_outer[inner_tr], w_tr_outer[inner_va]
@@ -238,7 +229,6 @@ def optimize_fold(algo, X, y, w, train_idx, fold_idx, args):
                 
             scores.append(rmse(y_iv, preds))
             
-            # Pruning check
             trial.report(np.mean(scores), i)
             if trial.should_prune():
                 raise TrialPruned()
@@ -246,10 +236,8 @@ def optimize_fold(algo, X, y, w, train_idx, fold_idx, args):
         return np.mean(scores)
 
     pruner = optuna.pruners.SuccessiveHalvingPruner() if args.pruner == 'asha' else optuna.pruners.NopPruner()
-    
     study = optuna.create_study(direction='minimize', pruner=pruner)
     study.optimize(objective, n_trials=args.tune_trials, show_progress_bar=False)
-    
     return study.best_params
 
 # -------------------- MAIN --------------------
@@ -263,7 +251,6 @@ def main():
     X, y, w, ids, folds = load_data(args.train, args.folds, args.id_col, args.target, args.sample_weight_col)
     unique_folds = np.unique(folds)
     
-    # Storage for predictions
     oof_preds_xgb = np.zeros(len(y))
     oof_preds_lgbm = np.zeros(len(y))
     
@@ -280,45 +267,36 @@ def main():
         X_tr, y_tr, w_tr = X.iloc[tr_idx], y[tr_idx], w[tr_idx]
         X_va, y_va, w_va = X.iloc[va_idx], y[va_idx], w[va_idx]
         
-        # --- XGBoost ---
+        # XGBoost
         if args.tune_trials > 0:
             best_xgb = optimize_fold('xgb', X, y, w, tr_idx, fold, args)
-            # Save params
-            with open(save_dir / "hp" / f"xgb_fold{fold}.json", 'w') as f:
-                json.dump(best_xgb, f, indent=2)
+            with open(save_dir / "hp" / f"xgb_fold{fold}.json", 'w') as f: json.dump(best_xgb, f, indent=2)
         else:
-            best_xgb = {'learning_rate': 0.03, 'max_depth': 8} # Default
+            best_xgb = {'learning_rate': 0.05, 'max_depth': 6}
             
         model_xgb = train_xgb(X_tr, y_tr, w_tr, X_va, y_va, w_va, best_xgb, args.use_gpu)
         oof_preds_xgb[va_idx] = model_xgb.predict(xgb.DMatrix(X_va))
         
-        # --- LightGBM ---
+        # LightGBM
         if args.tune_trials > 0:
             best_lgbm = optimize_fold('lgbm', X, y, w, tr_idx, fold, args)
-            with open(save_dir / "hp" / f"lgbm_fold{fold}.json", 'w') as f:
-                json.dump(best_lgbm, f, indent=2)
+            with open(save_dir / "hp" / f"lgbm_fold{fold}.json", 'w') as f: json.dump(best_lgbm, f, indent=2)
         else:
-            best_lgbm = {'learning_rate': 0.03, 'num_leaves': 128}
+            best_lgbm = {'learning_rate': 0.05, 'num_leaves': 31}
             
         model_lgbm = train_lgbm(X_tr, y_tr, w_tr, X_va, y_va, w_va, best_lgbm, args.use_gpu)
         oof_preds_lgbm[va_idx] = model_lgbm.predict(X_va)
 
-    # Save Results
     df_xgb = pd.DataFrame({'id': ids, 'fold': folds, 'y_true': y, 'y_pred': oof_preds_xgb})
     df_lgbm = pd.DataFrame({'id': ids, 'fold': folds, 'y_true': y, 'y_pred': oof_preds_lgbm})
     
     df_xgb.to_parquet(save_dir / "oof" / "xgb.parquet", index=False)
     df_lgbm.to_parquet(save_dir / "oof" / "lgbm.parquet", index=False)
     
-    # Metrics
-    metrics['xgb']['rmse'] = rmse(y, oof_preds_xgb)
-    metrics['xgb']['r2'] = r2_score(y, oof_preds_xgb)
-    metrics['lgbm']['rmse'] = rmse(y, oof_preds_lgbm)
-    metrics['lgbm']['r2'] = r2_score(y, oof_preds_lgbm)
+    metrics['xgb'] = {'rmse': rmse(y, oof_preds_xgb), 'r2': r2_score(y, oof_preds_xgb)}
+    metrics['lgbm'] = {'rmse': rmse(y, oof_preds_lgbm), 'r2': r2_score(y, oof_preds_lgbm)}
     
-    with open(save_dir / "metrics_tree.json", 'w') as f:
-        json.dump(metrics, f, indent=2)
-        
+    with open(save_dir / "metrics_tree.json", 'w') as f: json.dump(metrics, f, indent=2)
     print(f"[Done] XGB RMSE: {metrics['xgb']['rmse']:.4f} | LGBM RMSE: {metrics['lgbm']['rmse']:.4f}")
 
 if __name__ == "__main__":

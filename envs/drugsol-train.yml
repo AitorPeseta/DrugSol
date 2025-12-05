@@ -11,14 +11,15 @@ dependencies:
   - pandas<2.0.0
   - rdkit=2022.09.5
   - pyarrow
+  - shap
   - mkl
   - mkl-service
   - matplotlib
   - seaborn
+  - py-xgboost-gpu   # Versión específica con soporte GPU activado
+  - lightgbm         # En conda-forge suele venir con soporte OpenCL/CUDA
   - pip
   - pip:
       - chemprop==1.6.1
-      - xgboost
-      - lightgbm
       - optuna
       - scikit-learn

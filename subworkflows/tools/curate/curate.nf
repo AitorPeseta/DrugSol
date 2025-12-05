@@ -40,8 +40,8 @@ workflow curate {
             filter_water.out, 
             outdir_val, 
             script_filter_temp, 
-            '25', // Min Temp
-            '49'  // Max Temp
+            '24', // Min Temp
+            '50'  // Max Temp
         )
 
         // --- 3. Outlier Management ---

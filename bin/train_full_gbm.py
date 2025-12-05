@@ -5,6 +5,7 @@ train_full_gbm.py
 -----------------
 Retrains XGBoost and LightGBM on the full dataset.
 Updated for XGBoost 2.0+ (tree_method='hist' + device='cuda').
+Now includes SHAP Analysis for interpretability.
 """
 
 import argparse
@@ -15,6 +16,10 @@ import statistics
 import numpy as np
 import pandas as pd
 from pathlib import Path
+
+# Nuevas importaciones para SHAP
+import shap
+import matplotlib.pyplot as plt
 
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
@@ -34,6 +39,18 @@ def read_any(path):
 def get_aggregated_params(hp_dir, prefix):
     """Aggregates params from multiple fold JSONs."""
     p = Path(hp_dir)
+    # Si es un archivo directo (el consolidado), lo leemos directamente
+    if p.is_file():
+        try:
+            full_params = json.loads(p.read_text())
+            # A veces el consolidado tiene claves "xgb_params" o "lgb_params" si es un manifest
+            # O puede ser el json directo de params. Asumimos estructura simple o filtrado.
+            # Adaptación para tu caso actual si ya viene limpio:
+            return full_params
+        except:
+            return {}
+
+    # Si es directorio, lógica antigua de agregación
     files = sorted(p.glob(f"{prefix}_fold*.json"))
     if not files: return {}
     
@@ -111,7 +128,9 @@ def main():
         w = None
 
     drop_cols = [args.target, args.sample_weight_col, "row_uid", "fold", "smiles_neutral"]
-    X = df.drop(columns=[c for c in drop_cols if c in df.columns]).select_dtypes(include=np.number)
+    # Guardamos columns originales para reconstruir nombres después
+    X_original_df = df.drop(columns=[c for c in drop_cols if c in df.columns]).select_dtypes(include=np.number)
+    X = X_original_df.copy()
     
     preprocessor = Pipeline([
         ('imputer', SimpleImputer(strategy='median')),
@@ -121,7 +140,9 @@ def main():
     hp_xgb = get_aggregated_params(args.hp_dir, "xgb")
     hp_lgb = get_aggregated_params(args.hp_dir, "lgbm")
     
-    # Train XGBoost
+    # ---------------------------------------------------------
+    # 1. Train XGBoost
+    # ---------------------------------------------------------
     print("[Full GBM] Training XGBoost...")
     xgb_model = get_pipeline_xgb(hp_xgb, args.use_gpu)
     xgb_pipe = Pipeline([('pre', preprocessor), ('model', xgb_model)])
@@ -132,7 +153,52 @@ def main():
     with open(outdir / "xgb.pkl", "wb") as f:
         pickle.dump(xgb_pipe, f)
 
-    # Train LightGBM
+    # =========================================================
+    # NUEVO: SHAP ANALYSIS (Solo para XGBoost)
+    # =========================================================
+    try:
+        print("[Full GBM] Generating SHAP explanation for XGBoost...")
+        
+        # A. Recuperar el modelo interno y el preprocesador
+        inner_model = xgb_pipe.named_steps['model']
+        inner_pre = xgb_pipe.named_steps['pre']
+        
+        # B. Transformar X tal como lo ve el modelo (Imputación + Selección)
+        # Esto devuelve un numpy array sin nombres
+        X_transformed = inner_pre.transform(X)
+        
+        # C. Recuperar nombres de las features
+        # VarianceThreshold elimina columnas, necesitamos saber cuáles quedaron
+        support_mask = inner_pre.named_steps['var_thresh'].get_support()
+        original_feats = X_original_df.columns
+        final_feats = original_feats[support_mask]
+        
+        # D. Crear DataFrame con nombres para que SHAP los pinte bonitos
+        X_shap = pd.DataFrame(X_transformed, columns=final_feats)
+        
+        # E. Calcular SHAP
+        # TreeExplainer es muy rápido para XGBoost
+        explainer = shap.TreeExplainer(inner_model)
+        shap_values = explainer.shap_values(X_shap)
+        
+        # F. Plot
+        plt.figure(figsize=(10, 12))
+        # Summary Plot (tipo "dot" es el de abejas, el más informativo)
+        shap.summary_plot(shap_values, X_shap, max_display=20, show=False, plot_type="dot")
+        
+        shap_out = outdir / "shap_summary_xgb.png"
+        plt.savefig(shap_out, bbox_inches='tight', dpi=300)
+        plt.close()
+        print(f"[Full GBM] SHAP plot saved to {shap_out}")
+        
+    except Exception as e:
+        print(f"[WARN] Could not generate SHAP plot: {e}")
+    # =========================================================
+
+
+    # ---------------------------------------------------------
+    # 2. Train LightGBM
+    # ---------------------------------------------------------
     print("[Full GBM] Training LightGBM...")
     try:
         lgb_model = get_pipeline_lgbm(hp_lgb, args.use_gpu)

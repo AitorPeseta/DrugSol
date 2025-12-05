@@ -1,6 +1,7 @@
 # --- Nextflow & Temporary Files ---
 work/
 .nextflow/
+envs/conda_cache/
 # Captures .nextflow.log, .nextflow.log.1, .nextflow.log.2, etc.
 .nextflow.log*
 trace.txt*

@@ -7,17 +7,16 @@ process make_features_mordred {
     conda "${baseDir}/envs/drugsol-data.yml"
     
     // Publish results. If it's the training set, we might want to keep it as a resource resource
-    publishDir "${params.outdir}/prepare_data/features", mode: 'copy', overwrite: true
-    publishDir "${baseDir}/resources", mode: 'copy', overwrite: true, enabled: { dataset_name == 'train' }
+    publishDir "${params.outdir}/prepare_data/${meta_id}/features", mode: 'copy', overwrite: true
     
     input:
-        path input_file    // Input parquet file
+        tuple val(meta_id), path(input_file)
         val  outdir_val
         path script_py     // Python script
         val  dataset_name  // "train" or "test"
 
     output:
-        path "${dataset_name}_mordred_featured.parquet", emit: out
+        tuple val(meta_id), path("${dataset_name}_mordred_featured.parquet"), emit: out
 
     script:
     """

@@ -6,15 +6,15 @@ process align_feature_columns {
     
     conda "${baseDir}/envs/drugsol-data.yml"
     
-    publishDir "${params.outdir}/prepare_data/aligned", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/prepare_data/${meta_id}/aligned", mode: 'copy', overwrite: true
 
     input:
-        tuple path(train_file), path(test_file) // Tuple ensures we have the pair
+        tuple val(meta_id), path(train_file), path(test_file) // Tuple ensures we have the pair
         val  outdir_val
         path script_py    // Python script
 
     output:
-        path "features_test_aligned.parquet", emit: out
+        tuple val(meta_id), path("features_test_aligned.parquet"), emit: out
 
     script:
     """

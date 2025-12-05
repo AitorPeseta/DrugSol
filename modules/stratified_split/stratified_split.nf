@@ -6,16 +6,17 @@ process stratified_split {
     
     conda "${baseDir}/envs/drugsol-data.yml"
     
-    publishDir "${params.outdir}/prepare_data", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/prepare_data/splits", mode: 'copy', overwrite: true
 
     input:
         path source_file  // Parquet file to split
         val  outdir_val
         path script_py    // Python script
+        val n_iters
+        val seed
 
     output:
-        path "train.parquet", emit: train
-        path "test.parquet",  emit: test
+        path "split_*" , emit: splits
 
     script:
     """
@@ -31,6 +32,8 @@ process stratified_split {
         --test-size 0.2 \\
         --seed 42 \\
         --min-groups-per-class 2 \\
-        --save-csv
+        --seed ${seed} \\
+        --n-splits ${n_iters} \\
+        --outdir .
     """
 }

@@ -6,24 +6,18 @@ process final_infer_master {
     
     conda "${baseDir}/envs/drugsol-train.yml"
     
-    publishDir "${params.outdir}/prediction", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/evaluation/${meta_id}", mode: 'copy', overwrite: true
 
     input:
-        path test_tabular  // Parquet file features
-        path test_smiles   // Parquet file SMILES
-        path models_dir    // Directory with base models
-        path chemprop_dir  // Directory with Chemprop models
-        path tpsa_model    // TPSA model JSON
-        val  outdir_val
-        path script_py     // Python script
-        path weights_json  // Optional
-        path stack_model   // Optional
+        tuple val(meta_id), path(test_tab), path(test_smi), path(mod_gbm), path(mod_gnn), path(mod_tpsa), path(weights), path(stack)
+        val outdir
+        path script_py
 
     output:
-        path "pred/test_level0.parquet", emit: LEVEL0
-        path "pred/test_blend.parquet",  emit: BLEND
-        path "pred/test_stack.parquet",  emit: STACK, optional: true
-        path "pred/metrics_test.json",   emit: METRICS
+        tuple val(meta_id), path("pred/test_level0.parquet"), emit: LEVEL0
+        tuple val(meta_id), path("pred/test_blend.parquet"),  emit: BLEND
+        tuple val(meta_id), path("pred/test_stack.parquet"),  emit: STACK, optional: true
+        tuple val(meta_id), path("pred/metrics_test.json"),   emit: METRICS
 
     script:
     """
@@ -34,21 +28,21 @@ process final_infer_master {
     
     # Build optional flags
     WEIGHTS_OPT=""
-    if [[ -f "${weights_json}" ]]; then
-        WEIGHTS_OPT="--weights-json ${weights_json}"
+    if [[ -f "${weights}" ]]; then
+        WEIGHTS_OPT="--weights-json ${weights}"
     fi
 
     STACK_OPT=""
-    if [[ -f "${stack_model}" ]]; then
-        STACK_OPT="--stack-pkl ${stack_model}"
+    if [[ -f "${stack}" ]]; then
+        STACK_OPT="--stack-pkl ${stack}"
     fi
     
     python ${script_py} \\
-        --test-tabular "${test_tabular}" \\
-        --test-smiles  "${test_smiles}"  \\
-        --models-dir   "${models_dir}"   \\
-        --chemprop-model-dir "${chemprop_dir}" \\
-        --tpsa-json "${tpsa_model}" \\
+        --test-tabular "${test_tab}" \\
+        --test-smiles  "${test_smi}"  \\
+        --models-dir   "${mod_gbm}"   \\
+        --chemprop-model-dir "${mod_gnn}" \\
+        --tpsa-json "${mod_tpsa}" \\
         --id-col row_uid \\
         --smiles-col smiles_neutral \\
         --chemprop-smiles-col smiles \\

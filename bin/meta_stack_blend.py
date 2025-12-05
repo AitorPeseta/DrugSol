@@ -179,7 +179,6 @@ def main():
     ap.add_argument("--labels", nargs="+", help="Labels for models (lgbm xgb ...)")
     ap.add_argument("--metric", choices=["rmse", "r2"], default="rmse")
     ap.add_argument("--save-dir", default="meta_results")
-    ap.add_argument("--suffix", default="")
     ap.add_argument("--seed", type=int, default=42)
     
     args = ap.parse_args()
@@ -219,7 +218,7 @@ def main():
     # A. Combined Predictions
     merged["oof_stack"] = stack_preds
     merged["oof_blend"] = blend_preds
-    out_parquet = outdir / f"oof_predictions{args.suffix}.parquet"
+    out_parquet = outdir / f"oof_predictions.parquet"
     merged.to_parquet(out_parquet, index=False)
     
     # B. Stacking Model (Pickle for inference)
@@ -239,12 +238,12 @@ def main():
         "intercept": stack_model.intercept_,
         "alpha": stack_alpha
     }
-    with open(outdir / f"stack/meta_ridge{args.suffix}.pkl", "wb") as f:
+    with open(outdir / f"stack/meta_ridge.pkl", "wb") as f:
         pickle.dump(stack_artifact, f)
         
     # C. Blending Weights (JSON)
     weights_dict = dict(zip(labels, blend_weights_vec.tolist()))
-    with open(outdir / f"blend/weights{args.suffix}.json", "w") as f:
+    with open(outdir / f"blend/weights.json", "w") as f:
         json.dump(weights_dict, f, indent=2)
         
     # D. Metrics Report
@@ -254,7 +253,7 @@ def main():
         "blending": {"rmse": blend_rmse, "r2": r2(y, blend_preds), "weights": weights_dict},
         "winner": "stack" if stack_rmse < blend_rmse else "blend"
     }
-    with open(outdir / f"metrics_oof{args.suffix}.json", "w") as f:
+    with open(outdir / f"metrics_oof.json", "w") as f:
         json.dump(report, f, indent=2)
         
     print(f"[Meta] Done. Winner: {report['winner']}")

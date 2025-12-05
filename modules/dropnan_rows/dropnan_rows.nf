@@ -6,17 +6,17 @@ process dropnan_rows {
     
     conda "${baseDir}/envs/drugsol-data.yml"
     
-    publishDir "${params.outdir}/prepare_data/final", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/prepare_data/${meta_id}/final", mode: 'copy', overwrite: true
 
     input:
-        path source_file // Parquet file to clean
+        tuple val(meta_id), path(source_file)
         val  outdir_val
         path script_py   // Python script
         val  name_out    // e.g. "final_train_gbm"
         val  mode        // "train" or "test"
 
     output:
-        path "${name_out}.parquet", emit: out
+        tuple val(meta_id), path ("${name_out}.parquet"), emit: out
 
     script:
     """

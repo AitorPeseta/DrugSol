@@ -6,15 +6,15 @@ process outliers_scatter_mahalanobis {
     
     conda "${baseDir}/envs/drugsol-data.yml"
     
-    publishDir "${params.outdir}/analysis", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/analysis/${meta_id}", mode: 'copy', overwrite: true
 
     input:
-        tuple path(train), path(test)  // Train and Test parquet files
+        tuple val(meta_id), path(train), path(test)  // Train and Test parquet files
         val  outdir
         path script_py             // Python script
 
     output:
-        path "out_viz", emit: OUTLIER_DIR
+        tuple val(meta_id), path("out_viz"), emit: OUTLIER_DIR
     
     script:
     """

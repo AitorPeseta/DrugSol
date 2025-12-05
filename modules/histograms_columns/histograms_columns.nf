@@ -6,15 +6,15 @@ process histograms_columns {
     
     conda "${baseDir}/envs/drugsol-data.yml"
     
-    publishDir "${params.outdir}/analysis", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/analysis/${meta_id}", mode: 'copy', overwrite: true
 
     input:
-        tuple path(train), path(test)  // Train and test parquet files
+        tuple val(meta_id), path(train), path(test)  // Train and test parquet files
         val  outdir
         path  script_py               // Python script
 
     output:
-        path "hist_out", emit: HIST_DIR
+        tuple val(meta_id), path("hist_out"), emit: HIST_DIR
     
     script:
     """
@@ -24,7 +24,7 @@ process histograms_columns {
     python ${script_py} \\
         --train "${train}" \\
         --test "${test}" \\
-        --cols logS temp_C qed weight \\
+        --cols logS temp_C qed MW \\
         --round-step 0.5 \\
         --overlay \\
         --outdir hist_out
