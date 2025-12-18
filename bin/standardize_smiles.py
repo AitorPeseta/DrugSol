@@ -127,57 +127,138 @@ def standardize_pandas(df, src_col, do_tautomer):
     df["InChIKey"] = pairs.map(lambda t: t[1]).astype("string")
     return df
 
-# ---------- DEDUPLICACIÓN INTELIGENTE ----------
+# ---------- DEDUPLICACIÓN ESTRICTA CON TRAZABILIDAD ----------
 def deduplicate_data(df, threshold=0.7):
-    print(f"[Dedup] Iniciando deduplicación por InChIKey (thresh={threshold})...")
+    """
+    Deduplica filas basadas en InChIKey, Solvente y Temperatura.
+    - Si los valores están cerca: hace la media.
+    - Si los valores discrepan (conflicto): ELIMINA TODOS (no se fía de ninguno).
+    - Genera un reporte detallado de conflictos.
+    """
+    print(f"[Dedup] Iniciando deduplicación estricta (thresh={threshold})...")
     
-    # Importante: dropna aquí también por si acaso
+    # 1. Preparación
     df = df.dropna(subset=["InChIKey"])
     
+    # Rellenamos nulos temporalmente para poder agrupar
     df["temp_C_grp"] = df["temp_C"].fillna(-9999)
     df["solvent_grp"] = df["solvent"].fillna("UNKNOWN")
     
-    def _agg_logic(x):
-        vals = x.values
-        if len(vals) == 1:
-            return vals[0]
-        
-        med = np.median(vals)
-        mask = np.abs(vals - med) <= threshold
-        clean_vals = vals[mask]
-        
-        if len(clean_vals) == 0:
-            return np.nan 
-        
-        return np.mean(clean_vals)
-
+    # 2. Identificar duplicados
+    # keep=False marca TODAS las apariciones como True (ej: las 2 filas del conflicto)
     dup_mask = df.duplicated(subset=["InChIKey", "solvent_grp", "temp_C_grp"], keep=False)
     
-    df_unique = df[~dup_mask].copy()
-    df_dups = df[dup_mask].copy()
+    df_unique = df[~dup_mask].copy() # Filas que aparecen una sola vez (seguras)
+    df_dups = df[dup_mask].copy()    # Filas con conflictos/repetidos
     
     if df_dups.empty:
         print("[Dedup] No se encontraron duplicados.")
-        return df.drop(columns=["temp_C_grp", "solvent_grp"])
+        cols_to_drop = ["temp_C_grp", "solvent_grp"]
+        if "source" in df.columns: cols_to_drop.append("source")
+        return df.drop(columns=cols_to_drop, errors='ignore')
     
-    print(f"[Dedup] Procesando {len(df_dups)} filas duplicadas...")
+    print(f"[Dedup] Analizando conflictos en {len(df_dups)} filas duplicadas...")
+
+    # 3. Lógica de Consenso y Reporte
+    # Agrupamos los duplicados para ver caso por caso
+    grouped = df_dups.groupby(["InChIKey", "solvent_grp", "temp_C_grp"])
     
-    grp = df_dups.groupby(["InChIKey", "solvent_grp", "temp_C_grp"])
-    new_logs = grp["logS"].apply(_agg_logic)
+    # Listas para reconstruir el dataframe final de duplicados resueltos
+    resolved_rows = []
     
-    df_collapsed = grp.first().reset_index()
+    # Contador para el reporte
+    conflict_count = 0
+    dropped_groups = 0
+
+    print("\n" + "="*80)
+    print(f" REPORTE DE CONFLICTOS (Umbral diferencia > {threshold})")
+    print("="*80)
+
+    for name, group in grouped:
+        vals = group["logS"].values
+        # Si existe columna source la usamos, si no, ponemos 'Unknown'
+        sources = group["source"].values if "source" in group.columns else ["?"] * len(vals)
+        smiles = group["smiles_neutral"].iloc[0]
+        
+        # --- LÓGICA MATEMÁTICA ---
+        median_val = np.median(vals)
+        
+        # Calculamos la distancia de cada punto a la mediana
+        diffs = np.abs(vals - median_val)
+        
+        # ¿Quiénes son 'buenos' (están cerca del consenso)?
+        is_good = diffs <= threshold
+        clean_vals = vals[is_good]
+        
+        # --- DECISIÓN ---
+        final_logS = np.nan
+        status_msg = ""
+        
+        if len(clean_vals) == 0:
+            # CASO: Todos están lejos entre sí (ej: -2 vs -5). Nadie sobrevive.
+            status_msg = "CONFLICTO SEVERO -> SE ELIMINAN TODOS"
+            dropped_groups += 1
+            conflict_count += 1
+            
+        elif len(clean_vals) < len(vals):
+            # CASO: Había 3 valores, 2 coinciden y 1 es outlier.
+            # Nos quedamos con la media de los buenos.
+            final_logS = np.mean(clean_vals)
+            status_msg = "OUTLIER DETECTADO -> Se eliminó el valor discordante"
+            conflict_count += 1
+            
+            # Guardamos la fila 'colapsada'
+            row = group.iloc[0].copy() # Copiamos metadatos de la primera
+            row["logS"] = final_logS
+            resolved_rows.append(row)
+            
+        else:
+            # CASO: Todos coinciden (varianza baja). Todo OK.
+            final_logS = np.mean(clean_vals)
+            # No imprimimos nada si todo está bien para no ensuciar el log
+            # Pero guardamos la fila
+            row = group.iloc[0].copy()
+            row["logS"] = final_logS
+            resolved_rows.append(row)
+
+        # --- IMPRIMIR SOLO SI HUBO LÍO ---
+        if "CONFLICTO" in status_msg or "OUTLIER" in status_msg:
+            temp_str = f"{name[2]}°C" if name[2] != -9999 else "N/A"
+            print(f"\nMol: {smiles[:25]}... | {name[1]} | {temp_str}")
+            print(f"Estado: {status_msg}")
+            
+            for v, s, good in zip(vals, sources, is_good):                
+                status = "" if good else "*"
+                print(f"   -> Val: {v:.4f} \t[{s}] \t | {status}")
+
+    print("="*80 + "\n")
+
+    # 4. Reconstrucción
+    if resolved_rows:
+        df_resolved = pd.DataFrame(resolved_rows)
+    else:
+        df_resolved = pd.DataFrame(columns=df.columns) # Caso raro: todo eliminado
+        
+    # Limpiamos columnas auxiliares en el resuelto
+    cols_aux = ["temp_C_grp", "solvent_grp"]
+    # Quitamos 'source' porque ya no tiene sentido (es una mezcla)
+    if "source" in df.columns: cols_aux.append("source")
     
-    # Alinear índices de logS calculado
-    # Al hacer reset_index, el orden debería coincidir con new_logs.values si el sort es consistente
-    # Para máxima seguridad, hacemos un map usando el índice múltiple, pero values suele funcionar en groupby default
-    df_collapsed["logS"] = new_logs.values
+    # Concatenamos los únicos originales + los resueltos (deduplicados)
+    final_cols = [c for c in df.columns if c not in ["temp_C_grp", "solvent_grp", "source"]]
     
-    df_collapsed = df_collapsed.dropna(subset=["logS"])
+    # Aseguramos que df_resolved tenga las columnas correctas antes de concatenar
+    df_resolved = df_resolved.reindex(columns=final_cols)
+    df_unique = df_unique.reindex(columns=final_cols)
     
-    final_cols = [c for c in df.columns if c not in ["temp_C_grp", "solvent_grp"]]
-    df_clean = pd.concat([df_unique[final_cols], df_collapsed[final_cols]], ignore_index=True)
+    df_clean = pd.concat([df_unique, df_resolved], ignore_index=True)
     
-    print(f"[Dedup] Final: {len(df)} -> {len(df_clean)} filas únicas.")
+    print(f"[Dedup] Resumen:")
+    print(f"   - Filas únicas directas: {len(df_unique)}")
+    print(f"   - Grupos duplicados procesados: {len(grouped)}")
+    print(f"   - Grupos ELIMINADOS por conflicto: {dropped_groups}")
+    print(f"   - Total final: {len(df_clean)} filas.")
+    
     return df_clean
 
 def main():

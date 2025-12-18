@@ -20,7 +20,8 @@ process histograms_columns {
     """
     # Generate comparative histograms for key features
     # We check logS (Target), temp_C (Control), and qed/weight (New features)
-    
+    export LD_LIBRARY_PATH="\$CONDA_PREFIX/lib:\${LD_LIBRARY_PATH:-}"
+
     python ${script_py} \\
         --train "${train}" \\
         --test "${test}" \\

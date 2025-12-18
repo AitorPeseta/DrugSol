@@ -31,6 +31,9 @@ process engineer_features {
         --temp-col temp_C \\
         --smarts "${baseDir}/resources/smarts_pattern_ionized.txt" \\
         --pka-api-url "http://xundrug.cn:5001/modules/upload0/" \\
-        --pka-token "O05DriqqQLlry9kmpCwms2IJLC0MuLQ7"
+        --pka-token "O05DriqqQLlry9kmpCwms2IJLC0MuLQ7" \\
+        --nproc ${task.cpus}
+
+    rm -r ${baseDir}/bin/__pycache__
     """
 }

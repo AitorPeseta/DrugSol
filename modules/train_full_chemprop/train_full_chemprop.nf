@@ -2,7 +2,7 @@ nextflow.enable.dsl = 2
 
 process train_full_chemprop {
     tag "Train Full Chemprop"
-    label 'process_gpu' // Request GPU
+    label 'process_gpu'
     
     conda "${baseDir}/envs/drugsol-train.yml"
     
@@ -38,6 +38,7 @@ process train_full_chemprop {
         --best-params "${best_params_json}" \\
         --epochs 40 \\
         --gpu \\
+        --weight-col weight \\
         --save-dir models_GNN
     """
 }

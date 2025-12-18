@@ -1,39 +1,31 @@
-nextflow.enable.dsl = 2
-
 process stratified_split {
-    tag "Stratified Scaffold Split"
+    tag "Split Iter #${iter_id}"
     label 'cpu_small'
-    
     conda "${baseDir}/envs/drugsol-data.yml"
     
-    publishDir "${params.outdir}/prepare_data/splits", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/prepare_data/iter_${iter_id}", mode: 'copy', overwrite: true
 
     input:
-        path source_file  // Parquet file to split
-        val  outdir_val
-        path script_py    // Python script
-        val n_iters
-        val seed
+        tuple val(iter_id), path(balanced_file)
+        val  outdir_base 
+        path script_py
+        val seed_fixed 
 
     output:
-        path "split_*" , emit: splits
+        tuple val(iter_id), path("train.parquet"), path("test.parquet"), emit: splits
 
     script:
     """
-    # Performs a Group Stratified Split.
-    # Groups = Scaffolds (Butina Clusters) to prevent structure leakage.
-    # Strata = Solvent + Temperature bins to ensure balanced conditions.
+    # Ejecutamos el script para hacer UN solo split (80/20)
+    # Usamos una semilla fija porque la aleatoriedad ya vino del balanceo previo.
     
     python ${script_py} \\
-        --input ${source_file} \\
+        --input ${balanced_file} \\
         --group-col "cluster_ecfp4_0p7" \\
         --temp-col "temp_C" \\
         --temp-step 5 \\
         --test-size 0.2 \\
-        --seed 42 \\
-        --min-groups-per-class 2 \\
-        --seed ${seed} \\
-        --n-splits ${n_iters} \\
-        --outdir .
+        --seed ${seed_fixed} \\
+        --outdir . 
     """
 }

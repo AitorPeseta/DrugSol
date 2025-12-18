@@ -4,7 +4,9 @@ nextflow.enable.dsl = 2
 include { common_ingest as COMMON_INGEST } from '../../tools/common_ingest/common_ingest.nf'
 include { curate        as CURATE      }   from '../../tools/curate/curate.nf'
 include { prepare_data  as PREPARE     }   from '../../tools/prepare_data/prepare_data.nf'
-include { predict_full_pipeline   as PREDICT     }   from '../../../modules/predict_full_pipeline/predict_full_pipeline.nf'
+include { predict_full_pipeline   } from '../../../modules/predict_full_pipeline/predict_full_pipeline.nf'
+include { predict_real_solubility } from '../../../modules/predict_real_solubility/predict_real_solubility.nf'
+
 
 workflow execution {
   take:
@@ -23,16 +25,15 @@ workflow execution {
 
     // 3) Preprocesamiento (Cálculo de features Mordred/RDKit)
     // Pasamos params.iterations/seed aunque no se usen en split de execution
-    PREPARE( FINAL_CURATED, OUTDIR_VAL, 1, 42 )
+    PREPARE( FINAL_CURATED, OUTDIR_VAL, 1, 42, "features_only")
     
     // Obtenemos los datos listos para inferencia
-    def FINAL_TEST_GBM   = PREPARE.out.test_gbm    // Mordred features
-    def FINAL_TEST_SMILE = PREPARE.out.test_smiles // RDKit features + SMILES
+    def FINAL_TEST_GBM   = PREPARE.out.test_gbm.map    { id, file -> file }
+    def FINAL_TEST_SMILE = PREPARE.out.test_smiles.map { id, file -> file }
 
     // 4) Predicción con final_product
     // Localizamos la carpeta final_product. 
-    // Asumimos que está en research/results/final_product
-    def final_prod_dir = file("${params.outdir}/research/results/final_product")
+    def final_prod_dir = file("${baseDir}/results/research/final_product/drugsol_model")
     
     // Verificación de seguridad
     if (!final_prod_dir.exists()) {
@@ -41,10 +42,19 @@ workflow execution {
 
     def script_predict = Channel.value(file("${baseDir}/bin/predict_full_pipeline.py"))
 
-    PREDICT(
+    predict_full_pipeline(
         FINAL_TEST_GBM,
         FINAL_TEST_SMILE,
         final_prod_dir,
         script_predict
+    )
+
+    def script_seff = Channel.value(file("${baseDir}/bin/predict_real_solubility.py"))
+    
+    predict_real_solubility(
+        predict_full_pipeline.out,
+        OUTDIR_VAL,
+        script_seff,
+        7.4
     )
 }

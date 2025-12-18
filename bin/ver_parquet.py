@@ -5,7 +5,7 @@ import os
 directorio_del_script = os.path.dirname(os.path.abspath(__file__))
 
 # Une esa ruta con el nombre del archivo
-archivo = os.path.join(directorio_del_script, '../work/f6/de76ceba0c93880892df418abc80f8/final_train_gbm.parquet')
+archivo = os.path.join(directorio_del_script, '../results/prepare_data/split_8/final/final_test_gnn.parquet')
 
 try:
     df = pd.read_parquet(archivo)

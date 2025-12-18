@@ -42,6 +42,7 @@ def main():
     ap.add_argument("--batch-size", type=int, default=50)
     ap.add_argument("--val-fraction", default=0.05)
     ap.add_argument("--checkpoint", default=None)
+    ap.add_argument("--weight-col", default=None)
     args = ap.parse_args()
     
     outdir = Path(args.save_dir)
@@ -54,12 +55,14 @@ def main():
     valid = df[args.smiles_col].apply(is_valid_smiles)
     df = df[valid].reset_index(drop=True)
     
-    # Física: Calculamos pesos pero NO features
-    if "temp_C" in df.columns:
-        t = df["temp_C"].fillna(25.0)
-        df["sw_temp37"] = 1.0 + 2.0 * np.exp(-((t - 37.0) ** 2) / (2 * 8.0**2))
+    # Física: Usar pesos pre-calculados si existen
+    weight_col_name = "sw_temp37" # Default internal name for chemprop csv
+    if args.weight_col and args.weight_col in df.columns:
+        print(f"[Full] Usando pesos de columna: {args.weight_col}")
+        df[weight_col_name] = df[args.weight_col].fillna(1.0)
     else:
-        df["sw_temp37"] = 1.0
+        print("[Full] Sin columna de pesos externa. Usando 1.0.")
+        df[weight_col_name] = 1.0
 
     # Guardar CSVs limpios (Solo SMILES + Target + Peso)
     cols_to_save = [args.smiles_col, args.target]

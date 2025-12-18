@@ -236,19 +236,37 @@ def plot_classification_curves(df, target_col, pred_col, model_name, out_path, t
 
 
 def plot_residuals(df, target_col, pred_col, model_name, out_path):
-    if pred_col not in df.columns or target_col not in df.columns: return
+    """
+    Gráfico de residuos: (y_true - y_pred) vs y_pred
+    CORREGIDO: Ahora acepta explícitamente target y pred column.
+    """
+    if pred_col not in df.columns or target_col not in df.columns:
+        return
+
     y_true = pd.to_numeric(df[target_col], errors='coerce')
     y_pred = pd.to_numeric(df[pred_col], errors='coerce')
     mask = np.isfinite(y_true) & np.isfinite(y_pred)
+    
     if not mask.any(): return
-    res = y_true[mask] - y_pred[mask]
+
+    y_true = y_true[mask]
+    y_pred = y_pred[mask]
+    residuals = y_true - y_pred
+    
     plt.figure(figsize=(8, 6))
-    sns.scatterplot(x=y_pred[mask], y=res, color='purple', alpha=0.5)
-    plt.axhline(0, color='k', linestyle='--', lw=2)
-    plt.xlabel(f"Predicted")
-    plt.ylabel("Residuals")
-    plt.title(f"{model_name}: Residuals")
-    plt.tight_layout(); plt.savefig(out_path, dpi=150); plt.close()
+    
+    # Colores genéricos
+    sns.scatterplot(x=y_pred, y=residuals, alpha=0.5, color='royalblue')
+    plt.axhline(0, color='black', linestyle='--')
+    
+    plt.xlabel(f"Predicted {target_col}")
+    plt.ylabel("Residual (True - Pred)")
+    plt.title(f"{model_name}: Residual Analysis")
+    
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=150)
+    plt.close()
 
 def plot_bias_check(df, target_col, pred_col, model_name, out_path):
     if pred_col not in df.columns or target_col not in df.columns: return
@@ -368,6 +386,7 @@ def main():
             res = plot_scatter_comparison(df_test, df_oof, args.target, test_col, oof_col, name, out_global / f"scatter_{test_col}.png", mode=args.mode)
             
             # 2. Plots de Residuos, Bias, Hist
+            # AQUI ESTABA EL ERROR: Ahora la función acepta los 5 argumentos correctamente
             plot_residuals(df_test, args.target, test_col, name, out_global / f"residuals_{test_col}.png")
             plot_bias_check(df_test, args.target, test_col, name, out_global / f"bias_{test_col}.png")
             plot_error_hist(df_test, args.target, test_col, name, out_global / f"error_hist_{test_col}.png")
@@ -415,8 +434,10 @@ def main():
                     summary.append(res)
                     metrics_json["physio_range"][test_col] = res
                     
+                    # CORREGIDO AQUÍ TAMBIÉN
                     plot_residuals(df_test_phys, args.target, test_col, name, out_physio / f"residuals_{test_col}.png")
                     plot_bias_check(df_test_phys, args.target, test_col, name, out_physio / f"bias_{test_col}.png")
+                    plot_error_hist(df_test_phys, args.target, test_col, name, out_physio / f"error_hist_{test_col}.png")
 
     # Guardar resumen final
     pd.DataFrame(summary).to_csv(Path(args.outdir) / "metrics_summary.csv", index=False)

@@ -26,7 +26,7 @@ process train_full_gbm {
         --target logS \\
         --hp-dir "${hp_dir}" \\
         --use-gpu \\
-        --sample-weight-col sw_temp37 \\
+        --sample-weight-col weight \\
         --save-dir models_GBM
     """
 }

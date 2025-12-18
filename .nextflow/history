@@ -376,3 +376,98 @@
 2025-12-05 12:23:42	4.1s	desperate_leavitt	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	8ff825ce-1095-48b1-8e88-d8bba51563d7	nextflow run main.nf --mode research --n_iterations 10 -profile gpu_high -resume
 2025-12-05 13:06:29	4m 50s	compassionate_shockley	OK	f2b0b83ba60175d4cf087e3263ab3fcb	8ff825ce-1095-48b1-8e88-d8bba51563d7	nextflow run main.nf --mode research --n_iterations 10 -profile gpu_high -resume
 2025-12-05 13:15:30	4m 59s	intergalactic_turing	OK	f2b0b83ba60175d4cf087e3263ab3fcb	8ff825ce-1095-48b1-8e88-d8bba51563d7	nextflow run main.nf --mode research --n_iterations 10 -profile gpu_high -resume
+2025-12-09 09:39:30	15m 59s	maniac_meitner	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	8ff825ce-1095-48b1-8e88-d8bba51563d7	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-09 13:05:18	-	gigantic_euler	-	f2b0b83ba60175d4cf087e3263ab3fcb	04273ec8-e9c3-4395-9297-882eebc977d9	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv
+2025-12-09 13:30:18	-	infallible_gilbert	-	f2b0b83ba60175d4cf087e3263ab3fcb	37156a6e-0ac4-4acd-ac78-954579114f68	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv
+2025-12-09 13:34:06	-	pensive_euler	-	f2b0b83ba60175d4cf087e3263ab3fcb	0282e189-6a3c-4c23-8a13-b8dd168d06aa	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv
+2025-12-09 13:36:50	-	happy_jang	-	f2b0b83ba60175d4cf087e3263ab3fcb	6d1b858e-16d5-434a-bf8e-27926131efb3	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv
+2025-12-09 13:37:34	-	stoic_fermi	-	f2b0b83ba60175d4cf087e3263ab3fcb	418e0b21-7420-4862-9e34-a267f8a7be81	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv
+2025-12-09 13:38:44	3m 1s	drunk_neumann	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	51660323-1620-493e-845d-3f0cd0b323fd	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv
+2025-12-10 09:15:02	12.9s	shrivelled_leibniz	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	51660323-1620-493e-845d-3f0cd0b323fd	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-10 09:19:17	10.2s	gigantic_plateau	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	51660323-1620-493e-845d-3f0cd0b323fd	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-10 09:23:27	3.9s	berserk_jepsen	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	51660323-1620-493e-845d-3f0cd0b323fd	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-10 09:34:20	3.8s	big_wright	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	51660323-1620-493e-845d-3f0cd0b323fd	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-10 10:01:57	5.1s	crazy_hopper	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	51660323-1620-493e-845d-3f0cd0b323fd	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-10 10:04:47	7.2s	hungry_wescoff	OK	f2b0b83ba60175d4cf087e3263ab3fcb	51660323-1620-493e-845d-3f0cd0b323fd	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-10 11:38:07	7.5s	intergalactic_leakey	OK	f2b0b83ba60175d4cf087e3263ab3fcb	51660323-1620-493e-845d-3f0cd0b323fd	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-10 11:40:08	2.8s	sleepy_lichterman	OK	f2b0b83ba60175d4cf087e3263ab3fcb	51660323-1620-493e-845d-3f0cd0b323fd	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-10 11:47:51	1h 16m 55s	modest_leibniz	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	51660323-1620-493e-845d-3f0cd0b323fd	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-10 13:16:23	44.5s	prickly_plateau	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	51660323-1620-493e-845d-3f0cd0b323fd	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-10 13:17:13	19m 5s	pensive_chandrasekhar	OK	f2b0b83ba60175d4cf087e3263ab3fcb	51660323-1620-493e-845d-3f0cd0b323fd	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-10 13:42:14	10.6s	elated_moriondo	OK	f2b0b83ba60175d4cf087e3263ab3fcb	51660323-1620-493e-845d-3f0cd0b323fd	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-11 09:27:55	53.5s	astonishing_miescher	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	51660323-1620-493e-845d-3f0cd0b323fd	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-11 09:40:32	29.4s	nasty_knuth	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	51660323-1620-493e-845d-3f0cd0b323fd	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-11 09:43:37	1h 11m 24s	pedantic_swanson	OK	f2b0b83ba60175d4cf087e3263ab3fcb	51660323-1620-493e-845d-3f0cd0b323fd	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-11 10:02:34	-	jovial_lorenz	-	f2b0b83ba60175d4cf087e3263ab3fcb	51660323-1620-493e-845d-3f0cd0b323fd	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-11 10:02:56	-	elegant_morse	-	f2b0b83ba60175d4cf087e3263ab3fcb	4c4e1b51-f102-4a8b-be62-3305de06e621	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv
+2025-12-11 10:03:59	3m 4s	cheesy_rubens	OK	f2b0b83ba60175d4cf087e3263ab3fcb	53158e54-2e86-425e-a61f-cb33573e99cf	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv
+2025-12-11 10:35:03	-	fabulous_faraday	-	f2b0b83ba60175d4cf087e3263ab3fcb	1c91eda3-adb2-4f35-ad4d-67426dd4604c	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv
+2025-12-11 10:35:24	3m 12s	jovial_poisson	OK	f2b0b83ba60175d4cf087e3263ab3fcb	5dbe7bac-5810-4e8f-aeb7-7aa97ed45e15	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv
+2025-12-11 10:45:44	-	exotic_meucci	-	f2b0b83ba60175d4cf087e3263ab3fcb	8874af7c-2119-4a6a-b522-2c60d89f0df4	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv
+2025-12-11 10:46:04	2m 57s	drunk_mcnulty	OK	f2b0b83ba60175d4cf087e3263ab3fcb	72ba3202-f90b-4165-937f-ff404dec53ee	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv
+2025-12-11 11:09:30	3m	fabulous_euler	OK	f2b0b83ba60175d4cf087e3263ab3fcb	ffb7f288-47f3-4bcf-a269-6009b05a08d6	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv
+2025-12-11 11:33:18	3m	special_snyder	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	4cdd7b5e-0496-4f05-8bf5-b34aea7d1e97	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv
+2025-12-11 11:40:31	2m 30s	agitated_swartz	OK	f2b0b83ba60175d4cf087e3263ab3fcb	4cdd7b5e-0496-4f05-8bf5-b34aea7d1e97	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-11 12:55:43	17.9s	festering_ampere	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	4844b69a-cfbb-4890-aa01-70a4d6b9a2be	nextflow run main.nf --mode research --n_iterations 10
+2025-12-11 12:58:01	13.8s	awesome_wescoff	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10
+2025-12-12 09:33:02	6.5s	disturbed_crick	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-15 10:44:11	-	friendly_wozniak	-	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-15 10:45:01	-	distracted_shaw	-	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-15 10:45:23	10.6s	special_minsky	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-15 10:57:37	14.3s	zen_lagrange	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-15 10:58:52	3m 10s	backstabbing_stone	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-15 11:03:15	9m 41s	gloomy_goldwasser	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-15 12:18:37	-	scruffy_leakey	-	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-15 12:19:20	32.7s	cheeky_cantor	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-15 12:23:30	11m 17s	small_bardeen	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-15 13:32:45	37.4s	kickass_nightingale	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-15 13:39:10	6.1s	lonely_swanson	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-15 13:40:36	25m 18s	maniac_bhaskara	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 09:20:31	15m 23s	small_davinci	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 09:38:55	9.6s	festering_bell	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 10:08:48	-	gigantic_sanger	-	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 10:09:23	-	ecstatic_shirley	-	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 10:09:45	-	curious_ritchie	-	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 10:10:17	-	modest_fourier	-	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 10:11:12	-	astonishing_golick	-	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 10:13:31	3.5s	crazy_euler	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 10:14:55	3.1s	shrivelled_pesquet	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 10:16:52	1m 29s	hungry_legentil	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 10:21:21	7.8s	sick_engelbart	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 10:24:35	12.5s	evil_bell	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 10:28:00	9m 11s	dreamy_varahamihira	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 10:45:25	9m 43s	ridiculous_gautier	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 10:55:13	11.8s	nauseous_aryabhata	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 10:57:52	2m 17s	thirsty_swartz	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 11:06:45	-	loquacious_brahmagupta	-	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 11:07:02	2.9s	naughty_blackwell	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 11:07:27	8m 53s	berserk_williams	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 11:17:58	15.4s	friendly_pare	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 11:18:24	16.1s	scruffy_fourier	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 11:20:35	4m 3s	determined_borg	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 11:43:18	4.2s	adoring_leibniz	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 11:43:48	50.7s	scruffy_lamarr	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 11:49:36	32m 52s	fervent_cray	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 12:24:49	3.5s	hungry_wegener	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 12:25:19	44m 10s	deadly_kowalevski	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 13:14:59	-	nostalgic_meitner	-	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 13:15:28	25.2s	evil_gates	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 13:16:09	1m 40s	happy_joliot	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-16 13:19:05	3h 45m 27s	determined_ritchie	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-17 09:24:37	-	pensive_lorenz	-	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-17 09:25:49	9m 46s	happy_boltzmann	OK	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-17 09:46:35	-	awesome_joliot	-	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-17 09:47:23	-	intergalactic_williams	-	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-17 10:00:08	-	evil_leavitt	-	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-17 10:00:57	-	silly_kalam	-	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-17 10:01:22	-	desperate_gutenberg	-	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-17 10:02:22	-	adoring_tuckerman	-	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-17 10:03:18	4m	romantic_bohr	OK	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-17 11:52:33	3.2s	fabulous_hopper	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-17 11:53:00	2m 13s	serene_brahmagupta	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -resume
+2025-12-17 11:55:33	50m 55s	silly_cray	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -profile gpu_high -resume
+2025-12-17 12:46:34	1m 55s	clever_laplace	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -profile gpu_high -resume
+2025-12-17 12:48:59	3h 15m 41s	voluminous_allen	OK	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode research --n_iterations 10 -profile gpu_high -resume
+2025-12-18 10:18:10	-	voluminous_coulomb	-	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-18 10:18:44	3m 8s	serene_pauling	OK	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume
+2025-12-18 13:23:23	3m 16s	fervent_magritte	OK	f2b0b83ba60175d4cf087e3263ab3fcb	78231867-69fc-4ec8-ba8e-b1cc79d86e18	nextflow run main.nf --mode execution --input ../InformacionSanti/bin_pruebas/TEST_Camp.csv -resume

@@ -6,7 +6,7 @@ process build_final_ensemble {
     
     conda "${baseDir}/envs/drugsol-train.yml"
 
-    publishDir "${params.outdir}", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/final_product", mode: 'copy', overwrite: true
 
     input:
         val strategy
@@ -36,6 +36,6 @@ process build_final_ensemble {
         --gbm-dir input_gbm \\
         --gnn-dir input_gnn \\
         --tpsa-model input_tpsa \\
-        --save-dir final_product
+        --save-dir drugsol_model
     """
 }

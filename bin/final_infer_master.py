@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-final_infer_master.py (Pure Graph Strategy)
--------------------------------------------
-Solo usa SMILES para Chemprop.
-Ignora features extra para evitar errores de escala/orden.
+final_infer_master.py (Robust Version)
+--------------------------------------
+Maneja casos de intersección vacía entre Tabular y SMILES.
+Evita el crash de Chemprop cuando N=0.
 """
 import argparse, json, sys, subprocess, numpy as np, pandas as pd, joblib, pickle
 from pathlib import Path
@@ -17,7 +17,12 @@ def run_cmd(cmd, check=True):
 
 def read_any(path):
     p = Path(path)
-    return pd.read_parquet(p) if p.suffix == '.parquet' else pd.read_csv(p)
+    if not p.exists(): return pd.DataFrame()
+    try:
+        return pd.read_parquet(p) if p.suffix == '.parquet' else pd.read_csv(p)
+    except Exception as e:
+        print(f"[WARN] Error leyendo {path}: {e}")
+        return pd.DataFrame()
 
 def get_metrics(y_true, y_pred):
     mask = np.isfinite(y_true) & np.isfinite(y_pred)
@@ -30,8 +35,11 @@ def get_metrics(y_true, y_pred):
 
 def _norm_id(s): return s.astype("string").str.strip()
 
-# --- PREDICT CHEMPROP (SIMPLIFICADO) ---
+# --- PREDICT CHEMPROP (ROBUSTO) ---
 def predict_chemprop(model_dir, test_df, smiles_col, id_col, gpu=False):
+    if test_df.empty:
+        return pd.DataFrame(columns=[id_col, "y_chemprop"])
+
     p = Path(model_dir)
     ckpts = sorted(list(p.rglob("*.pt")))
     if not ckpts: return pd.DataFrame({id_col: test_df[id_col]})
@@ -43,11 +51,15 @@ def predict_chemprop(model_dir, test_df, smiles_col, id_col, gpu=False):
     tmp_out = p / "test_out.csv"
     
     df_in = test_df.copy()
+    # Asegurar que existe la columna smiles
+    if smiles_col not in df_in.columns:
+        print(f"[WARN] Columna SMILES '{smiles_col}' no encontrada para GNN.")
+        return pd.DataFrame({id_col: test_df[id_col]})
+        
     df_in = df_in.rename(columns={smiles_col: "smiles"})
     
     # Solo guardamos SMILES
     cols_to_save = ["smiles"]
-    print(f"[Chemprop] Input cols: {cols_to_save}")
     df_in[cols_to_save].to_csv(tmp_in, index=False)
     
     cmd = [
@@ -63,28 +75,52 @@ def predict_chemprop(model_dir, test_df, smiles_col, id_col, gpu=False):
     
     try:
         run_cmd(cmd)
+        if not tmp_out.exists():
+            raise FileNotFoundError("Chemprop no generó output file.")
+            
         preds = pd.read_csv(tmp_out)
-        pred_col = [c for c in preds.columns if c != "smiles"][0]
-        return pd.DataFrame({id_col: test_df[id_col].values, "y_chemprop": preds[pred_col].values})
+        if preds.empty:
+             return pd.DataFrame({id_col: test_df[id_col]})
+             
+        pred_col = [c for c in preds.columns if c != "smiles"]
+        if not pred_col:
+             return pd.DataFrame({id_col: test_df[id_col]})
+             
+        return pd.DataFrame({id_col: test_df[id_col].values, "y_chemprop": preds[pred_col[0]].values})
     except Exception as e:
         print(f"[WARN] Chemprop inference failed: {e}")
         return pd.DataFrame({id_col: test_df[id_col]})
 
-# --- PREDICT GBM (Igual) ---
+# --- PREDICT GBM ---
 def predict_gbm(models_dir, test_df, id_col):
+    if test_df.empty:
+        return pd.DataFrame(columns=[id_col])
+
     preds = pd.DataFrame({id_col: test_df[id_col]})
     xgb_path = Path(models_dir) / "xgb.pkl"
+    
+    # Cargar features json
+    features_gbm = []
+    manifest = Path(models_dir) / "gbm_manifest.json"
+    if manifest.exists():
+        try:
+            m = json.loads(manifest.read_text())
+            features_gbm = m.get("features", [])
+        except: pass
+
     if xgb_path.exists():
         try:
             print("[Infer] XGBoost...")
             xgb_pipe = joblib.load(xgb_path)
-            X = test_df.select_dtypes(include=[np.number]).drop(columns=[id_col, "fold", "target", "logS"], errors='ignore')
-            manifest = Path(models_dir) / "gbm_manifest.json"
-            if manifest.exists():
-                m = json.loads(manifest.read_text())
-                for c in m.get("features", []): 
-                    if c not in X.columns: X[c] = 0
-                X = X[m.get("features", [])]
+            
+            # Preparar X con las columnas exactas
+            if features_gbm:
+                for c in features_gbm:
+                    if c not in test_df.columns: test_df[c] = 0
+                X = test_df[features_gbm]
+            else:
+                X = test_df.select_dtypes(include=[np.number]).drop(columns=[id_col, "fold", "target", "logS"], errors='ignore')
+            
             preds["y_xgb"] = xgb_pipe.predict(X)
         except Exception as e: print(f"[WARN] XGB failed: {e}")
 
@@ -93,12 +129,23 @@ def predict_gbm(models_dir, test_df, id_col):
         try:
             print("[Infer] LightGBM...")
             lgbm_pipe = joblib.load(lgbm_path)
+            # Reusamos X si ya se creó para XGB, o creamos de nuevo
+            if 'X' not in locals():
+                 if features_gbm:
+                    for c in features_gbm:
+                        if c not in test_df.columns: test_df[c] = 0
+                    X = test_df[features_gbm]
+                 else:
+                    X = test_df.select_dtypes(include=[np.number]).drop(columns=[id_col, "fold", "target", "logS"], errors='ignore')
+
             preds["y_lgbm"] = lgbm_pipe.predict(X)
         except Exception as e: print(f"[WARN] LGBM failed: {e}")
     return preds
 
 def predict_tpsa(tpsa_json, test_df, id_col):
+    if test_df.empty: return pd.DataFrame(columns=[id_col])
     if not tpsa_json or not Path(tpsa_json).exists(): return pd.DataFrame({id_col: test_df[id_col]})
+    
     print("[Infer] Baseline...")
     try:
         model = json.loads(Path(tpsa_json).read_text())
@@ -134,13 +181,39 @@ def main():
     args = ap.parse_args()
     outdir = Path(args.save_dir); outdir.mkdir(parents=True, exist_ok=True)
 
-    print("[Infer] Loading...")
+    print("[Infer] Loading Inputs...")
     df_tab = read_any(args.test_tabular).drop_duplicates(subset=[args.id_col])
     df_smi = read_any(args.test_smiles).drop_duplicates(subset=[args.id_col])
-    df_tab[args.id_col] = _norm_id(df_tab[args.id_col])
-    df_smi[args.id_col] = _norm_id(df_smi[args.id_col])
     
+    print(f"   -> Tabular Rows: {len(df_tab)}")
+    print(f"   -> SMILES Rows:  {len(df_smi)}")
+
+    # Normalizar IDs para asegurar el merge
+    if not df_tab.empty: df_tab[args.id_col] = _norm_id(df_tab[args.id_col])
+    if not df_smi.empty: df_smi[args.id_col] = _norm_id(df_smi[args.id_col])
+    
+    # MERGE CRÍTICO
     df_full = df_tab.merge(df_smi, on=args.id_col, suffixes=("", "_smi"))
+    print(f"   -> MERGED Rows:  {len(df_full)}")
+
+    # --- SALIDA TEMPRANA SI NO HAY DATOS ---
+    if df_full.empty:
+        print("[WARN] Merged dataset is empty! Generating empty artifacts to prevent crash.")
+        # Crear archivos vacíos con las columnas esperadas
+        empty_l0 = pd.DataFrame(columns=[args.id_col, "y_xgb", "y_lgbm", "y_chemprop", "y_tpsa"])
+        empty_l0.to_parquet(outdir / "test_level0.parquet", index=False)
+        
+        empty_blend = pd.DataFrame(columns=[args.id_col, "y_pred_blend"])
+        empty_blend.to_parquet(outdir / "test_blend.parquet", index=False)
+        
+        empty_stack = pd.DataFrame(columns=[args.id_col, "y_pred_stack"])
+        empty_stack.to_parquet(outdir / "test_stack.parquet", index=False)
+        
+        (outdir / "metrics_test.json").write_text(json.dumps({}, indent=2))
+        return # Terminar aquí
+    # ---------------------------------------
+
+    # Si hay datos, seguimos normal
     if "temp_C" in df_full.columns:
         t = pd.to_numeric(df_full["temp_C"], errors='coerce').fillna(25.0)
         df_full["inv_temp"] = 1000.0 / (t + 273.15)
@@ -150,35 +223,52 @@ def main():
     p_gnn = predict_chemprop(args.chemprop_model_dir, df_full, args.smiles_col, args.id_col, gpu=True)
     p_tpsa = predict_tpsa(args.tpsa_json, df_full, args.id_col)
     
-    level0 = p_gbm.merge(p_gnn, on=args.id_col, how="left").merge(p_tpsa, on=args.id_col, how="left")
+    # Merge de predicciones
+    level0 = df_full[[args.id_col]].copy()
+    level0 = level0.merge(p_gbm, on=args.id_col, how="left")
+    level0 = level0.merge(p_gnn, on=args.id_col, how="left")
+    level0 = level0.merge(p_tpsa, on=args.id_col, how="left")
     
+    # Añadir target y temp si existen
     for c in [args.target, "temp_C"]:
-        if c in df_full.columns and c not in level0.columns:
+        if c in df_full.columns:
             level0 = level0.merge(df_full[[args.id_col, c]], on=args.id_col, how="left")
             
     level0.to_parquet(outdir / "test_level0.parquet", index=False)
     
+    # Blend & Stack
     cols = ["y_xgb", "y_lgbm", "y_chemprop", "y_tpsa"]
     present = [c for c in cols if c in level0.columns]
     X = level0[present].values
     
+    # Blend
     if args.weights_json and Path(args.weights_json).exists():
-        w = json.loads(Path(args.weights_json).read_text())
-        vec = np.array([w.get(c.replace("y_", ""), 0.0) for c in present])
-        if vec.sum() > 0: vec /= vec.sum()
-        level0["y_pred_blend"] = np.nansum(X * vec, axis=1)
-        level0[[args.id_col, "y_pred_blend"]].to_parquet(outdir / "test_blend.parquet", index=False)
+        try:
+            w = json.loads(Path(args.weights_json).read_text())
+            vec = np.array([w.get(c.replace("y_", ""), 0.0) for c in present])
+            if vec.sum() > 0: vec /= vec.sum()
+            level0["y_pred_blend"] = np.nansum(X * vec, axis=1)
+            level0[[args.id_col, "y_pred_blend"]].to_parquet(outdir / "test_blend.parquet", index=False)
+        except Exception as e:
+            print(f"[WARN] Blend failed: {e}")
 
+    # Stack
     if args.stack_pkl and Path(args.stack_pkl).exists():
-        try: meta = pickle.loads(Path(args.stack_pkl).read_bytes())
-        except: meta = joblib.load(args.stack_pkl)
-        if "coef" in meta:
-            y_stk = np.full(len(level0), meta["intercept"])
-            for f, w in zip(meta["feature_names"], meta["coef"]):
-                if f in level0.columns: y_stk += level0[f].fillna(0.0).values * w
-            level0["y_pred_stack"] = y_stk
-            level0[[args.id_col, "y_pred_stack"]].to_parquet(outdir / "test_stack.parquet", index=False)
+        try: 
+            try: meta = pickle.loads(Path(args.stack_pkl).read_bytes())
+            except: meta = joblib.load(args.stack_pkl)
+            
+            if "coef" in meta:
+                y_stk = np.full(len(level0), meta["intercept"])
+                for f, w in zip(meta["feature_names"], meta["coef"]):
+                    if f in level0.columns: 
+                        y_stk += level0[f].fillna(0.0).values * w
+                level0["y_pred_stack"] = y_stk
+                level0[[args.id_col, "y_pred_stack"]].to_parquet(outdir / "test_stack.parquet", index=False)
+        except Exception as e:
+            print(f"[WARN] Stack failed: {e}")
 
+    # Metrics
     if args.target in level0.columns:
         metrics = {}
         y_true = level0[args.target].values
@@ -194,6 +284,8 @@ def main():
                     if c in level0.columns:
                         metrics["physio_range"][c] = get_metrics(y_true[phys_mask], level0.loc[phys_mask, c].values)
         (outdir / "metrics_test.json").write_text(json.dumps(metrics, indent=2))
+    else:
+        (outdir / "metrics_test.json").write_text(json.dumps({}, indent=2))
 
 if __name__ == "__main__":
     main()

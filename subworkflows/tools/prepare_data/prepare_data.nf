@@ -5,11 +5,11 @@ nextflow.enable.dsl = 2
 // ============================================================================
 
 // 1. Standardization & Engineering
-include { standardize_smiles }          from '../../../modules/standardize_smiles/standardize_smiles.nf'
 include { engineer_features }           from '../../../modules/engineer_features/engineer_features.nf' 
 include { make_fingerprints }           from '../../../modules/make_fingerprints/make_fingerprints.nf'
 
 // 2. Splitting
+include { balance_dataset }             from '../../../modules/balance_dataset/balance_dataset.nf'
 include { stratified_split }            from '../../../modules/stratified_split/stratified_split.nf'
 
 // 3. Feature Calculation (Aliased for clarity in DAG)
@@ -45,12 +45,13 @@ workflow prepare_data {
         outdir_val         // Output directory
         n_iterations
         seed_val
+        subset
 
     main: 
         // --- Define Scripts (Binaries) ---
-        def script_std     = file("${baseDir}/bin/standardize_smiles.py")
         def script_eng     = file("${baseDir}/bin/engineer_features.py")
         def script_fp      = file("${baseDir}/bin/make_fingerprints.py")
+        def script_balance = file("${baseDir}/bin/balance_dataset.py")
         def script_split   = file("${baseDir}/bin/stratified_split.py")
         def script_mordred = file("${baseDir}/bin/make_features_mordred.py")
         def script_rdkit   = file("${baseDir}/bin/make_features_rdkit.py")
@@ -61,19 +62,15 @@ workflow prepare_data {
         // ============================================================
         // 1. COMMON PRE-PROCESSING
         // ============================================================
-
-        // A. Standardize SMILES (Canonicalize, Salts, etc.)
-        standardize_smiles(ch_filtered_data, outdir_val, script_std)
-        def ch_standardized = standardize_smiles.out
         
         // B. Feature Engineering (The "Physics" Step)
-        // Calculates: Gaussian Weights, QED (Drug-likeness), Ionization
-        engineer_features(ch_standardized, outdir_val, script_eng)
+        // Calculates: Gaussian Weights, Ionization
+        engineer_features(ch_filtered_data, outdir_val, script_eng)
         def ch_rich_data = engineer_features.out
 
         // D. Fingerprints (needed for Stratified Split)
         make_fingerprints(ch_rich_data, outdir_val, script_fp, "cluster_ecfp4_0p7")
-        def ch_ready_to_split = make_fingerprints.out
+        def ch_ready_to_balance = make_fingerprints.out
 
 
         // ============================================================
@@ -88,26 +85,19 @@ workflow prepare_data {
 
         if (params.mode == 'research') {
             
-            // --- RESEARCH MODE: SPLIT TRAIN/TEST ---
+            ch_iters = Channel.of(1..n_iterations)
+            ch_balance_inputs = ch_iters.combine(ch_ready_to_balance)
+
+            // EJECUTAR BALANCEO (10 veces en paralelo)
+            // Cada iteración usará una semilla distinta (seed + iter_id)
+            balance_dataset(ch_balance_inputs, script_balance, seed_val)
+            def ch_ready_to_split = balance_dataset.out.balanced_data
 
             // 1. Stratified Scaffold Split + cross-validation
-            stratified_split(ch_ready_to_split, outdir_val, script_split, n_iterations, seed_val)
+            stratified_split(ch_ready_to_split, outdir_val, script_split, seed_val)
             
-            def ch_splits = stratified_split.out.splits
-            .flatten()
-            .map { dir -> 
-                def id = dir.name // "split_1", "split_2"...
-                
-                // Resolvemos los archivos dentro de esa carpeta
-                def train_file = dir.resolve("train.parquet")
-                def test_file  = dir.resolve("test.parquet")
-                
-                // Tupla clave para que todo el pipeline sepa quién es quién
-                return tuple(id, train_file, test_file)
-            }
-            
-            def train_ch = ch_splits.map { id, tr, te -> tuple(id, tr) }
-            def test_ch  = ch_splits.map { id, tr, te -> tuple(id, te) }
+            def train_ch = stratified_split.out.splits.map { id, tr, te -> tuple(id, tr) }
+            def test_ch  = stratified_split.out.splits.map { id, tr, te -> tuple(id, te) }
 
             // ----------------------------------------------------
             // PATH A: GBM Models (Mordred Descriptors)
@@ -126,8 +116,8 @@ workflow prepare_data {
             align_mordred(ch_mordred_pairs, outdir_val, script_align)
 
             // Drop NaNs (Final Cleanup)
-            dropnan_rows_train(filter_feat_train.out, outdir_val, script_drop, "final_train_gbm", "train")
-            dropnan_rows_test(align_mordred.out,      outdir_val, script_drop, "final_test_gbm",  "test")
+            dropnan_rows_train(filter_feat_train.out, outdir_val, script_drop, "final_train_gbm", "train", subset)
+            dropnan_rows_test(align_mordred.out,      outdir_val, script_drop, "final_test_gbm",  "test", subset)
 
             ch_final_train_gbm = dropnan_rows_train.out
             ch_final_test_gbm  = dropnan_rows_test.out
@@ -145,8 +135,8 @@ workflow prepare_data {
             align_rdkit(ch_rdkit_pairs, outdir_val, script_align)
 
             // Finalizing GNN Inputs (Usually just SMILES + Target + Weight, but we keep features if needed)
-            dropnan_rows_train_smile(calc_rdkit_train.out, outdir_val, script_drop, "final_train_gnn", "train")
-            dropnan_rows_test_smile(align_rdkit.out,       outdir_val, script_drop, "final_test_gnn",  "test")
+            dropnan_rows_train_smile(calc_rdkit_train.out, outdir_val, script_drop, "final_train_gnn", "train", subset)
+            dropnan_rows_test_smile(align_rdkit.out,       outdir_val, script_drop, "final_test_gnn",  "test", subset)
 
             ch_final_train_smile = dropnan_rows_train_smile.out
             ch_final_test_smile  = dropnan_rows_test_smile.out
@@ -158,8 +148,8 @@ workflow prepare_data {
             // Input data is treated entirely as "TEST" data.
             // We must load "TRAIN" reference artifacts (column names, scalers) from resources/
 
-            def ch_input_test = ch_ready_to_split
-
+            def ch_input_test = ch_ready_to_balance.map { file -> tuple("test", file) }  
+            
             // 1. Calculate Features
             calc_mordred_test(ch_input_test, outdir_val, script_mordred, "test")
             calc_rdkit_test(ch_input_test,   outdir_val, script_rdkit,   "test")
@@ -167,17 +157,36 @@ workflow prepare_data {
             // 2. Filter (Test only needs to remove its own infinities, column selection happens in align)
             filter_feat_test(calc_mordred_test.out, outdir_val, script_filter, "test")
 
-            // 3. Load Reference Artifacts (Trained Feature Lists)
+            // 3. Load Reference Artifacts
             def ref_train_mordred = Channel.fromPath("${baseDir}/resources/train_features_mordred_filtered.parquet", checkIfExists: true)
             def ref_train_rdkit   = Channel.fromPath("${baseDir}/resources/train_rdkit_featured.parquet",   checkIfExists: true)
 
             // 4. Align Test against Reference Train
-            align_mordred(ref_train_mordred.combine(filter_feat_test.out), outdir_val, script_align)
-            align_rdkit(ref_train_rdkit.combine(calc_rdkit_test.out),      outdir_val, script_align)
+            // CORRECCIÓN: Usamos .map para poner el ID ("test") al principio
+            
+            align_mordred(
+                ref_train_mordred
+                    .combine(filter_feat_test.out)
+                    .map { train_file, id, test_file -> 
+                        tuple(id, train_file, test_file) 
+                    }, 
+                outdir_val, 
+                script_align
+            )
+
+            align_rdkit(
+                ref_train_rdkit
+                    .combine(calc_rdkit_test.out)
+                    .map { train_file, id, test_file -> 
+                        tuple(id, train_file, test_file) 
+                    },      
+                outdir_val, 
+                script_align
+            )
 
             // 5. Drop NaNs
-            dropnan_rows_test(align_mordred.out, outdir_val, script_drop, "final_test_gbm", "test")
-            dropnan_rows_test_smile(align_rdkit.out, outdir_val, script_drop, "final_test_gnn", "test")
+            dropnan_rows_test(align_mordred.out, outdir_val, script_drop, "final_test_gbm", "test", subset)
+            dropnan_rows_test_smile(align_rdkit.out, outdir_val, script_drop, "final_test_gnn", "test", subset)
 
             ch_final_test_gbm   = dropnan_rows_test.out
             ch_final_test_smile = dropnan_rows_test_smile.out
@@ -188,5 +197,4 @@ workflow prepare_data {
         test_gbm     = ch_final_test_gbm
         train_smiles = ch_final_train_smile
         test_smiles  = ch_final_test_smile
-        standarized  = ch_standardized
 }

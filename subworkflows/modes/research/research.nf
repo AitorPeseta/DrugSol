@@ -54,21 +54,21 @@ workflow research {
             ch_curated_data, 
             ch_outdir_val,
             n_iters, 
-            42
+            42,
+            "all"
         )
 
         def ch_train_csv    = PREPARE.out.train_gbm
         def ch_test_csv     = PREPARE.out.test_gbm
         def ch_train_smiles = PREPARE.out.train_smiles
         def ch_test_smiles  = PREPARE.out.test_smiles
-        def ch_standarized  = PREPARE.out.standarized
 
         // ---------------------------------------------------------
         // 4. Exploratory Data Analysis (EDA)
         //    - Generate plots of distributions (T, MW, LogS)
         //    - Check chemical space coverage
         // ---------------------------------------------------------
-        ANALYSIS( ch_train_smiles, ch_test_smiles, ch_outdir_val, ch_standarized )
+        ANALYSIS( ch_train_smiles, ch_test_smiles, ch_outdir_val )
 
         // ---------------------------------------------------------
         // 5. Model Training (The Stack)

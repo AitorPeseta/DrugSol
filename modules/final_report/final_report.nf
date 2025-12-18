@@ -22,8 +22,8 @@ process final_report {
 
     output:
         tuple val(meta_id), path("plots_global/*.png"),      emit: PLOTS_GLOBAL
-        tuple val(meta_id), path("plots_physio/*.png"),      emit: PLOTS_PHYSIO
-        tuple val(meta_id), path("plots_classification/*.png"),  emit: PLOTS_CLASS
+        tuple val(meta_id), path("plots_physio/*.png"),      emit: PLOTS_PHYSIO, optional: true
+        tuple val(meta_id), path("plots_classification/*.png"),  emit: PLOTS_CLASS, optional: true
         tuple val(meta_id), path("metrics_summary.csv"),     emit: SUMMARY_CSV
         tuple val(meta_id), path("metrics_global.json"),     emit: METRICS_JSON
 

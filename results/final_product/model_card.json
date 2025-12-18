@@ -1,9 +1,0 @@
-{
-  "strategy": "stack",
-  "description": "Modelo final DrugSol v1.0",
-  "input_columns": [
-    "smiles",
-    "temperature_K",
-    "solvent"
-  ]
-}

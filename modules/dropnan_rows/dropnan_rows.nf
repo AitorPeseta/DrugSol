@@ -14,6 +14,7 @@ process dropnan_rows {
         path script_py   // Python script
         val  name_out    // e.g. "final_train_gbm"
         val  mode        // "train" or "test"
+        val  subset
 
     output:
         tuple val(meta_id), path ("${name_out}.parquet"), emit: out
@@ -26,6 +27,7 @@ process dropnan_rows {
         --input "${source_file}" \\
         --output "${name_out}.parquet" \\
         --mode "${mode}" \\
+        --subset features_only \\
         --save_csv
     """
 }

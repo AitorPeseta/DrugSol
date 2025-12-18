@@ -29,7 +29,7 @@ process train_oof_gbm {
         --folds "${folds_file}" \\
         --target logS \\
         --id-col row_uid \\
-        --sample-weight-col sw_temp37 \\
+        --sample-weight-col weight \\
         --use-gpu \\
         --tune-trials 5 \\
         --inner-splits 2 \\

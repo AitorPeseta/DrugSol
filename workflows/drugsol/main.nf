@@ -13,7 +13,7 @@ log.info "[DrugSol] Nextflow ${nextflow.version} | DSL2 enabled"
 
 // --- General Parameters ---
 params.mode      = params.mode      ?: 'research'           // Options: 'research', 'execution'
-params.outdir    = params.outdir    ?: "${baseDir}/${params.mode}/results" // Output directory
+params.outdir    = params.outdir    ?: "${baseDir}/results/${params.mode}" // Output directory
 params.input     = params.input     ?: null                 // Path to unified table (CSV/TSV/Parquet)
 
 // --- Research Specific ---
@@ -54,32 +54,33 @@ def print_header() {
 
 // Function to validate execution requirements
 def validate_execution_environment() {
-    // 1. If a specific model is provided, we are good.
     if (params.model) return
+    def product_dir = file("${baseDir}/results/research/final_product/drugsol_model")
+    def model_card  = file("${product_dir}/model_card.json")
 
-    // 2. If no model provided, check if 'research' results exist in the output directory
-    def gnn_path = file("${params.outdir}/research/training/models_GNN")
-    def gbm_path = file("${params.outdir}/research/training/models_GBM")
-
-    boolean models_exist = gnn_path.isDirectory() && gbm_path.isDirectory()
+    boolean models_exist = product_dir.isDirectory() && model_card.exists()
 
     if (!models_exist) {
         error """
-        [ERROR] Execution mode requires trained models.
+        [ERROR] Execution mode requires a trained model.
         
         Reason:
         1. No '--model' parameter was provided.
-        2. Previous research results were not found at:
-           - ${gnn_path}
-           - ${gbm_path}
+        2. A valid 'Final Product' was not found in the output directory.
+           
+           Checked Location: 
+           - ${product_dir}
+           
+           Missing Artifact:
+           - model_card.json 
+           (This file validates that the build process finished successfully, 
+            regardless of whether the strategy was stack, blend, or single).
         
         Solution:
-        - Run with '--mode research' first.
-        - OR provide a specific model path with '--model'.
-        - OR ensure '--outdir' points to where previous research results are stored.
+        - Run with '--mode research' first to generate the final product.
+        - OR provide a specific model path with '--model /path/to/model'.
+        - OR ensure '--outdir' matches the directory used in the research phase.
         """
-    } else {
-        log.info "[INFO] Models found in ${params.outdir}. Proceeding with execution."
     }
 }
 

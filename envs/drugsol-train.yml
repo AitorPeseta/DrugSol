@@ -16,6 +16,7 @@ dependencies:
   - mkl-service
   - matplotlib
   - seaborn
+  - scipy
   - py-xgboost-gpu   # Versión específica con soporte GPU activado
   - lightgbm         # En conda-forge suele venir con soporte OpenCL/CUDA
   - pip

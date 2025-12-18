@@ -40,7 +40,7 @@ process train_oof_chemprop {
         --smiles-col smiles_neutral \\
         --id-col row_uid \\
         --target logS \\
-        --weight-col sw_temp37 \\
+        --weight-col weight \\
         --tune-trials 5 \\
         --epochs 40 \\
         --tune-pruner asha \\

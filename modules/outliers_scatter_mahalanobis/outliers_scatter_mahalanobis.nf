@@ -20,7 +20,8 @@ process outliers_scatter_mahalanobis {
     """
     # Visualize Data Space using PCA and Mahalanobis distance
     # Useful to check if Test set is within the domain of applicability of Train
-    
+    export LD_LIBRARY_PATH="\$CONDA_PREFIX/lib:\${LD_LIBRARY_PATH:-}"
+
     python ${script_py} \\
         --train "${train}" \\
         --test "${test}" \\

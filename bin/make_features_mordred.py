@@ -74,6 +74,7 @@ def compute_mordred(df_mols, ignore_3d=True, nproc=1):
     calc = Calculator(descriptors, ignore_3D=ignore_3d)
     
     # calc.pandas returns a DataFrame with descriptors
+    # IMPORTANT: Ensure no None values are passed here
     mord = calc.pandas(df_mols["mol"], nproc=nproc)
     
     # Clean up: Keep only numbers, remove Infs
@@ -165,11 +166,7 @@ def main():
     # 2. Prepare Molecules
     print("[Mordred] Converting SMILES to RDKit Mols...")
     mols = df[smi_col].apply(smiles_to_mol)
-    valid_mask = mols.notna()
     
-    if (~valid_mask).sum() > 0:
-        print(f"[WARN] {int((~valid_mask).sum())} invalid SMILES found. They will have NaN features.", file=sys.stderr)
-
     # 3. 3D Conformation (Optional)
     if args.include_3d:
         print("[Mordred] Generating 3D conformers (this is slow)...")
@@ -181,21 +178,29 @@ def main():
     else:
         mols_for_calc = mols
 
-    # 4. Calculate RDKit LogP
+    # 4. Calculate RDKit LogP (Works on 2D if 3D fails, so use original mols if needed, but best on processed)
     print("[Mordred] Calculating RDKit LogP...")
     rdkit_logp = compute_rdkit_logp(mols)
 
     # 5. Calculate Mordred
     print("[Mordred] Calculating Mordred Descriptors...")
-    df_mols_valid = pd.DataFrame({"mol": mols_for_calc[valid_mask]})
+    
+    # --- FIX START ---
+    # Filtrar explícitamente cualquier molécula que sea None.
+    # Esto ocurre si la conversión 2D falló O si la generación 3D falló.
+    valid_calc_mask = mols_for_calc.notna()
+    
+    df_mols_valid = pd.DataFrame({"mol": mols_for_calc[valid_calc_mask]})
     
     if len(df_mols_valid) > 0:
+        # Calcular solo para las válidas
         mord_valid = compute_mordred(df_mols_valid, ignore_3d=not args.include_3d, nproc=args.nproc)
-        # Reindex to match original DF (fills invalid with NaN)
-        mord_valid.index = df_mols_valid.index
-        mord = mord_valid.reindex(mols.index)
+        # Reindexar para volver al tamaño original (rellena con NaN las filas fallidas)
+        mord = mord_valid.reindex(df.index)
     else:
-        mord = pd.DataFrame(index=mols.index)
+        print("[WARN] No valid molecules for Mordred calculation. Returning empty features.")
+        mord = pd.DataFrame(index=df.index)
+    # --- FIX END ---
 
     # 6. Solvent One-Hot Encoding
     print("[Mordred] One-Hot Encoding Solvents...")

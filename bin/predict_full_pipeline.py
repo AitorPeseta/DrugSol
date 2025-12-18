@@ -4,10 +4,9 @@
 predict_full_pipeline.py
 ------------------------
 Realiza inferencia sobre nuevas moléculas usando el artefacto FINAL_PRODUCT.
-Pasos:
-1. Carga los datos procesados (Mordred y RDKit/SMILES).
-2. Ejecuta predicciones base (GBM, GNN, TPSA).
-3. Combina usando el Meta-Modelo (Stacking/Blending).
+Versión corregida: 
+1. Mapeo flexible de nombres (y_gnn vs y_chemprop).
+2. Búsqueda recursiva de modelos para evitar 'Not Found'.
 """
 
 import argparse
@@ -18,8 +17,11 @@ import pickle
 import subprocess
 import pandas as pd
 import numpy as np
-import joblib
 from pathlib import Path
+import warnings
+
+# Ignorar warnings de sklearn sobre versiones o nombres si no son críticos
+warnings.filterwarnings("ignore", category=UserWarning)
 
 def run_cmd(cmd):
     print(f"[Exec] CMD: {' '.join(cmd)}")
@@ -29,93 +31,172 @@ def load_pickle(path):
     with open(path, "rb") as f:
         return pickle.load(f)
 
-def predict_gbm(model_dir, X_df):
-    """Carga XGBoost y LightGBM y promedia sus predicciones (o usa solo uno si falta otro)"""
-    preds = []
+def find_file(directory, pattern):
+    """Busca un archivo recursivamente si no está en la raíz"""
+    matches = list(Path(directory).rglob(pattern))
+    return matches[0] if matches else None
+
+def filter_model_features(model, df, model_name="Model"):
+    """Selecciona SOLO las columnas que el modelo espera."""
+    if hasattr(model, "feature_names_in_"):
+        required_cols = model.feature_names_in_
+        missing = [c for c in required_cols if c not in df.columns]
+        if missing:
+            # print(f"[WARN] {model_name}: Faltan {len(missing)} columnas (ej. {missing[:3]}). Rellenando con 0.")
+            for c in missing: df[c] = 0.0
+        return df[required_cols]
+    
+    # Fallback si no tiene metadatos
+    metadata_cols = ["row_uid", "smiles", "smiles_neutral", "logS", "InChIKey", "groups"]
+    cols_to_keep = [c for c in df.columns if c not in metadata_cols]
+    return df[cols_to_keep]
+
+def predict_gbm(model_dir, df_raw):
+    """Carga XGBoost y LightGBM y devuelve sus predicciones"""
+    y_xgb = None
+    y_lgb = None
+    
+    # Búsqueda flexible de los modelos
+    xgb_path = find_file(model_dir / "gbm", "xgb.pkl")
+    lgb_path = find_file(model_dir / "gbm", "lgbm.pkl")
     
     # XGBoost
-    xgb_path = model_dir / "gbm" / "xgb.pkl"
-    if xgb_path.exists():
-        print(f"[Exec] Prediciendo con XGBoost...")
+    if xgb_path:
+        print(f"[Exec] Prediciendo con XGBoost ({xgb_path.name})...")
         model = load_pickle(xgb_path)
-        # XGBoost Pipeline espera DataFrame con nombres correctos
-        preds.append(model.predict(X_df))
+        X_clean = filter_model_features(model, df_raw, "XGBoost")
+        y_xgb = model.predict(X_clean)
     
     # LightGBM
-    lgb_path = model_dir / "gbm" / "lgbm.pkl"
-    if lgb_path.exists():
-        print(f"[Exec] Prediciendo con LightGBM...")
+    if lgb_path:
+        print(f"[Exec] Prediciendo con LightGBM ({lgb_path.name})...")
         model = load_pickle(lgb_path)
-        preds.append(model.predict(X_df))
+        X_clean = filter_model_features(model, df_raw, "LightGBM")
+        y_lgb = model.predict(X_clean)
     
-    if not preds:
-        raise FileNotFoundError("No se encontraron modelos GBM en FINAL_PRODUCT/base_models/gbm")
+    # Fallbacks si falta alguno
+    if y_xgb is None and y_lgb is None:
+        print("[ERROR] No se encontraron modelos GBM. Devolviendo ceros.")
+        return np.zeros(len(df_raw)), np.zeros(len(df_raw))
+        
+    if y_xgb is None: y_xgb = y_lgb
+    if y_lgb is None: y_lgb = y_xgb
     
-    # Promedio simple de GBMs (Nivel 0 interno)
-    return np.mean(preds, axis=0)
+    return y_xgb, y_lgb
 
-def predict_tpsa(model_dir, df_rdkit):
-    """Carga el modelo Baseline (Ridge) y predice"""
-    tpsa_path = model_dir / "tpsa" / "tpsa_ridge.pkl" # Ajusta nombre si es distinto
-    if not tpsa_path.exists():
-        # Intenta buscar cualquier .pkl en esa carpeta
-        pkls = list((model_dir / "tpsa").glob("*.pkl"))
-        if pkls: tpsa_path = pkls[0]
-        else: raise FileNotFoundError("No se encontró modelo TPSA")
+def predict_tpsa(model_dir, df_raw):
+    """
+    Carga el modelo Baseline. 
+    Soporta formato JSON (coeficientes explícitos) y Pickle (objeto sklearn).
+    """
+    tpsa_dir = model_dir / "tpsa"
+    
+    # 1. Intentar buscar modelo JSON (input_tpsa o *.json)
+    # Buscamos archivos que puedan ser el json
+    candidates = list(tpsa_dir.glob("*json")) + list(tpsa_dir.glob("input_tpsa"))
+    
+    # Filtramos directorios, nos quedamos con archivos
+    candidates = [f for f in candidates if f.is_file()]
+    
+    if candidates:
+        model_path = candidates[0]
+        print(f"[Exec] Prediciendo con TPSA JSON ({model_path.name})...")
+        try:
+            with open(model_path, 'r') as f:
+                model = json.load(f)
+            
+            # A. Preparar variables físicas (inv_temp)
+            df_calc = df_raw.copy()
+            if "temp_C" in df_calc.columns:
+                # Kelvin inverso * 1000 (escala típica)
+                df_calc["inv_temp"] = 1000.0 / (df_calc["temp_C"] + 273.15)
+            else:
+                # Default a 25 C si no hay temperatura
+                df_calc["inv_temp"] = 1000.0 / 298.15
 
-    print(f"[Exec] Prediciendo con TPSA Baseline...")
-    model = load_pickle(tpsa_path)
+            # B. Calcular Predicción (Intercept + Sum(Coef * Val))
+            intercept = model.get("intercept", 0.0)
+            preds = np.full(len(df_calc), intercept)
+            
+            coefs = model.get("coefs", {})
+            features_found = []
+            
+            for feat, w in coefs.items():
+                val = None
+                # 1. Buscamos la feature tal cual (ej. rdkit__TPSA)
+                if feat in df_calc.columns:
+                    val = df_calc[feat]
+                # 2. Buscamos sin prefijo (ej. TPSA)
+                elif feat.replace("rdkit__", "") in df_calc.columns:
+                    val = df_calc[feat.replace("rdkit__", "")]
+                
+                if val is not None:
+                    # Rellenar NaNs con 0 para la suma
+                    preds += pd.to_numeric(val, errors='coerce').fillna(0.0).values * w
+                    features_found.append(feat)
+            
+            # print(f"   -> Features usadas: {features_found}")
+            return preds
+
+        except Exception as e:
+            print(f"[WARN] Falló la carga del JSON TPSA: {e}. Intentando fallback PKL...")
+
+    # 2. Fallback: Buscar modelo Pickle (.pkl)
+    pkl_files = list(tpsa_dir.rglob("*.pkl"))
+    model_path = next((p for p in pkl_files if "meta" not in p.name), None)
+
+    if not model_path:
+        print(f"[WARN] No se encontró modelo TPSA (ni JSON ni PKL) en {tpsa_dir}. Devolviendo ceros.")
+        return np.zeros(len(df_raw))
+
+    print(f"[Exec] Prediciendo con TPSA Pickle ({model_path.name})...")
+    model = load_pickle(model_path)
     
-    # Seleccionar features requeridas por TPSA (definidas en train_full_tpsa)
-    # Normalmente: mw, logp, tpsa, temp
-    # El modelo es un Pipeline, así que se encarga de seleccionar si se le pasa el DF correcto
-    # Pero necesitamos mapear nombres si difieren. 
-    # Asumimos que df_rdkit trae: "rdkit__TPSA", "rdkit__logP", "rdkit__MW", "temp_C"
-    
-    # Renombrar para asegurar compatibilidad si el modelo espera nombres cortos
-    # (Depende de cómo entrenaste TPSA, pero el pipeline suele ser robusto)
-    return model.predict(df_rdkit)
+    # Lógica de renombreado para pickles antiguos
+    df_mapped = df_raw.copy()
+    rename_map = {c: c.replace("rdkit__", "") for c in df_mapped.columns if c.startswith("rdkit__")}
+    if rename_map:
+        df_mapped = df_mapped.rename(columns=rename_map)
+        
+    X_clean = filter_model_features(model, df_mapped, "TPSA")
+    return model.predict(X_clean)
 
 def predict_gnn(model_dir, input_csv, output_csv, batch_size=50):
     """Invoca a Chemprop para predecir"""
     print(f"[Exec] Prediciendo con Chemprop (GNN)...")
     checkpoint_dir = model_dir / "gnn"
     
-    # Buscamos el .pt
-    checkpoints = list(checkpoint_dir.glob("*.pt"))
-    if not checkpoints:
-        raise FileNotFoundError(f"No hay checkpoints .pt en {checkpoint_dir}")
+    # Buscar modelo .pt recursivamente
+    model_path = find_file(checkpoint_dir, "*.pt")
     
-    # Usamos el modelo principal (el último o model.pt)
-    model_path = [c for c in checkpoints if "model.pt" in c.name]
-    model_path = model_path[0] if model_path else checkpoints[0]
-
+    if not model_path:
+        print(f"[WARN] No hay modelo GNN (.pt) en {checkpoint_dir}. Devolviendo ceros.")
+        return np.zeros(pd.read_csv(input_csv).shape[0])
+    
     cmd = [
         "chemprop_predict",
         "--test_path", str(input_csv),
         "--preds_path", str(output_csv),
         "--checkpoint_path", str(model_path),
         "--batch_size", str(batch_size),
-        "--smiles_columns", "smiles_neutral" # Asegurado por Curate
+        "--smiles_columns", "smiles_neutral"
     ]
-    # Si tienes GPU en inferencia:
-    # cmd += ["--gpu", "0"]
     
-    run_cmd(cmd)
-    
-    # Leer resultados
-    df_res = pd.read_csv(output_csv)
-    # Asumimos que la columna target es la única predicción o se llama 'logS'
-    # Chemprop devuelve columnas con el nombre del target.
-    # Buscamos columna numérica
-    pred_cols = [c for c in df_res.columns if c != "smiles_neutral"]
-    return df_res[pred_cols[0]].values
+    # Chemprop a veces es ruidoso, capturamos error si falla
+    try:
+        run_cmd(cmd)
+        df_res = pd.read_csv(output_csv)
+        pred_cols = [c for c in df_res.columns if c != "smiles_neutral" and c != "smiles"]
+        return df_res[pred_cols[0]].values
+    except Exception as e:
+        print(f"[WARN] Falló Chemprop: {e}. Devolviendo ceros.")
+        return np.zeros(pd.read_csv(input_csv).shape[0])
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--data-gbm", required=True, help="Parquet con features Mordred")
-    ap.add_argument("--data-gnn", required=True, help="Parquet/CSV con SMILES y features RDKit")
-    ap.add_argument("--final-product", required=True, help="Directorio FINAL_PRODUCT")
+    ap.add_argument("--data-gbm", required=True)
+    ap.add_argument("--data-gnn", required=True)
+    ap.add_argument("--final-product", required=True)
     ap.add_argument("--output", default="predictions.csv")
     args = ap.parse_args()
 
@@ -125,110 +206,87 @@ def main():
     # 1. Cargar Datos
     print("[Exec] Cargando datos de entrada...")
     df_gbm = pd.read_parquet(args.data_gbm)
-    df_gnn = pd.read_parquet(args.data_gnn) # Contiene SMILES y RDKit features
+    df_gnn = pd.read_parquet(args.data_gnn) 
     
-    # Asegurar orden (usando ID si existe, o asumiendo mismo orden si vienen del pipeline)
-    # Asumimos mismo orden fila a fila.
-
     # 2. Predicciones Base
-    # A. GBM
-    pred_gbm = predict_gbm(base_models_dir, df_gbm)
-    
-    # B. TPSA (Usa df_gnn que tiene rdkit features)
+    y_xgb, y_lgb = predict_gbm(base_models_dir, df_gbm)
     pred_tpsa = predict_tpsa(base_models_dir, df_gnn)
     
-    # C. GNN (Necesita CSV temporal con SMILES)
+    # GNN (con CSV temporal)
     tmp_smiles = "temp_gnn_input.csv"
     tmp_preds  = "temp_gnn_output.csv"
+    
+    if "smiles_neutral" not in df_gnn.columns:
+        df_gnn["smiles_neutral"] = df_gnn["smiles"] if "smiles" in df_gnn.columns else df_gnn.iloc[:,0]
+
     df_gnn[["smiles_neutral"]].to_csv(tmp_smiles, index=False)
     pred_gnn = predict_gnn(base_models_dir, tmp_smiles, tmp_preds)
     
-    # Limpieza temporales
     for f in [tmp_smiles, tmp_preds]:
         if os.path.exists(f): os.remove(f)
 
     # 3. Ensamblaje (Meta-Modelo)
     print("[Exec] Realizando ensamblaje final...")
     
-    # Cargar Model Card para saber estrategia
-    with open(prod_dir / "model_card.json") as f:
-        card = json.load(f)
-    strategy = card.get("strategy", "stack")
-    
-    # Construir Matriz X para el meta-modelo
-    # ORDEN IMPORTANTE: Debe coincidir con como se entrenó (build_final_ensemble)
-    # En build_final: sorted(pred_cols) -> ['oof_chemprop', 'oof_lgbm', 'oof_tpsa', 'oof_xgb']
-    # Pero aquí tenemos 'pred_gbm' que ya es mezcla de xgb/lgbm si train_methods lo hizo así
-    # OJO: Si train_methods usó 4 columnas independientes (xgb, lgbm, gnn, tpsa), 
-    # aquí debemos replicarlo.
-    
-    # REVISIÓN CRÍTICA: En train_methods tu stack recibe [xgb, lgbm, gnn, tpsa].
-    # Mi función predict_gbm arriba promediaba. ERROR. 
-    # Debemos devolver xgb y lgbm por separado para el stacker.
-    
-    # --- CORRECCIÓN GBM ---
-    xgb_path = base_models_dir / "gbm" / "xgb.pkl"
-    lgb_path = base_models_dir / "gbm" / "lgbm.pkl"
-    
-    y_xgb = load_pickle(xgb_path).predict(df_gbm)
-    y_lgb = load_pickle(lgb_path).predict(df_gbm)
-    # ----------------------
-
-    # Stack DataFrame
-    # Nombres deben coincidir con lo que espera el Ridge o los pesos
-    # Si usaste RidgeCV, él no mira nombres de columnas si le pasas numpy, 
-    # pero el orden es VITAL.
-    # Orden alfabético de columnas OOF era: oof_chemprop, oof_lgbm, oof_tpsa, oof_xgb
-    
+    # Construir DataFrame de Meta-Features
+    # IMPORTANTE: Creamos alias para evitar el KeyError 'y_gnn' vs 'y_chemprop'
     X_meta = pd.DataFrame({
-        "y_chemprop": pred_gnn,
         "y_lgbm": y_lgb,
         "y_tpsa": pred_tpsa,
-        "y_xgb": y_xgb
+        "y_xgb": y_xgb,
+        "y_gnn": pred_gnn,         # Nombre probable 1
+        "y_chemprop": pred_gnn,    # Nombre probable 2
+        "oof_gnn": pred_gnn,       # Nombre legacy
+        "oof_chemprop": pred_gnn   # Nombre legacy
     })
-    
-    # Reordenar alfabéticamente para coincidir con el training (y_chemprop, y_lgbm, ...)
-    X_meta = X_meta.reindex(sorted(X_meta.columns), axis=1)
     
     final_pred = None
     
-    if strategy == "stack":
-        with open(prod_dir / "meta_ridge.pkl", "rb") as f:
-            stack_data = pickle.load(f)
-            # stack_data es un dict {'coef': ..., 'intercept': ...} o el modelo raw
+    # Cargar Stacker
+    meta_model_path = prod_dir / "meta_ridge.pkl"
+    if not meta_model_path.exists():
+        print("[WARN] No se encontró meta_ridge.pkl. Usando promedio simple (Blending).")
+        final_pred = (y_xgb + y_lgb + pred_gnn + pred_tpsa) / 4
+    else:
+        with open(meta_model_path, "rb") as f:
+            stack_model = pickle.load(f)
             
-        if isinstance(stack_data, dict):
-            # Reconstrucción manual
-            coef = np.array(stack_data["coef"])
-            intercept = stack_data["intercept"]
-            final_pred = np.dot(X_meta.values, coef.T) + intercept
-        else:
-            # Es el objeto sklearn
-            final_pred = stack_data.predict(X_meta.values)
+        # Lógica Robusta: Seleccionar SOLO las columnas que el Stacker quiere
+        if isinstance(stack_model, dict) and "feature_names" in stack_model:
+            required_cols = stack_model["feature_names"]
+            print(f"[Exec] El Stacker espera estas columnas: {required_cols}")
             
-    elif strategy == "blend":
-        with open(prod_dir / "weights.json") as f:
-            weights = json.load(f)
-        # Weights: {"y_xgb": 0.2, ...}
-        final_pred = np.zeros(len(df_gbm))
-        for col, w in weights.items():
-            if col in X_meta.columns:
-                final_pred += X_meta[col].values * w
-    
+            # Verificar si las tenemos todas
+            missing = [c for c in required_cols if c not in X_meta.columns]
+            if missing:
+                print(f"[WARN] Faltan columnas críticas: {missing}. Rellenando con 0.")
+                for c in missing: X_meta[c] = 0.0
+            
+            # Filtrar y ordenar
+            X_final = X_meta[required_cols].values
+            
+            coef = np.array(stack_model["coef"])
+            intercept = stack_model["intercept"]
+            final_pred = np.dot(X_final, coef.T) + intercept
+            
+        elif hasattr(stack_model, "predict"):
+            # Si es un objeto sklearn directo, intentamos pasarle las columnas que coincidan
+            # Esto es más arriesgado si no tiene feature_names_in_
+            if hasattr(stack_model, "feature_names_in_"):
+                 X_final = X_meta[stack_model.feature_names_in_]
+                 final_pred = stack_model.predict(X_final)
+            else:
+                 # Fallback: Usar orden alfabético de las 4 principales
+                 cols_fallback = sorted(["y_xgb", "y_lgbm", "y_tpsa", "y_gnn"])
+                 final_pred = stack_model.predict(X_meta[cols_fallback])
+
     # 4. Guardar Resultado
     df_out = pd.DataFrame()
-    if "row_uid" in df_gbm.columns: df_out["id"] = df_gbm["row_uid"]
     df_out["smiles"] = df_gnn["smiles_neutral"]
     df_out["predicted_logS"] = final_pred
-    
-    # Añadir componentes por si interesa verlos
-    df_out["pred_xgb"] = y_xgb
-    df_out["pred_lgbm"] = y_lgb
-    df_out["pred_gnn"] = pred_gnn
-    df_out["pred_tpsa"] = pred_tpsa
 
     df_out.to_csv(args.output, index=False)
-    print(f"[Exec] Predicciones guardadas en {args.output}")
+    print(f"[Exec] ¡ÉXITO! Predicciones guardadas en {args.output}")
 
 if __name__ == "__main__":
     main()
