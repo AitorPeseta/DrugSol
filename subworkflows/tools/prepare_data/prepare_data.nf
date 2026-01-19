@@ -59,19 +59,6 @@ workflow prepare_data {
         def script_align   = file("${baseDir}/bin/align_feature_columns.py")
         def script_drop    = file("${baseDir}/bin/dropnan_rows.py")
 
-        // ============================================================
-        // 1. COMMON PRE-PROCESSING
-        // ============================================================
-        
-        // B. Feature Engineering (The "Physics" Step)
-        // Calculates: Gaussian Weights, Ionization
-        engineer_features(ch_filtered_data, outdir_val, script_eng)
-        def ch_rich_data = engineer_features.out
-
-        // D. Fingerprints (needed for Stratified Split)
-        make_fingerprints(ch_rich_data, outdir_val, script_fp, "cluster_ecfp4_0p7")
-        def ch_ready_to_balance = make_fingerprints.out
-
 
         // ============================================================
         // 2. BRANCHING LOGIC
@@ -86,15 +73,24 @@ workflow prepare_data {
         if (params.mode == 'research') {
             
             ch_iters = Channel.of(1..n_iterations)
-            ch_balance_inputs = ch_iters.combine(ch_ready_to_balance)
+            ch_balance_inputs = ch_iters.combine(ch_filtered_data)
 
             // EJECUTAR BALANCEO (10 veces en paralelo)
             // Cada iteración usará una semilla distinta (seed + iter_id)
             balance_dataset(ch_balance_inputs, script_balance, seed_val)
             def ch_ready_to_split = balance_dataset.out.balanced_data
 
+            // Feature Engineering (The "Physics" Step)
+            engineer_features(ch_ready_to_split, outdir_val, script_eng)
+            def ch_rich_data = engineer_features.out
+
+            // Fingerprints (needed for Stratified Split)
+            make_fingerprints(ch_rich_data, outdir_val, script_fp, "cluster_ecfp4_0p7")
+            def ch_ready_to_stratified = make_fingerprints.out
+
+
             // 1. Stratified Scaffold Split + cross-validation
-            stratified_split(ch_ready_to_split, outdir_val, script_split, seed_val)
+            stratified_split(ch_ready_to_stratified, outdir_val, script_split, seed_val)
             
             def train_ch = stratified_split.out.splits.map { id, tr, te -> tuple(id, tr) }
             def test_ch  = stratified_split.out.splits.map { id, tr, te -> tuple(id, te) }
@@ -147,6 +143,15 @@ workflow prepare_data {
             // --- EXECUTION MODE: INFERENCE ONLY ---
             // Input data is treated entirely as "TEST" data.
             // We must load "TRAIN" reference artifacts (column names, scalers) from resources/
+
+            // Feature Engineering (The "Physics" Step)
+            engineer_features(ch_filtered_data, outdir_val, script_eng)
+            def ch_rich_data = engineer_features.out
+
+            // Fingerprints (needed for Stratified Split)
+            make_fingerprints(ch_rich_data, outdir_val, script_fp, "cluster_ecfp4_0p7")
+            def ch_ready_to_balance = make_fingerprints.out
+
 
             def ch_input_test = ch_ready_to_balance.map { file -> tuple("test", file) }  
             

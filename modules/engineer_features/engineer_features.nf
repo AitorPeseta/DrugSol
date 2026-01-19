@@ -1,20 +1,20 @@
 nextflow.enable.dsl = 2
 
 process engineer_features {
-    tag "Physics & Chemistry"
-    label 'cpu_medium'
+    tag "Physics & Chemistry #${iter_id}"
+    label 'cpu_small'
     
     conda "${baseDir}/envs/drugsol-data.yml"
     
-    publishDir "${params.outdir}/prepare_data", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/prepare_data/iter_${iter_id}", mode: 'copy', overwrite: true
 
     input:
-        path input_parquet   // Input parquet
+        tuple val(iter_id), path(input_parquet)   // Input parquet
         val  outdir_val
         path script_py       // Python script
 
     output:
-        path "engineered_features.parquet", emit: out
+        tuple val(iter_id), path("engineered_features.parquet"), emit: out
 
     script:
     """
@@ -33,7 +33,5 @@ process engineer_features {
         --pka-api-url "http://xundrug.cn:5001/modules/upload0/" \\
         --pka-token "O05DriqqQLlry9kmpCwms2IJLC0MuLQ7" \\
         --nproc ${task.cpus}
-
-    rm -r ${baseDir}/bin/__pycache__
     """
 }

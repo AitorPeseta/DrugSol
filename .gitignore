@@ -18,7 +18,6 @@ __pycache__/
 # --- Data & Large Models ---
 bin_pruebas/
 *.parquet
-*.csv
 *.pkl
 *.h5
 *.pt

@@ -24,7 +24,7 @@ process balance_dataset {
     python ${script_py} \\
         --input "${input_parquet}" \\
         --output "balanced_${iter_id}.parquet" \\
-        --limit 100 \\
+        --limit 50 \\
         --bin-size 0.2 \\
         --seed \$CURRENT_SEED
     """

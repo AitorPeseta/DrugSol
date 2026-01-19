@@ -1,21 +1,21 @@
 nextflow.enable.dsl = 2
 
 process make_fingerprints {
-    tag "ECFP4 & Butina Clustering"
-    label 'cpu_medium'
+    tag "ECFP4 & Butina Clustering #${iter_id}"
+    label 'cpu_small'
     
     conda "${baseDir}/envs/drugsol-data.yml"
     
-    publishDir "${params.outdir}/prepare_data", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/prepare_data/iter_${iter_id}", mode: 'copy', overwrite: true
 
     input:  
-        path input_file     // Input parquet file
+        tuple val(iter_id), path(input_file)     // Input parquet file
         val  outdir_val
         path script_py      // Python script
         val  name_prefix    // e.g. "cluster_ecfp4_0p7"
 
     output:
-        path "${name_prefix}_fingerprint.parquet", emit: out
+        tuple val(iter_id), path("${name_prefix}_fingerprint.parquet"), emit: out
 
     script:
     """

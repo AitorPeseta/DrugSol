@@ -2,7 +2,7 @@ nextflow.enable.dsl = 2
 
 process filter_features {
     tag "Filter Features (${dataset_name})"
-    label 'cpu_medium'
+    label 'cpu_small'
     
     conda "${baseDir}/envs/drugsol-data.yml"
     
