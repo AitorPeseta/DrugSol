@@ -2,7 +2,7 @@ nextflow.enable.dsl = 2
 
 process cross_validation {
     tag "CV Aggregation"
-    label 'cpu_medium'
+    label 'cpu_small'
 
     conda "${baseDir}/envs/drugsol-data.yml"
     

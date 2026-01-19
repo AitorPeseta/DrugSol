@@ -2,7 +2,7 @@ nextflow.enable.dsl = 2
 
 process final_report {
     tag "Generate Final Report"
-    label 'cpu_medium'
+    label 'cpu_small'
     
     conda "${baseDir}/envs/drugsol-train.yml"
     
