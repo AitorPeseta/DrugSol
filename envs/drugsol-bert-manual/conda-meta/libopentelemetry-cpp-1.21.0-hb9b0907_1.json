@@ -1,0 +1,448 @@
+{
+    "arch": "x86_64",
+    "build": "hb9b0907_1",
+    "build_number": 1,
+    "build_string": "hb9b0907_1",
+    "channel": "conda-forge",
+    "constrains": [
+        "cpp-opentelemetry-sdk 1.21.0*"
+    ],
+    "depends": [
+        "libabseil * cxx17*",
+        "libabseil >=20250512.1,<20250513.0a0",
+        "libcurl >=8.14.1,<9.0a0",
+        "libgrpc >=1.73.1,<1.74.0a0",
+        "libopentelemetry-cpp-headers 1.21.0 ha770c72_1",
+        "libprotobuf >=6.31.1,<6.31.2.0a0",
+        "libzlib >=1.3.1,<2.0a0",
+        "nlohmann_json",
+        "prometheus-cpp >=1.3.0,<1.4.0a0"
+    ],
+    "extracted_package_dir": "/home/adduser/.local/share/mamba/pkgs/libopentelemetry-cpp-1.21.0-hb9b0907_1",
+    "files": [
+        "lib/cmake/opentelemetry-cpp/component-definitions.cmake",
+        "lib/cmake/opentelemetry-cpp/find-package-support-functions.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-api-target.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-config-version.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-config.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_in_memory-target-release.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_in_memory-target.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_ostream-target-release.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_ostream-target.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_otlp_common-target-release.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_otlp_common-target.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_otlp_grpc-target-release.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_otlp_grpc-target.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_otlp_http-target-release.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_otlp_http-target.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_prometheus-target-release.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_prometheus-target.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_zipkin-target-release.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_zipkin-target.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-ext_common-target.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-ext_http_curl-target-release.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-ext_http_curl-target.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-sdk-target-release.cmake",
+        "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-sdk-target.cmake",
+        "lib/cmake/opentelemetry-cpp/thirdparty-dependency-definitions.cmake",
+        "lib/libopentelemetry_common.so",
+        "lib/libopentelemetry_exporter_in_memory.so",
+        "lib/libopentelemetry_exporter_in_memory_metric.so",
+        "lib/libopentelemetry_exporter_ostream_logs.so",
+        "lib/libopentelemetry_exporter_ostream_metrics.so",
+        "lib/libopentelemetry_exporter_ostream_span.so",
+        "lib/libopentelemetry_exporter_otlp_grpc.so",
+        "lib/libopentelemetry_exporter_otlp_grpc_client.so",
+        "lib/libopentelemetry_exporter_otlp_grpc_log.so",
+        "lib/libopentelemetry_exporter_otlp_grpc_metrics.so",
+        "lib/libopentelemetry_exporter_otlp_http.so",
+        "lib/libopentelemetry_exporter_otlp_http_client.so",
+        "lib/libopentelemetry_exporter_otlp_http_log.so",
+        "lib/libopentelemetry_exporter_otlp_http_metric.so",
+        "lib/libopentelemetry_exporter_prometheus.so",
+        "lib/libopentelemetry_exporter_zipkin_trace.so",
+        "lib/libopentelemetry_http_client_curl.so",
+        "lib/libopentelemetry_logs.so",
+        "lib/libopentelemetry_metrics.so",
+        "lib/libopentelemetry_otlp_recordable.so",
+        "lib/libopentelemetry_proto.so",
+        "lib/libopentelemetry_proto_grpc.so",
+        "lib/libopentelemetry_resources.so",
+        "lib/libopentelemetry_trace.so",
+        "lib/libopentelemetry_version.so"
+    ],
+    "fn": "libopentelemetry-cpp-1.21.0-hb9b0907_1.conda",
+    "license": "Apache-2.0",
+    "license_family": "APACHE",
+    "link": {
+        "source": "/home/adduser/.local/share/mamba/pkgs/libopentelemetry-cpp-1.21.0-hb9b0907_1",
+        "type": 1
+    },
+    "md5": "1c0320794855f457dea27d35c4c71e23",
+    "name": "libopentelemetry-cpp",
+    "package_tarball_full_path": "/home/adduser/.local/share/mamba/pkgs/libopentelemetry-cpp-1.21.0-hb9b0907_1.tar.bz2",
+    "paths_data": {
+        "paths": [
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/component-definitions.cmake",
+                "path_type": "hardlink",
+                "sha256": "62b1b63500a2cd9eadf1f4901b3d95a5b5bea89b85427d8633f496a5874b5269",
+                "sha256_in_prefix": "62b1b63500a2cd9eadf1f4901b3d95a5b5bea89b85427d8633f496a5874b5269",
+                "size_in_bytes": 5551
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/find-package-support-functions.cmake",
+                "path_type": "hardlink",
+                "sha256": "b049005466f40af8d78201851dcd907db4a8ee06245abc6ad044f3d78bbc3f00",
+                "sha256_in_prefix": "b049005466f40af8d78201851dcd907db4a8ee06245abc6ad044f3d78bbc3f00",
+                "size_in_bytes": 6507
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-api-target.cmake",
+                "path_type": "hardlink",
+                "sha256": "10c1bf755f59a04f4df0ff7d3d982f0e987f78bef2ff8542a89e373f60939bdb",
+                "sha256_in_prefix": "10c1bf755f59a04f4df0ff7d3d982f0e987f78bef2ff8542a89e373f60939bdb",
+                "size_in_bytes": 4231
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-config-version.cmake",
+                "path_type": "hardlink",
+                "sha256": "72fd68db21e5b4fff28e69cd3cb8b9e568786ba9da86e7501da40fc4cbed1117",
+                "sha256_in_prefix": "72fd68db21e5b4fff28e69cd3cb8b9e568786ba9da86e7501da40fc4cbed1117",
+                "size_in_bytes": 3252
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-config.cmake",
+                "path_type": "hardlink",
+                "sha256": "64d76d429001a3267f49e92d0d6cac441a3e13fc86d023cd3d1b6e6601297c07",
+                "sha256_in_prefix": "64d76d429001a3267f49e92d0d6cac441a3e13fc86d023cd3d1b6e6601297c07",
+                "size_in_bytes": 11038
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_in_memory-target-release.cmake",
+                "path_type": "hardlink",
+                "sha256": "1f51e00a4b2171ad29b0cbe20cf1a3464ac4722a1c58c02cf629004ef18289fc",
+                "sha256_in_prefix": "1f51e00a4b2171ad29b0cbe20cf1a3464ac4722a1c58c02cf629004ef18289fc",
+                "size_in_bytes": 1761
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_in_memory-target.cmake",
+                "path_type": "hardlink",
+                "sha256": "709b67dba6cc96b83c74b85f68c2795ae75a07744714630a9e104594a8fb0452",
+                "sha256_in_prefix": "709b67dba6cc96b83c74b85f68c2795ae75a07744714630a9e104594a8fb0452",
+                "size_in_bytes": 5529
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_ostream-target-release.cmake",
+                "path_type": "hardlink",
+                "sha256": "61e475566bced05fed2aebe91267656e7b94608964b341361b16307a694d0fdc",
+                "sha256_in_prefix": "61e475566bced05fed2aebe91267656e7b94608964b341361b16307a694d0fdc",
+                "size_in_bytes": 2457
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_ostream-target.cmake",
+                "path_type": "hardlink",
+                "sha256": "512975b4591a97848c2a96b138d750c1a1e644c5a5c788c478407075b1af8fae",
+                "sha256_in_prefix": "512975b4591a97848c2a96b138d750c1a1e644c5a5c788c478407075b1af8fae",
+                "size_in_bytes": 5813
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_otlp_common-target-release.cmake",
+                "path_type": "hardlink",
+                "sha256": "2259f714b6827af44b1f9c476306b2cc8002d08eefe8e6c593b792ec26106cd0",
+                "sha256_in_prefix": "2259f714b6827af44b1f9c476306b2cc8002d08eefe8e6c593b792ec26106cd0",
+                "size_in_bytes": 1552
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_otlp_common-target.cmake",
+                "path_type": "hardlink",
+                "sha256": "75f6664297efa2a1e6ed89040ef60ccc0887c54fccf0d68186da916f6f771153",
+                "sha256_in_prefix": "75f6664297efa2a1e6ed89040ef60ccc0887c54fccf0d68186da916f6f771153",
+                "size_in_bytes": 5576
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_otlp_grpc-target-release.cmake",
+                "path_type": "hardlink",
+                "sha256": "7e7472165a71e070539b33557d4fe300e87f7e1360d9a3e7befc10bee43a9030",
+                "sha256_in_prefix": "7e7472165a71e070539b33557d4fe300e87f7e1360d9a3e7befc10bee43a9030",
+                "size_in_bytes": 3961
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_otlp_grpc-target.cmake",
+                "path_type": "hardlink",
+                "sha256": "645b14166c4d3745aaf3c16dd9e043c9e5d29934c9e40875bffeddf913e77361",
+                "sha256_in_prefix": "645b14166c4d3745aaf3c16dd9e043c9e5d29934c9e40875bffeddf913e77361",
+                "size_in_bytes": 6612
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_otlp_http-target-release.cmake",
+                "path_type": "hardlink",
+                "sha256": "fc4ce47eb06d140dee2be400befa100faf17fe549fef8219fe736cac63e5c31c",
+                "sha256_in_prefix": "fc4ce47eb06d140dee2be400befa100faf17fe549fef8219fe736cac63e5c31c",
+                "size_in_bytes": 3223
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_otlp_http-target.cmake",
+                "path_type": "hardlink",
+                "sha256": "6e9203be5bc01d242333ecf2f1b641d35cc976aa2a20b9473ee468f78d190ae8",
+                "sha256_in_prefix": "6e9203be5bc01d242333ecf2f1b641d35cc976aa2a20b9473ee468f78d190ae8",
+                "size_in_bytes": 6321
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_prometheus-target-release.cmake",
+                "path_type": "hardlink",
+                "sha256": "3fb497f821890d35d681363961766d104ea99d596360f6c1ff99f0d10c026dcf",
+                "sha256_in_prefix": "3fb497f821890d35d681363961766d104ea99d596360f6c1ff99f0d10c026dcf",
+                "size_in_bytes": 1037
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_prometheus-target.cmake",
+                "path_type": "hardlink",
+                "sha256": "35752249de6d711449d9ad57c574713ec265ef7c2665dab884b0df820916d2dd",
+                "sha256_in_prefix": "35752249de6d711449d9ad57c574713ec265ef7c2665dab884b0df820916d2dd",
+                "size_in_bytes": 5165
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_zipkin-target-release.cmake",
+                "path_type": "hardlink",
+                "sha256": "fd23fc6e89c7d4381da588cb1d8531b740193cf777e4eb18781aaa903a3487a4",
+                "sha256_in_prefix": "fd23fc6e89c7d4381da588cb1d8531b740193cf777e4eb18781aaa903a3487a4",
+                "size_in_bytes": 1053
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-exporters_zipkin-target.cmake",
+                "path_type": "hardlink",
+                "sha256": "74e5f9c5ec5bf3d71ac6110926786f7bf85a44faa69f46864b7d900551566dfa",
+                "sha256_in_prefix": "74e5f9c5ec5bf3d71ac6110926786f7bf85a44faa69f46864b7d900551566dfa",
+                "size_in_bytes": 5205
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-ext_common-target.cmake",
+                "path_type": "hardlink",
+                "sha256": "dad75cbd1d5d13539aa71a37e046bd817698f4f23e8145a9da99803094e5bba7",
+                "sha256_in_prefix": "dad75cbd1d5d13539aa71a37e046bd817698f4f23e8145a9da99803094e5bba7",
+                "size_in_bytes": 5019
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-ext_http_curl-target-release.cmake",
+                "path_type": "hardlink",
+                "sha256": "129688b3154cf049b3c82c4bcb2254efacd5b587e82f0049fca340af3951ce9c",
+                "sha256_in_prefix": "129688b3154cf049b3c82c4bcb2254efacd5b587e82f0049fca340af3951ce9c",
+                "size_in_bytes": 1013
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-ext_http_curl-target.cmake",
+                "path_type": "hardlink",
+                "sha256": "80d6130be4214e80e9667856a08e1f6dae3ff7c8a97299ce1576ccb272720703",
+                "sha256_in_prefix": "80d6130be4214e80e9667856a08e1f6dae3ff7c8a97299ce1576ccb272720703",
+                "size_in_bytes": 5095
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-sdk-target-release.cmake",
+                "path_type": "hardlink",
+                "sha256": "f4528bd8155bef950f3593182cc18e4d99f3f1664b885a25d3c9d5d309b33d74",
+                "sha256_in_prefix": "f4528bd8155bef950f3593182cc18e4d99f3f1664b885a25d3c9d5d309b33d74",
+                "size_in_bytes": 3724
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/opentelemetry-cpp-sdk-target.cmake",
+                "path_type": "hardlink",
+                "sha256": "cfe95fbdeb569f0b19580de3b3b785bedb20d62823607657a2a4a1a9f4776d87",
+                "sha256_in_prefix": "cfe95fbdeb569f0b19580de3b3b785bedb20d62823607657a2a4a1a9f4776d87",
+                "size_in_bytes": 6664
+            },
+            {
+                "_path": "lib/cmake/opentelemetry-cpp/thirdparty-dependency-definitions.cmake",
+                "path_type": "hardlink",
+                "sha256": "e3d15d76024a0badcfb3d52043894053c66093cbfe58f842ac38dfee43377127",
+                "sha256_in_prefix": "e3d15d76024a0badcfb3d52043894053c66093cbfe58f842ac38dfee43377127",
+                "size_in_bytes": 1604
+            },
+            {
+                "_path": "lib/libopentelemetry_common.so",
+                "path_type": "hardlink",
+                "sha256": "82a6e065bc05dcfe82910d76b7989f20bc15ae6f7be918d6efe1361f1cf51ec0",
+                "sha256_in_prefix": "82a6e065bc05dcfe82910d76b7989f20bc15ae6f7be918d6efe1361f1cf51ec0",
+                "size_in_bytes": 67112
+            },
+            {
+                "_path": "lib/libopentelemetry_exporter_in_memory.so",
+                "path_type": "hardlink",
+                "sha256": "60ecf7ea689a6bb19a8ef184b445c58346d48531f03fbf3a4f33581237db1826",
+                "sha256_in_prefix": "60ecf7ea689a6bb19a8ef184b445c58346d48531f03fbf3a4f33581237db1826",
+                "size_in_bytes": 87352
+            },
+            {
+                "_path": "lib/libopentelemetry_exporter_in_memory_metric.so",
+                "path_type": "hardlink",
+                "sha256": "72f5c854a376ac3f7bf34a1f0c71fe8f7923f760b8bb86c4367f522debfbe1cb",
+                "sha256_in_prefix": "72f5c854a376ac3f7bf34a1f0c71fe8f7923f760b8bb86c4367f522debfbe1cb",
+                "size_in_bytes": 95040
+            },
+            {
+                "_path": "lib/libopentelemetry_exporter_ostream_logs.so",
+                "path_type": "hardlink",
+                "sha256": "1d5bde9f0a757502cb314c14caf4921ff14fd8aa6d022e982d08cb3576564e95",
+                "sha256_in_prefix": "1d5bde9f0a757502cb314c14caf4921ff14fd8aa6d022e982d08cb3576564e95",
+                "size_in_bytes": 56128
+            },
+            {
+                "_path": "lib/libopentelemetry_exporter_ostream_metrics.so",
+                "path_type": "hardlink",
+                "sha256": "dcec6083663401178b2ae8fc2c49caeba97fdb58c142e71387e28e26dedf3680",
+                "sha256_in_prefix": "dcec6083663401178b2ae8fc2c49caeba97fdb58c142e71387e28e26dedf3680",
+                "size_in_bytes": 84488
+            },
+            {
+                "_path": "lib/libopentelemetry_exporter_ostream_span.so",
+                "path_type": "hardlink",
+                "sha256": "4c3a87f6ecfc6b43bbab94116c6c4c3e678d585dec8856a8c3094c095be1cedc",
+                "sha256_in_prefix": "4c3a87f6ecfc6b43bbab94116c6c4c3e678d585dec8856a8c3094c095be1cedc",
+                "size_in_bytes": 111832
+            },
+            {
+                "_path": "lib/libopentelemetry_exporter_otlp_grpc.so",
+                "path_type": "hardlink",
+                "sha256": "47f85479a7b4be2486e790d34dfe9e40106f665e94a2d7d65ac8d9e34f6e93a4",
+                "sha256_in_prefix": "47f85479a7b4be2486e790d34dfe9e40106f665e94a2d7d65ac8d9e34f6e93a4",
+                "size_in_bytes": 73112
+            },
+            {
+                "_path": "lib/libopentelemetry_exporter_otlp_grpc_client.so",
+                "path_type": "hardlink",
+                "sha256": "dd060da27af7af80b1ad3d5a56fc00b8b30c45ec5f625518e7283c9156b9da20",
+                "sha256_in_prefix": "dd060da27af7af80b1ad3d5a56fc00b8b30c45ec5f625518e7283c9156b9da20",
+                "size_in_bytes": 78992
+            },
+            {
+                "_path": "lib/libopentelemetry_exporter_otlp_grpc_log.so",
+                "path_type": "hardlink",
+                "sha256": "265aab7500fd7c74e14c2aa642252421dd48ab54a6b8a6989a26d6df5b71bd69",
+                "sha256_in_prefix": "265aab7500fd7c74e14c2aa642252421dd48ab54a6b8a6989a26d6df5b71bd69",
+                "size_in_bytes": 73232
+            },
+            {
+                "_path": "lib/libopentelemetry_exporter_otlp_grpc_metrics.so",
+                "path_type": "hardlink",
+                "sha256": "29593fea49529873a44cbe604880ddba6803b1d0cef498465f2d9a9bfddfbe16",
+                "sha256_in_prefix": "29593fea49529873a44cbe604880ddba6803b1d0cef498465f2d9a9bfddfbe16",
+                "size_in_bytes": 73032
+            },
+            {
+                "_path": "lib/libopentelemetry_exporter_otlp_http.so",
+                "path_type": "hardlink",
+                "sha256": "c10674452d5829c940aa911a34dd56fcfd020674d755fbf4e810988442343df0",
+                "sha256_in_prefix": "c10674452d5829c940aa911a34dd56fcfd020674d755fbf4e810988442343df0",
+                "size_in_bytes": 78712
+            },
+            {
+                "_path": "lib/libopentelemetry_exporter_otlp_http_client.so",
+                "path_type": "hardlink",
+                "sha256": "ced87c62e184ec245c365b6161934afef13dd335d1cf88cc08876ad5b0f8d4c4",
+                "sha256_in_prefix": "ced87c62e184ec245c365b6161934afef13dd335d1cf88cc08876ad5b0f8d4c4",
+                "size_in_bytes": 163544
+            },
+            {
+                "_path": "lib/libopentelemetry_exporter_otlp_http_log.so",
+                "path_type": "hardlink",
+                "sha256": "9a0b0b7c224cda876d53c3b06b8acd1ee9f0c68c29cc32739328347bb3ba20f4",
+                "sha256_in_prefix": "9a0b0b7c224cda876d53c3b06b8acd1ee9f0c68c29cc32739328347bb3ba20f4",
+                "size_in_bytes": 79152
+            },
+            {
+                "_path": "lib/libopentelemetry_exporter_otlp_http_metric.so",
+                "path_type": "hardlink",
+                "sha256": "6fc4aa8994837b003c585a7fda9bfc17baeff6873b6bdb030408bd00002e89ae",
+                "sha256_in_prefix": "6fc4aa8994837b003c585a7fda9bfc17baeff6873b6bdb030408bd00002e89ae",
+                "size_in_bytes": 78864
+            },
+            {
+                "_path": "lib/libopentelemetry_exporter_prometheus.so",
+                "path_type": "hardlink",
+                "sha256": "05a979a37b252007d9953015bd1346049fb44ab72ea95a7461059cd9594dd8c7",
+                "sha256_in_prefix": "05a979a37b252007d9953015bd1346049fb44ab72ea95a7461059cd9594dd8c7",
+                "size_in_bytes": 328464
+            },
+            {
+                "_path": "lib/libopentelemetry_exporter_zipkin_trace.so",
+                "path_type": "hardlink",
+                "sha256": "b04dde724343511ab776701eb705f3c8bc4bcdb8e95364aab43877eb7428710d",
+                "sha256_in_prefix": "b04dde724343511ab776701eb705f3c8bc4bcdb8e95364aab43877eb7428710d",
+                "size_in_bytes": 186552
+            },
+            {
+                "_path": "lib/libopentelemetry_http_client_curl.so",
+                "path_type": "hardlink",
+                "sha256": "e64ac81b9319f8bad2e094bd046949ff0ef4208f7b3ef0a1ea619382d6e39d9e",
+                "sha256_in_prefix": "e64ac81b9319f8bad2e094bd046949ff0ef4208f7b3ef0a1ea619382d6e39d9e",
+                "size_in_bytes": 238560
+            },
+            {
+                "_path": "lib/libopentelemetry_logs.so",
+                "path_type": "hardlink",
+                "sha256": "12d3b75081017894a8b5ddc9252859ac7e90a19e62eff99cc6b7f2c060c430c9",
+                "sha256_in_prefix": "12d3b75081017894a8b5ddc9252859ac7e90a19e62eff99cc6b7f2c060c430c9",
+                "size_in_bytes": 485568
+            },
+            {
+                "_path": "lib/libopentelemetry_metrics.so",
+                "path_type": "hardlink",
+                "sha256": "9204690e057bc9f346879896acdceef6b92f740cbe917ab049f0de5de1625a8a",
+                "sha256_in_prefix": "9204690e057bc9f346879896acdceef6b92f740cbe917ab049f0de5de1625a8a",
+                "size_in_bytes": 932880
+            },
+            {
+                "_path": "lib/libopentelemetry_otlp_recordable.so",
+                "path_type": "hardlink",
+                "sha256": "b228af63b8a940b67aad4d7dbea62e58f851609dd2f9f877d07689d1eb7d61bc",
+                "sha256_in_prefix": "b228af63b8a940b67aad4d7dbea62e58f851609dd2f9f877d07689d1eb7d61bc",
+                "size_in_bytes": 194280
+            },
+            {
+                "_path": "lib/libopentelemetry_proto.so",
+                "path_type": "hardlink",
+                "sha256": "52667261b313a77364a7b073ce03006af288bd8d3e7bb117127f68f716ecbf3f",
+                "sha256_in_prefix": "52667261b313a77364a7b073ce03006af288bd8d3e7bb117127f68f716ecbf3f",
+                "size_in_bytes": 474272
+            },
+            {
+                "_path": "lib/libopentelemetry_proto_grpc.so",
+                "path_type": "hardlink",
+                "sha256": "3c9b09b9d3245ea2987b63469bbb6150e2972f5e7d3d51f99fb38be3af22fdc2",
+                "sha256_in_prefix": "f04c1fd6a2fe89866c96434a2f09729e670cfa516732a64f899d22e9406839ea",
+                "size_in_bytes": 267392
+            },
+            {
+                "_path": "lib/libopentelemetry_resources.so",
+                "path_type": "hardlink",
+                "sha256": "40abe6ed76cadccccfaa23db478df83ae4c44635d3f10b840af64650aadae70f",
+                "sha256_in_prefix": "40abe6ed76cadccccfaa23db478df83ae4c44635d3f10b840af64650aadae70f",
+                "size_in_bytes": 82568
+            },
+            {
+                "_path": "lib/libopentelemetry_trace.so",
+                "path_type": "hardlink",
+                "sha256": "255b187b3aa8fea3fed07675d3b4cc3fb474d3106da96efdd7509b32148a2f11",
+                "sha256_in_prefix": "255b187b3aa8fea3fed07675d3b4cc3fb474d3106da96efdd7509b32148a2f11",
+                "size_in_bytes": 307368
+            },
+            {
+                "_path": "lib/libopentelemetry_version.so",
+                "path_type": "hardlink",
+                "sha256": "7c18b685450d6d4a44bc76ec1ee4c970133a154175f62a05de66fc8c06e0f591",
+                "sha256_in_prefix": "7c18b685450d6d4a44bc76ec1ee4c970133a154175f62a05de66fc8c06e0f591",
+                "size_in_bytes": 15480
+            }
+        ],
+        "paths_version": 1
+    },
+    "platform": "linux",
+    "requested_spec": "",
+    "sha256": "ba9b09066f9abae9b4c98ffedef444bbbf4c068a094f6c77d70ef6f006574563",
+    "size": 885397,
+    "subdir": "linux-64",
+    "timestamp": 1751782709,
+    "track_features": "",
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libopentelemetry-cpp-1.21.0-hb9b0907_1.conda",
+    "version": "1.21.0"
+}

@@ -17,10 +17,11 @@ dependencies:
   - matplotlib
   - seaborn
   - scipy
-  - py-xgboost-gpu   # Versión específica con soporte GPU activado
-  - lightgbm         # En conda-forge suele venir con soporte OpenCL/CUDA
+  - py-xgboost-gpu    
+  - lightgbm        
   - pip
   - pip:
       - chemprop==1.6.1
       - optuna
       - scikit-learn
+      - catboost

@@ -1,0 +1,105 @@
+{
+    "arch": "x86_64",
+    "build": "h8c2c5c3_1_cpu",
+    "build_number": 1,
+    "build_string": "h8c2c5c3_1_cpu",
+    "channel": "conda-forge",
+    "constrains": [],
+    "depends": [
+        "re2",
+        "__glibc >=2.17,<3.0.a0",
+        "libgcc >=14",
+        "libstdcxx >=14",
+        "libre2-11 >=2025.8.12",
+        "libutf8proc >=2.11.3,<2.12.0a0",
+        "libarrow 23.0.0 h2c50142_1_cpu"
+    ],
+    "extracted_package_dir": "/home/adduser/.local/share/mamba/pkgs/libarrow-compute-23.0.0-h8c2c5c3_1_cpu",
+    "files": [
+        "lib/cmake/ArrowCompute/ArrowComputeConfig.cmake",
+        "lib/cmake/ArrowCompute/ArrowComputeConfigVersion.cmake",
+        "lib/cmake/ArrowCompute/ArrowComputeTargets-release.cmake",
+        "lib/cmake/ArrowCompute/ArrowComputeTargets.cmake",
+        "lib/libarrow_compute.so",
+        "lib/libarrow_compute.so.2300",
+        "lib/libarrow_compute.so.2300.0.0",
+        "lib/pkgconfig/arrow-compute.pc"
+    ],
+    "fn": "libarrow-compute-23.0.0-h8c2c5c3_1_cpu.conda",
+    "license": "Apache-2.0",
+    "link": {
+        "source": "/home/adduser/.local/share/mamba/pkgs/libarrow-compute-23.0.0-h8c2c5c3_1_cpu",
+        "type": 1
+    },
+    "md5": "102be5396c7899675268c17993e1a072",
+    "name": "libarrow-compute",
+    "package_tarball_full_path": "/home/adduser/.local/share/mamba/pkgs/libarrow-compute-23.0.0-h8c2c5c3_1_cpu.tar.bz2",
+    "paths_data": {
+        "paths": [
+            {
+                "_path": "lib/cmake/ArrowCompute/ArrowComputeConfig.cmake",
+                "path_type": "hardlink",
+                "sha256": "4559752a68fe3113e46ce0aa40898a1cf3b33d6a23a45b0970dd93f157f685e7",
+                "sha256_in_prefix": "4559752a68fe3113e46ce0aa40898a1cf3b33d6a23a45b0970dd93f157f685e7",
+                "size_in_bytes": 2341
+            },
+            {
+                "_path": "lib/cmake/ArrowCompute/ArrowComputeConfigVersion.cmake",
+                "path_type": "hardlink",
+                "sha256": "4191dbff04640d99e58f22735eba2a42b97c5dacf24167bb7eb9e4765c562ab6",
+                "sha256_in_prefix": "4191dbff04640d99e58f22735eba2a42b97c5dacf24167bb7eb9e4765c562ab6",
+                "size_in_bytes": 2765
+            },
+            {
+                "_path": "lib/cmake/ArrowCompute/ArrowComputeTargets-release.cmake",
+                "path_type": "hardlink",
+                "sha256": "e735fe78da3f23c10a8c7d508d8c231f08a49cd6b88f7dc92cf570b3bc81f9d9",
+                "sha256_in_prefix": "e735fe78da3f23c10a8c7d508d8c231f08a49cd6b88f7dc92cf570b3bc81f9d9",
+                "size_in_bytes": 1259
+            },
+            {
+                "_path": "lib/cmake/ArrowCompute/ArrowComputeTargets.cmake",
+                "path_type": "hardlink",
+                "sha256": "edbbf9fd3f3229c3324f2b3db2ea1e2a0dad508c19633f2c21d562c9e349dbe2",
+                "sha256_in_prefix": "edbbf9fd3f3229c3324f2b3db2ea1e2a0dad508c19633f2c21d562c9e349dbe2",
+                "size_in_bytes": 4254
+            },
+            {
+                "_path": "lib/libarrow_compute.so",
+                "path_type": "softlink",
+                "sha256_in_prefix": "77baa8500103b311f4e8686f137b901104fc12c4a288151a0730836e57e5b5f6",
+                "size_in_bytes": 17495816
+            },
+            {
+                "_path": "lib/libarrow_compute.so.2300",
+                "path_type": "softlink",
+                "sha256_in_prefix": "77baa8500103b311f4e8686f137b901104fc12c4a288151a0730836e57e5b5f6",
+                "size_in_bytes": 17495816
+            },
+            {
+                "_path": "lib/libarrow_compute.so.2300.0.0",
+                "path_type": "hardlink",
+                "sha256": "77baa8500103b311f4e8686f137b901104fc12c4a288151a0730836e57e5b5f6",
+                "sha256_in_prefix": "77baa8500103b311f4e8686f137b901104fc12c4a288151a0730836e57e5b5f6",
+                "size_in_bytes": 17495816
+            },
+            {
+                "_path": "lib/pkgconfig/arrow-compute.pc",
+                "path_type": "hardlink",
+                "sha256": "f51bebe77c5e909bed5adf5cdd54710919a1a895431014ed37653d58f8dbc5a4",
+                "sha256_in_prefix": "ff691e538c2028cd0b7bf7df47053182653dc2bd861fd455d1667be4318138c1",
+                "size_in_bytes": 1270
+            }
+        ],
+        "paths_version": 1
+    },
+    "platform": "linux",
+    "requested_spec": "",
+    "sha256": "7d49e48aca75f289eeab26220737af1abee7aaf678b5ba35753a6d2b02b2ea94",
+    "size": 3004043,
+    "subdir": "linux-64",
+    "timestamp": 1769493288,
+    "track_features": "",
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libarrow-compute-23.0.0-h8c2c5c3_1_cpu.conda",
+    "version": "23.0.0"
+}

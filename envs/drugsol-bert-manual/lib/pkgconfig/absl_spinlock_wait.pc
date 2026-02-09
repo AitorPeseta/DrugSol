@@ -1,0 +1,12 @@
+prefix=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual
+exec_prefix=${prefix}
+libdir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/lib
+includedir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/include
+
+Name: absl_spinlock_wait
+Description: Abseil spinlock_wait library
+URL: https://abseil.io/
+Version: 20250512
+Requires: absl_base_internal = 20250512, absl_core_headers = 20250512, absl_errno_saver = 20250512
+Libs: -L${libdir}  -labsl_spinlock_wait 
+Cflags: -I${includedir} -DNOMINMAX

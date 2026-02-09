@@ -1,0 +1,10 @@
+prefix=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual
+exec_prefix=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/bin
+libdir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/lib
+includedir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/include
+
+Name: libutf8proc
+Description: UTF8 processing
+Version: 2.11.3
+Libs: -L${libdir} -lutf8proc
+Cflags: -I${includedir} -DUTF8PROC_EXPORTS

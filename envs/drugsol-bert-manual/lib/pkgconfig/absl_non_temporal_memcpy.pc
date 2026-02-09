@@ -1,0 +1,12 @@
+prefix=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual
+exec_prefix=${prefix}
+libdir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/lib
+includedir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/include
+
+Name: absl_non_temporal_memcpy
+Description: Abseil non_temporal_memcpy library
+URL: https://abseil.io/
+Version: 20250512
+Requires: absl_non_temporal_arm_intrinsics = 20250512, absl_config = 20250512, absl_core_headers = 20250512
+Libs: -L${libdir}  
+Cflags: -I${includedir} -DNOMINMAX

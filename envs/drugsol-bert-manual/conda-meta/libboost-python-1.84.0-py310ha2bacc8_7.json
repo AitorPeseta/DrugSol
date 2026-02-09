@@ -1,0 +1,75 @@
+{
+    "arch": "x86_64",
+    "build": "py310ha2bacc8_7",
+    "build_number": 7,
+    "build_string": "py310ha2bacc8_7",
+    "channel": "conda-forge",
+    "constrains": [
+        "py-boost <0.0a0",
+        "boost 1.84.0*"
+    ],
+    "depends": [
+        "__glibc >=2.17,<3.0.a0",
+        "libgcc >=13",
+        "libstdcxx >=13",
+        "numpy >=1.19,<3",
+        "python >=3.10,<3.11.0a0",
+        "python_abi 3.10.* *_cp310"
+    ],
+    "extracted_package_dir": "/home/adduser/.local/share/mamba/pkgs/libboost-python-1.84.0-py310ha2bacc8_7",
+    "files": [
+        "lib/libboost_numpy310.so",
+        "lib/libboost_numpy310.so.1.84.0",
+        "lib/libboost_python310.so",
+        "lib/libboost_python310.so.1.84.0"
+    ],
+    "fn": "libboost-python-1.84.0-py310ha2bacc8_7.conda",
+    "license": "BSL-1.0",
+    "link": {
+        "source": "/home/adduser/.local/share/mamba/pkgs/libboost-python-1.84.0-py310ha2bacc8_7",
+        "type": 1
+    },
+    "md5": "cf7d416a851f79d9fbc271b22c75375e",
+    "name": "libboost-python",
+    "package_tarball_full_path": "/home/adduser/.local/share/mamba/pkgs/libboost-python-1.84.0-py310ha2bacc8_7.tar.bz2",
+    "paths_data": {
+        "paths": [
+            {
+                "_path": "lib/libboost_numpy310.so",
+                "path_type": "softlink",
+                "sha256_in_prefix": "762f4bb27fe304b339ed168d34485da2bf064db4e81c6542d9f0f5facedb9a5e",
+                "size_in_bytes": 75232
+            },
+            {
+                "_path": "lib/libboost_numpy310.so.1.84.0",
+                "path_type": "hardlink",
+                "sha256": "762f4bb27fe304b339ed168d34485da2bf064db4e81c6542d9f0f5facedb9a5e",
+                "sha256_in_prefix": "762f4bb27fe304b339ed168d34485da2bf064db4e81c6542d9f0f5facedb9a5e",
+                "size_in_bytes": 75232
+            },
+            {
+                "_path": "lib/libboost_python310.so",
+                "path_type": "softlink",
+                "sha256_in_prefix": "8470e306981f70adcfce300dc207900bc6ad5346430185ed08dbe2337938024e",
+                "size_in_bytes": 339280
+            },
+            {
+                "_path": "lib/libboost_python310.so.1.84.0",
+                "path_type": "hardlink",
+                "sha256": "8470e306981f70adcfce300dc207900bc6ad5346430185ed08dbe2337938024e",
+                "sha256_in_prefix": "8470e306981f70adcfce300dc207900bc6ad5346430185ed08dbe2337938024e",
+                "size_in_bytes": 339280
+            }
+        ],
+        "paths_version": 1
+    },
+    "platform": "linux",
+    "requested_spec": "",
+    "sha256": "1b9e17a0526073c8037673c59762f106b6647947f9f1bf362ded2b093520ce05",
+    "size": 123121,
+    "subdir": "linux-64",
+    "timestamp": 1733503215,
+    "track_features": "",
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libboost-python-1.84.0-py310ha2bacc8_7.conda",
+    "version": "1.84.0"
+}

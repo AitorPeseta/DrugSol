@@ -1,0 +1,12 @@
+prefix=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual
+exec_prefix=${prefix}
+libdir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/lib
+includedir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/include
+
+Name: absl_tracing_internal
+Description: Abseil tracing_internal library
+URL: https://abseil.io/
+Version: 20250512
+Requires: absl_base = 20250512
+Libs: -L${libdir}  -labsl_tracing_internal 
+Cflags: -I${includedir} -DNOMINMAX

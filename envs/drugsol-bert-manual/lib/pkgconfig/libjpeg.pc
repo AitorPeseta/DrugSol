@@ -1,0 +1,10 @@
+prefix=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual
+exec_prefix=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual
+libdir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/lib
+includedir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/include
+
+Name: libjpeg
+Description: A SIMD-accelerated JPEG codec that provides the libjpeg API
+Version: 3.1.2
+Libs: -L${libdir} -ljpeg
+Cflags: -I${includedir}

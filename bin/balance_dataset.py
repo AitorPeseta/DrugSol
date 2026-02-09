@@ -1,113 +1,218 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-balance_dataset_smart_2d.py
----------------------------
-Balanceo inteligente:
-1. Identifica la temperatura del grupo.
-2. Si es Temperatura Ambiente (20-30°C) -> APLICA LÍMITE (Undersampling).
-3. Si es Temperatura Fisiológica o Alta -> GUARDA TODO (100%).
-4. Permite definir el tamaño del bin de logS (ej: 0.2).
+Balance Dataset: Temperature-Aware Undersampling
+=================================================
+
+Performs intelligent dataset balancing to reduce temperature bias in solubility
+data. Literature data is heavily skewed toward room temperature (25°C), but
+physiological temperature (37°C) is more relevant for drug applications.
+
+Balancing Strategy:
+    The algorithm operates on 2D bins (logS × temperature):
+    
+    - Ambient (20-25°C): Apply undersampling limit per bin
+    - Normal (25-35°C): Keep all samples
+    - Physiological (35-40°C): Keep all samples (most valuable)
+    - Hot (40-50°C): Keep all samples
+    
+    This preserves the solubility distribution while reducing the dominance
+    of room temperature measurements.
+
+Arguments:
+    --input     : Input Parquet file with solubility data
+    --output    : Output Parquet file path
+    --limit     : Maximum samples per logS bin for ambient temperature (default: 50)
+    --bin-size  : Size of logS bins in log units (default: 0.2)
+    --seed      : Random seed for reproducible undersampling (default: 42)
+
+Usage:
+    python balance_dataset.py \\
+        --input curated_data.parquet \\
+        --output balanced_data.parquet \\
+        --limit 25 \\
+        --bin-size 0.2 \\
+        --seed 42
+
+Output:
+    Parquet file with balanced temperature distribution.
+    Ambient temperature samples are reduced while physiological data is preserved.
+
+Notes:
+    - Missing temperature values are filled with 25.0°C (room temperature assumption)
+    - Smaller bin sizes provide finer control but may create sparse bins
+    - The limit parameter controls the aggressiveness of undersampling
 """
 
 import argparse
-import pandas as pd
+import sys
+from pathlib import Path
+
 import numpy as np
-import os
+import pandas as pd
 
-def balance_data_smart_2d(df, log_col='logS', temp_col='temp_C', 
-                          limit_ambient=50, 
-                          bin_size=0.2,
-                          seed=42):
+
+# ============================================================================
+# BALANCING FUNCTION
+# ============================================================================
+
+def balance_data_smart_2d(
+    df: pd.DataFrame,
+    log_col: str = 'logS',
+    temp_col: str = 'temp_C',
+    limit_ambient: int = 50,
+    bin_size: float = 0.2,
+    seed: int = 42
+) -> pd.DataFrame:
+    """
+    Balance dataset by undersampling ambient temperature data.
     
-    print(f"[Balance Smart] Iniciando.")
-    print(f"                - Bin Size (logS): {bin_size}")
-    print(f"                - Datos 25°C (Ambient): Recortar a {limit_ambient} por bin.")
-    print(f"                - Datos >30°C o <20°C:  GUARDAR TODOS.")
+    The function creates 2D bins (solubility × temperature) and applies
+    selective undersampling only to the ambient temperature range,
+    preserving valuable physiological temperature data.
+    
+    Args:
+        df: Input DataFrame with solubility and temperature columns
+        log_col: Column name for log solubility (default: logS)
+        temp_col: Column name for temperature in Celsius (default: temp_C)
+        limit_ambient: Maximum samples per bin for ambient data (default: 50)
+        bin_size: Width of logS bins in log units (default: 0.2)
+        seed: Random seed for reproducibility (default: 42)
+    
+    Returns:
+        Balanced DataFrame with reduced ambient temperature samples
+    """
+    print(f"[Balance] Starting smart 2D balancing")
+    print(f"          - LogS bin size: {bin_size}")
+    print(f"          - Ambient (20-25°C) limit: {limit_ambient} per bin")
+    print(f"          - Other temperatures: Keep all samples")
 
-    # 1. Bins de Solubilidad (Ahora usa tu bin_size variable)
+    # -------------------------------------------------------------------------
+    # Create Solubility Bins
+    # -------------------------------------------------------------------------
     min_log = np.floor(df[log_col].min())
     max_log = np.ceil(df[log_col].max())
-    # Importante: Añadir bin_size al final para asegurar que se cubra el máximo
     bins_log = np.arange(min_log, max_log + bin_size, bin_size)
     
-    # 2. Bins de Temperatura
-    bins_temp = [24, 25, 35, 40, 50]
+    # -------------------------------------------------------------------------
+    # Create Temperature Bins
+    # -------------------------------------------------------------------------
+    # Categories designed around physiologically relevant ranges
+    bins_temp = [20, 25, 35, 40, 50]
     labels_temp = ['Ambient', 'Normal', 'Physio', 'Hot_Physio']
     
-    # Asignamos los bins
-    df['bin_log'] = pd.cut(df[log_col], bins=bins_log, include_lowest=True)
-    df['bin_temp'] = pd.cut(df[temp_col], bins=bins_temp, labels=labels_temp, include_lowest=True)
+    # Assign bins
+    df = df.copy()
+    df['_bin_log'] = pd.cut(df[log_col], bins=bins_log, include_lowest=True)
+    df['_bin_temp'] = pd.cut(df[temp_col], bins=bins_temp, labels=labels_temp, include_lowest=True)
     
-    # 3. Función de muestreo condicional
+    # -------------------------------------------------------------------------
+    # Conditional Sampling Function
+    # -------------------------------------------------------------------------
     def sampler(group):
-        temp_label = group.name[1] 
+        """Apply undersampling only to ambient temperature groups."""
+        temp_label = group.name[1]  # Second element of MultiIndex is temp bin
         
-        # Si es Ambiente, aplicamos el límite
         if temp_label == 'Ambient':
             n = len(group)
             if n > limit_ambient:
                 return group.sample(limit_ambient, random_state=seed)
-            else:
-                return group
-        # Si es cualquier otra cosa (Fisio, Calor, Frío), guardamos TODO
-        else:
-            return group
-
-    # 4. Ejecutar GroupBy
-    # Al ser bins más pequeños (0.2), habrá muchos más grupos, lo cual es bueno
-    # porque el recorte será más distribuido y menos "bloque".
-    df_balanced = df.groupby(['bin_log', 'bin_temp'], observed=True, group_keys=False).apply(sampler)
+        return group
     
-    # 5. Reporte
-    print("\n" + "="*60)
-    print(f" REPORTE FINAL (Bin Size: {bin_size})")
-    print("="*60)
+    # -------------------------------------------------------------------------
+    # Execute Grouped Sampling
+    # -------------------------------------------------------------------------
+    df_balanced = df.groupby(
+        ['_bin_log', '_bin_temp'],
+        observed=True,
+        group_keys=False
+    ).apply(sampler)
     
-    orig_counts = df['bin_temp'].value_counts()
-    new_counts = df_balanced['bin_temp'].value_counts()
+    # -------------------------------------------------------------------------
+    # Report Results
+    # -------------------------------------------------------------------------
+    print("\n" + "=" * 60)
+    print(f" BALANCE REPORT (Bin Size: {bin_size})")
+    print("=" * 60)
+    
+    orig_counts = df['_bin_temp'].value_counts()
+    new_counts = df_balanced['_bin_temp'].value_counts()
     
     for label in labels_temp:
-        if label in orig_counts:
-            o = orig_counts[label]
-            n = new_counts.get(label, 0)
-            status = "Recortado" if label == 'Ambient' else "Intacto"
-            print(f"  - {label:12s}: {o:6d} -> {n:6d}  [{status}]")
-            
-    print("-" * 60)
-    print(f"Total: {len(df)} -> {len(df_balanced)}")
+        if label in orig_counts.index:
+            orig = orig_counts[label]
+            new = new_counts.get(label, 0)
+            status = "Undersampled" if label == 'Ambient' else "Preserved"
+            reduction = (1 - new / orig) * 100 if orig > 0 else 0
+            print(f"  {label:12s}: {orig:6d} -> {new:6d}  [{status}, -{reduction:.1f}%]")
     
-    return df_balanced.drop(columns=['bin_log', 'bin_temp'])
+    print("-" * 60)
+    total_orig = len(df)
+    total_new = len(df_balanced)
+    print(f"  Total: {total_orig:,} -> {total_new:,} ({total_new/total_orig*100:.1f}% retained)")
+    
+    # Remove temporary columns
+    return df_balanced.drop(columns=['_bin_log', '_bin_temp'])
+
+
+# ============================================================================
+# MAIN FUNCTION
+# ============================================================================
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--input", required=True)
-    ap.add_argument("--output", required=True)
-    # Argumentos numéricos
-    ap.add_argument("--limit", type=int, default=50, help="Límite máx para muestras Ambient")
-    ap.add_argument("--bin-size", type=float, default=0.2, help="Tamaño del bin de logS (Default: 0.2)")
-    ap.add_argument("--seed", type=int, default=42)
+    """Main entry point for dataset balancing script."""
+    
+    ap = argparse.ArgumentParser(
+        description="Balance solubility dataset by temperature-aware undersampling."
+    )
+    ap.add_argument("--input", required=True,
+                    help="Input Parquet file")
+    ap.add_argument("--output", required=True,
+                    help="Output Parquet file")
+    ap.add_argument("--limit", type=int, default=50,
+                    help="Max samples per bin for ambient temperature (default: 50)")
+    ap.add_argument("--bin-size", type=float, default=0.2,
+                    help="LogS bin size in log units (default: 0.2)")
+    ap.add_argument("--seed", type=int, default=42,
+                    help="Random seed (default: 42)")
     
     args = ap.parse_args()
     
-    if not os.path.exists(args.input):
-        raise FileNotFoundError(f"No existe: {args.input}")
+    # -------------------------------------------------------------------------
+    # Load Data
+    # -------------------------------------------------------------------------
+    if not Path(args.input).exists():
+        sys.exit(f"[ERROR] Input file not found: {args.input}")
     
+    print(f"[Balance] Loading {args.input}...")
     df = pd.read_parquet(args.input)
+    print(f"[Balance] Loaded {len(df):,} rows")
     
+    # -------------------------------------------------------------------------
+    # Handle Missing Temperatures
+    # -------------------------------------------------------------------------
     if df['temp_C'].isnull().any():
-        print("[WARN] Rellenando temperaturas nulas con 25.0")
+        n_missing = df['temp_C'].isnull().sum()
+        print(f"[Balance] Filling {n_missing:,} missing temperatures with 25.0°C")
         df['temp_C'] = df['temp_C'].fillna(25.0)
-
-    df_bal = balance_data_smart_2d(
-        df, 
-        limit_ambient=args.limit, 
-        bin_size=args.bin_size, 
+    
+    # -------------------------------------------------------------------------
+    # Balance Dataset
+    # -------------------------------------------------------------------------
+    df_balanced = balance_data_smart_2d(
+        df,
+        limit_ambient=args.limit,
+        bin_size=args.bin_size,
         seed=args.seed
     )
     
-    df_bal.to_parquet(args.output, index=False)
-    print(f"[Balance] Guardado en: {args.output}")
+    # -------------------------------------------------------------------------
+    # Save Output
+    # -------------------------------------------------------------------------
+    print(f"\n[Balance] Saving to {args.output}...")
+    df_balanced.to_parquet(args.output, index=False)
+    print("[Balance] Done.")
+
 
 if __name__ == "__main__":
     main()

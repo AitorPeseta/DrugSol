@@ -1,0 +1,12 @@
+prefix=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual
+exec_prefix=${prefix}
+libdir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/lib
+includedir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/include
+
+Name: absl_log_initialize
+Description: Abseil log_initialize library
+URL: https://abseil.io/
+Version: 20250512
+Requires: absl_config = 20250512, absl_log_globals = 20250512, absl_log_internal_globals = 20250512, absl_time = 20250512
+Libs: -L${libdir}  -labsl_log_initialize 
+Cflags: -I${includedir} -DNOMINMAX

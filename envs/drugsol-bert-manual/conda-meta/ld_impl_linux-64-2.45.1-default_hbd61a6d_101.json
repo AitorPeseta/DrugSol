@@ -1,0 +1,55 @@
+{
+    "arch": "x86_64",
+    "build": "default_hbd61a6d_101",
+    "build_number": 101,
+    "build_string": "default_hbd61a6d_101",
+    "channel": "conda-forge",
+    "constrains": [
+        "binutils_impl_linux-64 2.45.1"
+    ],
+    "depends": [
+        "__glibc >=2.17,<3.0.a0",
+        "zstd >=1.5.7,<1.6.0a0"
+    ],
+    "extracted_package_dir": "/home/adduser/.local/share/mamba/pkgs/ld_impl_linux-64-2.45.1-default_hbd61a6d_101",
+    "files": [
+        "bin/x86_64-conda-linux-gnu-ld",
+        "x86_64-conda-linux-gnu/bin/ld"
+    ],
+    "fn": "ld_impl_linux-64-2.45.1-default_hbd61a6d_101.conda",
+    "license": "GPL-3.0-only",
+    "link": {
+        "source": "/home/adduser/.local/share/mamba/pkgs/ld_impl_linux-64-2.45.1-default_hbd61a6d_101",
+        "type": 1
+    },
+    "md5": "12bd9a3f089ee6c9266a37dab82afabd",
+    "name": "ld_impl_linux-64",
+    "package_tarball_full_path": "/home/adduser/.local/share/mamba/pkgs/ld_impl_linux-64-2.45.1-default_hbd61a6d_101.tar.bz2",
+    "paths_data": {
+        "paths": [
+            {
+                "_path": "bin/x86_64-conda-linux-gnu-ld",
+                "path_type": "hardlink",
+                "sha256": "d3ce8fb8fa730c95090bc14c860dafdbeaa9d3bc71f98cf95823f7b878db7984",
+                "sha256_in_prefix": "cf36a3d0e970928820a0706b7ced3fa757b65f1c6f13c3aa4ae4213184cab34a",
+                "size_in_bytes": 2917192
+            },
+            {
+                "_path": "x86_64-conda-linux-gnu/bin/ld",
+                "path_type": "softlink",
+                "sha256_in_prefix": "cf36a3d0e970928820a0706b7ced3fa757b65f1c6f13c3aa4ae4213184cab34a",
+                "size_in_bytes": 2917192
+            }
+        ],
+        "paths_version": 1
+    },
+    "platform": "linux",
+    "requested_spec": "",
+    "sha256": "565941ac1f8b0d2f2e8f02827cbca648f4d18cd461afc31f15604cd291b5c5f3",
+    "size": 725507,
+    "subdir": "linux-64",
+    "timestamp": 1770267139,
+    "track_features": "",
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.45.1-default_hbd61a6d_101.conda",
+    "version": "2.45.1"
+}

@@ -1,0 +1,17 @@
+prefix=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+sysconfdir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/etc
+localstatedir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/var
+confdir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/etc/fonts
+cachedir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/var/cache/fontconfig
+
+Name: Fontconfig
+Description: Font configuration and customization library
+Version: 2.15.0
+Requires: freetype2 >=  21.0.15
+Requires.private: expat
+Libs: -L${libdir} -lfontconfig
+Libs.private: -pthread
+Cflags: -I${includedir}

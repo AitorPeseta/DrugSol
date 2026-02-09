@@ -1,0 +1,121 @@
+{
+    "arch": "x86_64",
+    "build": "py310hb823017_0",
+    "build_number": 0,
+    "build_string": "py310hb823017_0",
+    "channel": "conda-forge",
+    "constrains": [
+        "__glibc >=2.17"
+    ],
+    "depends": [
+        "python",
+        "__glibc >=2.17,<3.0.a0",
+        "libgcc >=14",
+        "openssl >=3.5.4,<4.0a0",
+        "_python_abi3_support 1.*",
+        "cpython >=3.10"
+    ],
+    "extracted_package_dir": "/home/adduser/.local/share/mamba/pkgs/hf-xet-1.2.1-py310hb823017_0",
+    "files": [
+        "lib/python3.10/site-packages/hf_xet/__init__.py",
+        "lib/python3.10/site-packages/hf_xet/hf_xet.abi3.so",
+        "lib/python3.10/site-packages/hf_xet-1.2.1.dist-info/INSTALLER",
+        "lib/python3.10/site-packages/hf_xet-1.2.1.dist-info/METADATA",
+        "lib/python3.10/site-packages/hf_xet-1.2.1.dist-info/RECORD",
+        "lib/python3.10/site-packages/hf_xet-1.2.1.dist-info/REQUESTED",
+        "lib/python3.10/site-packages/hf_xet-1.2.1.dist-info/WHEEL",
+        "lib/python3.10/site-packages/hf_xet-1.2.1.dist-info/direct_url.json",
+        "lib/python3.10/site-packages/hf_xet-1.2.1.dist-info/licenses/LICENSE",
+        "lib/python3.10/site-packages/hf_xet/__pycache__/__init__.cpython-310.pyc"
+    ],
+    "fn": "hf-xet-1.2.1-py310hb823017_0.conda",
+    "license": "Apache-2.0",
+    "link": {
+        "source": "/home/adduser/.local/share/mamba/pkgs/hf-xet-1.2.1-py310hb823017_0",
+        "type": 1
+    },
+    "md5": "33bd9525f97a50dc414892cba8996b51",
+    "name": "hf-xet",
+    "noarch": "python",
+    "package_tarball_full_path": "/home/adduser/.local/share/mamba/pkgs/hf-xet-1.2.1-py310hb823017_0.tar.bz2",
+    "paths_data": {
+        "paths": [
+            {
+                "_path": "lib/python3.10/site-packages/hf_xet/__init__.py",
+                "path_type": "hardlink",
+                "sha256": "13c50377243c82567f9ef7bd84711fdb66cf6a783cf912b1e15b80a5761e414a",
+                "sha256_in_prefix": "13c50377243c82567f9ef7bd84711fdb66cf6a783cf912b1e15b80a5761e414a",
+                "size_in_bytes": 107
+            },
+            {
+                "_path": "lib/python3.10/site-packages/hf_xet/hf_xet.abi3.so",
+                "path_type": "hardlink",
+                "sha256": "f6ffba4066f26ed5b548f432907415246c3ceeebb823a1a7c0e7f938fcf6adb8",
+                "sha256_in_prefix": "f6ffba4066f26ed5b548f432907415246c3ceeebb823a1a7c0e7f938fcf6adb8",
+                "size_in_bytes": 7026520
+            },
+            {
+                "_path": "lib/python3.10/site-packages/hf_xet-1.2.1.dist-info/INSTALLER",
+                "path_type": "hardlink",
+                "sha256": "bc33022edcb7639ff53355b4e91dade50a0bbf0299efeb6171d1ec0ba5029cfc",
+                "sha256_in_prefix": "bc33022edcb7639ff53355b4e91dade50a0bbf0299efeb6171d1ec0ba5029cfc",
+                "size_in_bytes": 6
+            },
+            {
+                "_path": "lib/python3.10/site-packages/hf_xet-1.2.1.dist-info/METADATA",
+                "path_type": "hardlink",
+                "sha256": "9a49afd3ce20f253c158c62988ce0cbb023e220ca772d5c882ea00f968e3bfc8",
+                "sha256_in_prefix": "9a49afd3ce20f253c158c62988ce0cbb023e220ca772d5c882ea00f968e3bfc8",
+                "size_in_bytes": 723
+            },
+            {
+                "_path": "lib/python3.10/site-packages/hf_xet-1.2.1.dist-info/RECORD",
+                "path_type": "hardlink",
+                "sha256": "b481398f6fe8ee701d13c14853ac8418bf0e8c9785b260d8c616e3c6128b10cb",
+                "sha256_in_prefix": "b481398f6fe8ee701d13c14853ac8418bf0e8c9785b260d8c616e3c6128b10cb",
+                "size_in_bytes": 776
+            },
+            {
+                "_path": "lib/python3.10/site-packages/hf_xet-1.2.1.dist-info/REQUESTED",
+                "path_type": "hardlink",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/hf_xet-1.2.1.dist-info/WHEEL",
+                "path_type": "hardlink",
+                "sha256": "17ff3d7bda043911c89d600d6ca18a2133bf953cb67eed019bfd0f811b400c6d",
+                "sha256_in_prefix": "17ff3d7bda043911c89d600d6ca18a2133bf953cb67eed019bfd0f811b400c6d",
+                "size_in_bytes": 98
+            },
+            {
+                "_path": "lib/python3.10/site-packages/hf_xet-1.2.1.dist-info/direct_url.json",
+                "path_type": "hardlink",
+                "sha256": "9a6f462ac5d8ad45dd531665345291fe1fcd6dabb65fc0761148681c8ee09dec",
+                "sha256_in_prefix": "9a6f462ac5d8ad45dd531665345291fe1fcd6dabb65fc0761148681c8ee09dec",
+                "size_in_bytes": 117
+            },
+            {
+                "_path": "lib/python3.10/site-packages/hf_xet-1.2.1.dist-info/licenses/LICENSE",
+                "path_type": "hardlink",
+                "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+                "sha256_in_prefix": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+                "size_in_bytes": 11357
+            },
+            {
+                "_path": "lib/python3.10/site-packages/hf_xet/__pycache__/__init__.cpython-310.pyc",
+                "path_type": "pyc_file"
+            }
+        ],
+        "paths_version": 1
+    },
+    "platform": "linux",
+    "requested_spec": "",
+    "sha256": "11b840645c4d321d2b33c0e4cf8a1132bd01d1ccd8e019135c01fab7d4b96ca3",
+    "size": 2728965,
+    "subdir": "linux-64",
+    "timestamp": 1763772649,
+    "track_features": "",
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/hf-xet-1.2.1-py310hb823017_0.conda",
+    "version": "1.2.1"
+}

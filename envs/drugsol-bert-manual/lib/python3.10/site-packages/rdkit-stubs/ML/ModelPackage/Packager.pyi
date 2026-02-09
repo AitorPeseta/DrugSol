@@ -1,0 +1,46 @@
+from __future__ import annotations
+__all__ = ['ClassificationError', 'DescriptorCalculationError', 'ModelPackage']
+class ClassificationError(Exception):
+    """
+     used to signal problems generating predictions 
+    """
+class DescriptorCalculationError(Exception):
+    """
+     used to signal problems generating descriptor values 
+    """
+class ModelPackage:
+    """
+     a container class to package a composite model with a descriptor
+      calculator so that objects needing predictions (compounds, molecules, etc.)
+      can be passed directly in without worrying about generating descriptors
+    
+      
+    """
+    def AddSupplementalData(self, data):
+        ...
+    def Classify(self, obj, label = '', threshold = 0):
+        ...
+    def GetCalculator(self):
+        ...
+    def GetDataset(self):
+        ...
+    def GetModel(self):
+        ...
+    def GetNotes(self):
+        ...
+    def GetSupplementalData(self):
+        ...
+    def Init(self):
+        ...
+    def SetCalculator(self, calc):
+        ...
+    def SetDataset(self, data):
+        ...
+    def SetModel(self, model):
+        ...
+    def SetNotes(self, notes):
+        ...
+    def SetSupplementalData(self, suppD):
+        ...
+    def __init__(self, descCalc = None, model = None, dataSet = None, notes = ''):
+        ...

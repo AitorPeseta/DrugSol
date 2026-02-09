@@ -1,0 +1,11 @@
+prefix=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+toolexeclibdir=${libdir}
+includedir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/include
+
+Name: libffi
+Description: Library supporting Foreign Function Interfaces
+Version: 3.5.2
+Libs: -L${toolexeclibdir} -lffi
+Cflags: -I${includedir}

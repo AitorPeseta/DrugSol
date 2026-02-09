@@ -1,0 +1,93 @@
+{
+    "arch": "x86_64",
+    "build": "h54a6638_1",
+    "build_number": 1,
+    "build_string": "h54a6638_1",
+    "channel": "conda-forge",
+    "constrains": [],
+    "depends": [
+        "libgcc >=14",
+        "libstdcxx >=14",
+        "__glibc >=2.17,<3.0.a0"
+    ],
+    "extracted_package_dir": "/home/adduser/.local/share/mamba/pkgs/pixman-0.46.4-h54a6638_1",
+    "files": [
+        "include/pixman-1/pixman-version.h",
+        "include/pixman-1/pixman.h",
+        "lib/libpixman-1.a",
+        "lib/libpixman-1.so",
+        "lib/libpixman-1.so.0",
+        "lib/libpixman-1.so.0.46.4",
+        "lib/pkgconfig/pixman-1.pc"
+    ],
+    "fn": "pixman-0.46.4-h54a6638_1.conda",
+    "license": "MIT",
+    "link": {
+        "source": "/home/adduser/.local/share/mamba/pkgs/pixman-0.46.4-h54a6638_1",
+        "type": 1
+    },
+    "md5": "c01af13bdc553d1a8fbfff6e8db075f0",
+    "name": "pixman",
+    "package_tarball_full_path": "/home/adduser/.local/share/mamba/pkgs/pixman-0.46.4-h54a6638_1.tar.bz2",
+    "paths_data": {
+        "paths": [
+            {
+                "_path": "include/pixman-1/pixman-version.h",
+                "path_type": "hardlink",
+                "sha256": "eebbff4b66cbcc98b3ffa16c68a919d4a16dfcffb86cd1fb85faea4f07bcd76b",
+                "sha256_in_prefix": "eebbff4b66cbcc98b3ffa16c68a919d4a16dfcffb86cd1fb85faea4f07bcd76b",
+                "size_in_bytes": 1786
+            },
+            {
+                "_path": "include/pixman-1/pixman.h",
+                "path_type": "hardlink",
+                "sha256": "af49363cee8b2340a215e1ea477761c2c867905c17abe129e5778bfc65033f53",
+                "sha256_in_prefix": "af49363cee8b2340a215e1ea477761c2c867905c17abe129e5778bfc65033f53",
+                "size_in_bytes": 55372
+            },
+            {
+                "_path": "lib/libpixman-1.a",
+                "path_type": "hardlink",
+                "sha256": "992e845c93f68b4767c13cb20444d4b1496d8b744b49132124ec7f98113c0267",
+                "sha256_in_prefix": "992e845c93f68b4767c13cb20444d4b1496d8b744b49132124ec7f98113c0267",
+                "size_in_bytes": 1222684
+            },
+            {
+                "_path": "lib/libpixman-1.so",
+                "path_type": "softlink",
+                "sha256_in_prefix": "8c292d243a6c6dede7dae3f66117ab77f903743f73e745f0dd0a40f6259634cd",
+                "size_in_bytes": 16
+            },
+            {
+                "_path": "lib/libpixman-1.so.0",
+                "path_type": "softlink",
+                "sha256_in_prefix": "8c292d243a6c6dede7dae3f66117ab77f903743f73e745f0dd0a40f6259634cd",
+                "size_in_bytes": 21
+            },
+            {
+                "_path": "lib/libpixman-1.so.0.46.4",
+                "path_type": "hardlink",
+                "sha256": "8c292d243a6c6dede7dae3f66117ab77f903743f73e745f0dd0a40f6259634cd",
+                "sha256_in_prefix": "8c292d243a6c6dede7dae3f66117ab77f903743f73e745f0dd0a40f6259634cd",
+                "size_in_bytes": 872304
+            },
+            {
+                "_path": "lib/pkgconfig/pixman-1.pc",
+                "path_type": "hardlink",
+                "sha256": "bb9a0ddbde093e8495851b6ef73d3f3a679b3abbc7a16ca24015c53bce892d67",
+                "sha256_in_prefix": "9e3739073cb230301531c77a1faad52327ccf130d75c3b0286d231c666690708",
+                "size_in_bytes": 476
+            }
+        ],
+        "paths_version": 1
+    },
+    "platform": "linux",
+    "requested_spec": "",
+    "sha256": "43d37bc9ca3b257c5dd7bf76a8426addbdec381f6786ff441dc90b1a49143b6a",
+    "size": 450960,
+    "subdir": "linux-64",
+    "timestamp": 1754665235,
+    "track_features": "",
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/pixman-0.46.4-h54a6638_1.conda",
+    "version": "0.46.4"
+}

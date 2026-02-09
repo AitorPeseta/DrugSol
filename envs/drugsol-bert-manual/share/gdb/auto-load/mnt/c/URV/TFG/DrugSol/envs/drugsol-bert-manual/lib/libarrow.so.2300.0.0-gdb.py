@@ -1,0 +1,1 @@
+/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/share/gdb/auto-load/replace_this_section_with_absolute_slashed_path_to_CONDA_PREFIX/lib/libarrow.so.2300.0.0-gdb.py

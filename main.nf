@@ -1,12 +1,37 @@
+#!/usr/bin/env nextflow
+/*
+========================================================================================
+    drugsol-predictor: Main entry point
+========================================================================================
+    Aqueous solubility prediction pipeline using machine learning models
+    Github: https://https://github.com/AitorPeseta/DrugSol
+    Author: Aitor Olivares Perucho
+----------------------------------------------------------------------------------------
+*/
+
 nextflow.enable.dsl = 2
 
 /*
- * Project Root: Entry point delegating execution to the `drugsol` workflow
- * defined in ./workflows/drugsol/main.nf
- */
+========================================================================================
+    NAMED WORKFLOW FOR DRUGSOL PREDICTION
+========================================================================================
+*/
+
 include { drugsol } from './workflows/drugsol/main.nf'
 
+/*
+========================================================================================
+    RUN MAIN WORKFLOW
+========================================================================================
+*/
+
 workflow {
-    // Invoke the main workflow
+    // Execute the drugsol prediction workflow
     drugsol()
 }
+
+/*
+========================================================================================
+    THE END
+========================================================================================
+*/

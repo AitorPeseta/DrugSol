@@ -1,0 +1,12 @@
+prefix=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual
+exec_prefix=${prefix}
+libdir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/lib
+includedir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/include
+
+Name: absl_log_sink
+Description: Abseil log_sink library
+URL: https://abseil.io/
+Version: 20250512
+Requires: absl_config = 20250512, absl_log_entry = 20250512
+Libs: -L${libdir}  -labsl_log_sink 
+Cflags: -I${includedir} -DNOMINMAX

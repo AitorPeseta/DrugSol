@@ -1,0 +1,13 @@
+prefix=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual
+exec_prefix=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual
+libdir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/lib
+includedir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/include
+
+Name: FreeType 2
+URL: https://freetype.org
+Description: A free, high-quality, and portable font engine.
+Version: 26.4.20
+Requires: 
+Libs: -L/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/lib -lfreetype
+Libs.private: 
+Cflags: -I${includedir}/freetype2

@@ -1,0 +1,70 @@
+{
+    "arch": "x86_64",
+    "build": "h68bc16d_17",
+    "build_number": 17,
+    "build_string": "h68bc16d_17",
+    "channel": "conda-forge",
+    "constrains": [
+        "libgfortran 15.2.0"
+    ],
+    "depends": [
+        "__glibc >=2.17,<3.0.a0",
+        "libgcc >=15.2.0"
+    ],
+    "extracted_package_dir": "/home/adduser/.local/share/mamba/pkgs/libgfortran5-15.2.0-h68bc16d_17",
+    "files": [
+        "lib/libgfortran.so",
+        "lib/libgfortran.so.5",
+        "lib/libgfortran.so.5.0.0",
+        "share/licenses/libgfortran/RUNTIME.LIBRARY.EXCEPTION"
+    ],
+    "fn": "libgfortran5-15.2.0-h68bc16d_17.conda",
+    "license": "GPL-3.0-only WITH GCC-exception-3.1",
+    "link": {
+        "source": "/home/adduser/.local/share/mamba/pkgs/libgfortran5-15.2.0-h68bc16d_17",
+        "type": 1
+    },
+    "md5": "202fdf8cad9eea704c2b0d823d1732bf",
+    "name": "libgfortran5",
+    "package_tarball_full_path": "/home/adduser/.local/share/mamba/pkgs/libgfortran5-15.2.0-h68bc16d_17.tar.bz2",
+    "paths_data": {
+        "paths": [
+            {
+                "_path": "lib/libgfortran.so",
+                "path_type": "softlink",
+                "sha256_in_prefix": "aa71a66faa0a14d0240cf7c1eaa902cdcfb7fc0d5395bf4fc0fb877e859e836c",
+                "size_in_bytes": 11324144
+            },
+            {
+                "_path": "lib/libgfortran.so.5",
+                "path_type": "softlink",
+                "sha256_in_prefix": "aa71a66faa0a14d0240cf7c1eaa902cdcfb7fc0d5395bf4fc0fb877e859e836c",
+                "size_in_bytes": 11324144
+            },
+            {
+                "_path": "lib/libgfortran.so.5.0.0",
+                "path_type": "hardlink",
+                "sha256": "aa71a66faa0a14d0240cf7c1eaa902cdcfb7fc0d5395bf4fc0fb877e859e836c",
+                "sha256_in_prefix": "aa71a66faa0a14d0240cf7c1eaa902cdcfb7fc0d5395bf4fc0fb877e859e836c",
+                "size_in_bytes": 11324144
+            },
+            {
+                "_path": "share/licenses/libgfortran/RUNTIME.LIBRARY.EXCEPTION",
+                "path_type": "hardlink",
+                "sha256": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74",
+                "sha256_in_prefix": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74",
+                "size_in_bytes": 3324
+            }
+        ],
+        "paths_version": 1
+    },
+    "platform": "linux",
+    "requested_spec": "",
+    "sha256": "b1c77b85da9a3e204de986f59e262268805c6a35dffdf3953f1b98407db2aef3",
+    "size": 2480824,
+    "subdir": "linux-64",
+    "timestamp": 1770252563,
+    "track_features": "",
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libgfortran5-15.2.0-h68bc16d_17.conda",
+    "version": "15.2.0"
+}

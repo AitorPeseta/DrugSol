@@ -1,0 +1,12 @@
+prefix=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual
+exec_prefix=${prefix}
+libdir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/lib
+includedir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/include
+
+Name: absl_log_streamer
+Description: Abseil log_streamer library
+URL: https://abseil.io/
+Version: 20250512
+Requires: absl_config = 20250512, absl_absl_log = 20250512, absl_log_severity = 20250512, absl_optional = 20250512, absl_strings = 20250512, absl_strings_internal = 20250512, absl_utility = 20250512
+Libs: -L${libdir}  
+Cflags: -I${includedir} -DNOMINMAX

@@ -1,0 +1,527 @@
+{
+    "arch": null,
+    "build": "pyhd8ed1ab_0",
+    "build_number": 0,
+    "build_string": "pyhd8ed1ab_0",
+    "channel": "conda-forge",
+    "constrains": [],
+    "depends": [
+        "freetype",
+        "python >=3.7"
+    ],
+    "extracted_package_dir": "/home/adduser/.local/share/mamba/pkgs/freetype-py-2.3.0-pyhd8ed1ab_0",
+    "files": [
+        "lib/python3.10/site-packages/freetype/__init__.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/__init__.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/ft_curve_tags.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/ft_encodings.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/ft_face_flags.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/ft_fstypes.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/ft_glyph_bbox_modes.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/ft_glyph_formats.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/ft_kerning_modes.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/ft_lcd_filters.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/ft_load_flags.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/ft_load_targets.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/ft_open_modes.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/ft_outline_flags.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/ft_pixel_modes.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/ft_render_modes.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/ft_stroker_borders.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/ft_stroker_linecaps.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/ft_stroker_linejoins.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/ft_style_flags.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/tt_adobe_ids.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/tt_apple_ids.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/tt_mac_ids.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/tt_mac_langids.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/tt_ms_ids.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/tt_ms_langids.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/tt_name_ids.py",
+        "lib/python3.10/site-packages/freetype/ft_enums/tt_platforms.py",
+        "lib/python3.10/site-packages/freetype/ft_errors.py",
+        "lib/python3.10/site-packages/freetype/ft_structs.py",
+        "lib/python3.10/site-packages/freetype/ft_types.py",
+        "lib/python3.10/site-packages/freetype/raw.py",
+        "lib/python3.10/site-packages/freetype_py-2.3.0.dist-info/INSTALLER",
+        "lib/python3.10/site-packages/freetype_py-2.3.0.dist-info/LICENSE.txt",
+        "lib/python3.10/site-packages/freetype_py-2.3.0.dist-info/METADATA",
+        "lib/python3.10/site-packages/freetype_py-2.3.0.dist-info/RECORD",
+        "lib/python3.10/site-packages/freetype_py-2.3.0.dist-info/REQUESTED",
+        "lib/python3.10/site-packages/freetype_py-2.3.0.dist-info/WHEEL",
+        "lib/python3.10/site-packages/freetype_py-2.3.0.dist-info/direct_url.json",
+        "lib/python3.10/site-packages/freetype_py-2.3.0.dist-info/top_level.txt",
+        "lib/python3.10/site-packages/freetype_py-2.3.0.dist-info/zip-safe",
+        "lib/python3.10/site-packages/freetype/__pycache__/__init__.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/__init__.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_curve_tags.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_encodings.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_face_flags.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_fstypes.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_glyph_bbox_modes.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_glyph_formats.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_kerning_modes.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_lcd_filters.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_load_flags.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_load_targets.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_open_modes.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_outline_flags.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_pixel_modes.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_render_modes.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_stroker_borders.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_stroker_linecaps.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_stroker_linejoins.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_style_flags.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/tt_adobe_ids.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/tt_apple_ids.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/tt_mac_ids.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/tt_mac_langids.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/tt_ms_ids.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/tt_ms_langids.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/tt_name_ids.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/tt_platforms.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/__pycache__/ft_errors.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/__pycache__/ft_structs.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/__pycache__/ft_types.cpython-310.pyc",
+        "lib/python3.10/site-packages/freetype/__pycache__/raw.cpython-310.pyc"
+    ],
+    "fn": "freetype-py-2.3.0-pyhd8ed1ab_0.tar.bz2",
+    "license": "BSD-3-Clause",
+    "license_family": "BSD",
+    "link": {
+        "source": "/home/adduser/.local/share/mamba/pkgs/freetype-py-2.3.0-pyhd8ed1ab_0",
+        "type": 1
+    },
+    "md5": "e4a165cdbbaed5bbb6e653b823156151",
+    "name": "freetype-py",
+    "noarch": "python",
+    "package_tarball_full_path": "/home/adduser/.local/share/mamba/pkgs/freetype-py-2.3.0-pyhd8ed1ab_0.tar.bz2",
+    "paths_data": {
+        "paths": [
+            {
+                "_path": "lib/python3.10/site-packages/freetype/__init__.py",
+                "path_type": "hardlink",
+                "sha256": "4ec3dbe8684b81b7d958529a8c7235d7e330913f02c571a1f49c0f74114ceba2",
+                "sha256_in_prefix": "4ec3dbe8684b81b7d958529a8c7235d7e330913f02c571a1f49c0f74114ceba2",
+                "size_in_bytes": 94542
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__init__.py",
+                "path_type": "hardlink",
+                "sha256": "2fc48f024521c003492dd95f3c7ee975662265936a6698c7811bdc33838d1dc2",
+                "sha256_in_prefix": "2fc48f024521c003492dd95f3c7ee975662265936a6698c7811bdc33838d1dc2",
+                "size_in_bytes": 5634
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/ft_curve_tags.py",
+                "path_type": "hardlink",
+                "sha256": "ccbb83cef0511edb4bd12991282345c8dac6b1bd99ea214336bbb81625a47a54",
+                "sha256_in_prefix": "ccbb83cef0511edb4bd12991282345c8dac6b1bd99ea214336bbb81625a47a54",
+                "size_in_bytes": 1604
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/ft_encodings.py",
+                "path_type": "hardlink",
+                "sha256": "2ce91052a14eec5afbd5a5eb2463553e8377e1fc950a323b1f4d38987d70d49b",
+                "sha256_in_prefix": "2ce91052a14eec5afbd5a5eb2463553e8377e1fc950a323b1f4d38987d70d49b",
+                "size_in_bytes": 4019
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/ft_face_flags.py",
+                "path_type": "hardlink",
+                "sha256": "0ef53680485dff9b76c06517b3c462bd80719c3b572000ad1e68db2c72044823",
+                "sha256_in_prefix": "0ef53680485dff9b76c06517b3c462bd80719c3b572000ad1e68db2c72044823",
+                "size_in_bytes": 4854
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/ft_fstypes.py",
+                "path_type": "hardlink",
+                "sha256": "e9d43b51cd60cabce66192e71c15ae5f8bcf020ceda22e6022c0a72921baf12e",
+                "sha256_in_prefix": "e9d43b51cd60cabce66192e71c15ae5f8bcf020ceda22e6022c0a72921baf12e",
+                "size_in_bytes": 2490
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/ft_glyph_bbox_modes.py",
+                "path_type": "hardlink",
+                "sha256": "b66510a241641300aac96d0b64178a9b3a11562e3455d1fa7ad84cb59eaecb96",
+                "sha256_in_prefix": "b66510a241641300aac96d0b64178a9b3a11562e3455d1fa7ad84cb59eaecb96",
+                "size_in_bytes": 1001
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/ft_glyph_formats.py",
+                "path_type": "hardlink",
+                "sha256": "b0e9cd8335c8a498fd66489de6c67773b53db6f4b4e4571e664a0b0c30c11d9a",
+                "sha256_in_prefix": "b0e9cd8335c8a498fd66489de6c67773b53db6f4b4e4571e664a0b0c30c11d9a",
+                "size_in_bytes": 2276
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/ft_kerning_modes.py",
+                "path_type": "hardlink",
+                "sha256": "0c2b76095d461f74a5d98b01e8af5c29536941fd63a73467e80ab9bfbcc59305",
+                "sha256_in_prefix": "0c2b76095d461f74a5d98b01e8af5c29536941fd63a73467e80ab9bfbcc59305",
+                "size_in_bytes": 825
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/ft_lcd_filters.py",
+                "path_type": "hardlink",
+                "sha256": "955ab43ee8884552dfc0d454f8cff8cb188ecb3faafbe4aba4daf25425f0d3b7",
+                "sha256_in_prefix": "955ab43ee8884552dfc0d454f8cff8cb188ecb3faafbe4aba4daf25425f0d3b7",
+                "size_in_bytes": 1578
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/ft_load_flags.py",
+                "path_type": "hardlink",
+                "sha256": "5e702acc326a5cc5706cd9a6cd989d7265a86c0ae8c98aafa859c4cbc2b21882",
+                "sha256_in_prefix": "5e702acc326a5cc5706cd9a6cd989d7265a86c0ae8c98aafa859c4cbc2b21882",
+                "size_in_bytes": 6458
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/ft_load_targets.py",
+                "path_type": "hardlink",
+                "sha256": "e08428db150b4d69d21acdd5af286c71433225f8186643fbd3adf889f80cdb4d",
+                "sha256_in_prefix": "e08428db150b4d69d21acdd5af286c71433225f8186643fbd3adf889f80cdb4d",
+                "size_in_bytes": 2226
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/ft_open_modes.py",
+                "path_type": "hardlink",
+                "sha256": "3566950d1eea7bdef62bef151955a8e048fa83ded974a90bca33ab8b5e619e3a",
+                "sha256_in_prefix": "3566950d1eea7bdef62bef151955a8e048fa83ded974a90bca33ab8b5e619e3a",
+                "size_in_bytes": 947
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/ft_outline_flags.py",
+                "path_type": "hardlink",
+                "sha256": "c809f81056058bae7841d438d7fbcede8090b2395efaf32aae1fb249327f85a1",
+                "sha256_in_prefix": "c809f81056058bae7841d438d7fbcede8090b2395efaf32aae1fb249327f85a1",
+                "size_in_bytes": 2936
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/ft_pixel_modes.py",
+                "path_type": "hardlink",
+                "sha256": "844ad0cd2cdafb5d539c324ad356303cd186f203c3dabeb90b9004cfbf860d12",
+                "sha256_in_prefix": "844ad0cd2cdafb5d539c324ad356303cd186f203c3dabeb90b9004cfbf860d12",
+                "size_in_bytes": 2456
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/ft_render_modes.py",
+                "path_type": "hardlink",
+                "sha256": "153084460fdaa8287cbdf4842d6892ec96d08a88d6ab660da8cd9c35278ec338",
+                "sha256_in_prefix": "153084460fdaa8287cbdf4842d6892ec96d08a88d6ab660da8cd9c35278ec338",
+                "size_in_bytes": 2438
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/ft_stroker_borders.py",
+                "path_type": "hardlink",
+                "sha256": "9760688ac3e03811a3a7889773e545db2dfc73bdfee6dda1f3fbd0419d58364b",
+                "sha256_in_prefix": "9760688ac3e03811a3a7889773e545db2dfc73bdfee6dda1f3fbd0419d58364b",
+                "size_in_bytes": 1131
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/ft_stroker_linecaps.py",
+                "path_type": "hardlink",
+                "sha256": "b2ec0ee5bd248543c5b7fad127662cf0ab0627dcb5587cd9855c62f6c815608a",
+                "sha256_in_prefix": "b2ec0ee5bd248543c5b7fad127662cf0ab0627dcb5587cd9855c62f6c815608a",
+                "size_in_bytes": 910
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/ft_stroker_linejoins.py",
+                "path_type": "hardlink",
+                "sha256": "ef99bd2d0652557f23903cb1021f2be06b124df7797861005916cf06abad5acd",
+                "sha256_in_prefix": "ef99bd2d0652557f23903cb1021f2be06b124df7797861005916cf06abad5acd",
+                "size_in_bytes": 1092
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/ft_style_flags.py",
+                "path_type": "hardlink",
+                "sha256": "7fa40312fb31df7340a20b5f0a2c2de7601676927cc90740e6622ffdb5c1a2e9",
+                "sha256_in_prefix": "7fa40312fb31df7340a20b5f0a2c2de7601676927cc90740e6622ffdb5c1a2e9",
+                "size_in_bytes": 717
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/tt_adobe_ids.py",
+                "path_type": "hardlink",
+                "sha256": "c8a6c678eb5e1b1b0ad85ff1497c0c2782e6c3d81f7be6a04ff691109803d93c",
+                "sha256_in_prefix": "c8a6c678eb5e1b1b0ad85ff1497c0c2782e6c3d81f7be6a04ff691109803d93c",
+                "size_in_bytes": 813
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/tt_apple_ids.py",
+                "path_type": "hardlink",
+                "sha256": "4df0f1be70a4e7e03990fc39349e57da9ecdbb5419c29a8df9ce6f4ddc017737",
+                "sha256_in_prefix": "4df0f1be70a4e7e03990fc39349e57da9ecdbb5419c29a8df9ce6f4ddc017737",
+                "size_in_bytes": 1169
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/tt_mac_ids.py",
+                "path_type": "hardlink",
+                "sha256": "0d09ea014907febe0b6a5019272cd46aee7ea3b87b288d0638df43b5fab1ef1c",
+                "sha256_in_prefix": "0d09ea014907febe0b6a5019272cd46aee7ea3b87b288d0638df43b5fab1ef1c",
+                "size_in_bytes": 2564
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/tt_mac_langids.py",
+                "path_type": "hardlink",
+                "sha256": "864c1712e167cdad102adeb0854cad989812ecc190b9d3bbb28a4b3259630ace",
+                "sha256_in_prefix": "864c1712e167cdad102adeb0854cad989812ecc190b9d3bbb28a4b3259630ace",
+                "size_in_bytes": 9944
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/tt_ms_ids.py",
+                "path_type": "hardlink",
+                "sha256": "7a2913553b86d107a805c218881fdd05f3b40ee89e418523a578adeed321b910",
+                "sha256_in_prefix": "7a2913553b86d107a805c218881fdd05f3b40ee89e418523a578adeed321b910",
+                "size_in_bytes": 1525
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/tt_ms_langids.py",
+                "path_type": "hardlink",
+                "sha256": "e5f7c220841cee7cbe33b3226c432e12aaf391154112e0dd6ca3ac52b8e3e00a",
+                "sha256_in_prefix": "e5f7c220841cee7cbe33b3226c432e12aaf391154112e0dd6ca3ac52b8e3e00a",
+                "size_in_bytes": 23686
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/tt_name_ids.py",
+                "path_type": "hardlink",
+                "sha256": "0750293291c988cf4728a1b440c57eb28fda0b6b80456c61a32d0c344c2d1561",
+                "sha256_in_prefix": "0750293291c988cf4728a1b440c57eb28fda0b6b80456c61a32d0c344c2d1561",
+                "size_in_bytes": 2216
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/tt_platforms.py",
+                "path_type": "hardlink",
+                "sha256": "5d9d0b6af1094c9b867a30e85af55dfd4f702e6390e287141deee03c76655711",
+                "sha256_in_prefix": "5d9d0b6af1094c9b867a30e85af55dfd4f702e6390e287141deee03c76655711",
+                "size_in_bytes": 1984
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_errors.py",
+                "path_type": "hardlink",
+                "sha256": "fb687b6cae40a41199306d97a3f863d3254ee6a5882a69647ec9d55b29d01067",
+                "sha256_in_prefix": "fb687b6cae40a41199306d97a3f863d3254ee6a5882a69647ec9d55b29d01067",
+                "size_in_bytes": 4522
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_structs.py",
+                "path_type": "hardlink",
+                "sha256": "4c4aabee4fb5fabf762df239d101d1faa7821c4a77aa05a41b240e17e7799094",
+                "sha256_in_prefix": "4c4aabee4fb5fabf762df239d101d1faa7821c4a77aa05a41b240e17e7799094",
+                "size_in_bytes": 38531
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_types.py",
+                "path_type": "hardlink",
+                "sha256": "118767c3fba3503669bf3d76810482c6ea5f2ea820b5040c1581f26bea7d2d49",
+                "sha256_in_prefix": "118767c3fba3503669bf3d76810482c6ea5f2ea820b5040c1581f26bea7d2d49",
+                "size_in_bytes": 5701
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/raw.py",
+                "path_type": "hardlink",
+                "sha256": "305913db947a6ce4badd5de95264b4dff8b94f148096a3d9ba70793fab4e4e4a",
+                "sha256_in_prefix": "305913db947a6ce4badd5de95264b4dff8b94f148096a3d9ba70793fab4e4e4a",
+                "size_in_bytes": 12618
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype_py-2.3.0.dist-info/INSTALLER",
+                "path_type": "hardlink",
+                "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+                "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+                "size_in_bytes": 5
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype_py-2.3.0.dist-info/LICENSE.txt",
+                "path_type": "hardlink",
+                "sha256": "60386caf4d85fb57b5cc5470f1a00de1692fb28e8b731f7f9187f64451dbe641",
+                "sha256_in_prefix": "60386caf4d85fb57b5cc5470f1a00de1692fb28e8b731f7f9187f64451dbe641",
+                "size_in_bytes": 1585
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype_py-2.3.0.dist-info/METADATA",
+                "path_type": "hardlink",
+                "sha256": "d0847ba33f9630298e3c1cfe59f7e2137a39f5d73ccb4462958afe391a1c29ab",
+                "sha256_in_prefix": "d0847ba33f9630298e3c1cfe59f7e2137a39f5d73ccb4462958afe391a1c29ab",
+                "size_in_bytes": 6154
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype_py-2.3.0.dist-info/RECORD",
+                "path_type": "hardlink",
+                "sha256": "becfea7d945720fccba469801deb9bda1518d44df47c82f60a1ee223b5549a45",
+                "sha256_in_prefix": "becfea7d945720fccba469801deb9bda1518d44df47c82f60a1ee223b5549a45",
+                "size_in_bytes": 5644
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype_py-2.3.0.dist-info/REQUESTED",
+                "path_type": "hardlink",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype_py-2.3.0.dist-info/WHEEL",
+                "path_type": "hardlink",
+                "sha256": "1b5e87e00dc87a84269cead8578b9e6462928e18a95f1f3373c9eef451a5bcc0",
+                "sha256_in_prefix": "1b5e87e00dc87a84269cead8578b9e6462928e18a95f1f3373c9eef451a5bcc0",
+                "size_in_bytes": 92
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype_py-2.3.0.dist-info/direct_url.json",
+                "path_type": "hardlink",
+                "sha256": "8712d37cab080159cf248d39e4cc7e952250044f1368f0c1dd1f4f5ce1b16f4b",
+                "sha256_in_prefix": "8712d37cab080159cf248d39e4cc7e952250044f1368f0c1dd1f4f5ce1b16f4b",
+                "size_in_bytes": 107
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype_py-2.3.0.dist-info/top_level.txt",
+                "path_type": "hardlink",
+                "sha256": "4c08741b426834f7952b1389f1c4f4a25629f49948ec1758fc0be0b17bf6038b",
+                "sha256_in_prefix": "4c08741b426834f7952b1389f1c4f4a25629f49948ec1758fc0be0b17bf6038b",
+                "size_in_bytes": 9
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype_py-2.3.0.dist-info/zip-safe",
+                "path_type": "hardlink",
+                "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+                "sha256_in_prefix": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+                "size_in_bytes": 1
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/__pycache__/__init__.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/__init__.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_curve_tags.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_encodings.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_face_flags.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_fstypes.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_glyph_bbox_modes.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_glyph_formats.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_kerning_modes.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_lcd_filters.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_load_flags.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_load_targets.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_open_modes.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_outline_flags.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_pixel_modes.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_render_modes.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_stroker_borders.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_stroker_linecaps.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_stroker_linejoins.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/ft_style_flags.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/tt_adobe_ids.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/tt_apple_ids.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/tt_mac_ids.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/tt_mac_langids.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/tt_ms_ids.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/tt_ms_langids.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/tt_name_ids.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/ft_enums/__pycache__/tt_platforms.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/__pycache__/ft_errors.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/__pycache__/ft_structs.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/__pycache__/ft_types.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/freetype/__pycache__/raw.cpython-310.pyc",
+                "path_type": "pyc_file"
+            }
+        ],
+        "paths_version": 1
+    },
+    "platform": null,
+    "requested_spec": "",
+    "sha256": "bfa5ddb943992643a2ee2e258507beac2bdb17825e74d05f1bb0b79bb2c924fc",
+    "size": 58932,
+    "subdir": "noarch",
+    "timestamp": 1650983451,
+    "track_features": "",
+    "url": "https://conda.anaconda.org/conda-forge/noarch/freetype-py-2.3.0-pyhd8ed1ab_0.tar.bz2",
+    "version": "2.3.0"
+}

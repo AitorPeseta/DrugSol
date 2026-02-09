@@ -1,0 +1,12 @@
+prefix=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual
+exec_prefix=${prefix}
+libdir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/lib
+includedir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/include
+
+Name: absl_decode_rust_punycode
+Description: Abseil decode_rust_punycode library
+URL: https://abseil.io/
+Version: 20250512
+Requires: absl_bounded_utf8_length_sequence = 20250512, absl_config = 20250512, absl_nullability = 20250512, absl_utf8_for_code_point = 20250512
+Libs: -L${libdir}  -labsl_decode_rust_punycode 
+Cflags: -I${includedir} -DNOMINMAX

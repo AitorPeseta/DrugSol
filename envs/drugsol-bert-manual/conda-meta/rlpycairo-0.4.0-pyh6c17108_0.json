@@ -1,0 +1,135 @@
+{
+    "arch": null,
+    "build": "pyh6c17108_0",
+    "build_number": 0,
+    "build_string": "pyh6c17108_0",
+    "channel": "conda-forge",
+    "constrains": [],
+    "depends": [
+        "freetype-py >=2.3",
+        "pycairo >=1.20.0",
+        "python >=3.10"
+    ],
+    "extracted_package_dir": "/home/adduser/.local/share/mamba/pkgs/rlpycairo-0.4.0-pyh6c17108_0",
+    "files": [
+        "lib/python3.10/site-packages/rlPyCairo/__init__.py",
+        "lib/python3.10/site-packages/rlPyCairo/gstate.py",
+        "lib/python3.10/site-packages/rlPyCairo/pil2pict.py",
+        "lib/python3.10/site-packages/rlpycairo-0.4.0.dist-info/INSTALLER",
+        "lib/python3.10/site-packages/rlpycairo-0.4.0.dist-info/METADATA",
+        "lib/python3.10/site-packages/rlpycairo-0.4.0.dist-info/RECORD",
+        "lib/python3.10/site-packages/rlpycairo-0.4.0.dist-info/REQUESTED",
+        "lib/python3.10/site-packages/rlpycairo-0.4.0.dist-info/WHEEL",
+        "lib/python3.10/site-packages/rlpycairo-0.4.0.dist-info/direct_url.json",
+        "lib/python3.10/site-packages/rlpycairo-0.4.0.dist-info/top_level.txt",
+        "lib/python3.10/site-packages/rlPyCairo/__pycache__/__init__.cpython-310.pyc",
+        "lib/python3.10/site-packages/rlPyCairo/__pycache__/gstate.cpython-310.pyc",
+        "lib/python3.10/site-packages/rlPyCairo/__pycache__/pil2pict.cpython-310.pyc"
+    ],
+    "fn": "rlpycairo-0.4.0-pyh6c17108_0.conda",
+    "license": "BSD-3-Clause",
+    "license_family": "BSD",
+    "link": {
+        "source": "/home/adduser/.local/share/mamba/pkgs/rlpycairo-0.4.0-pyh6c17108_0",
+        "type": 1
+    },
+    "md5": "cc70086eaf08be7f62fd44842c013916",
+    "name": "rlpycairo",
+    "noarch": "python",
+    "package_tarball_full_path": "/home/adduser/.local/share/mamba/pkgs/rlpycairo-0.4.0-pyh6c17108_0.tar.bz2",
+    "paths_data": {
+        "paths": [
+            {
+                "_path": "lib/python3.10/site-packages/rlPyCairo/__init__.py",
+                "path_type": "hardlink",
+                "sha256": "50ce69f47794b08b03f255829e2a1345d134119266c4d5b4e44f190934eb17e3",
+                "sha256_in_prefix": "50ce69f47794b08b03f255829e2a1345d134119266c4d5b4e44f190934eb17e3",
+                "size_in_bytes": 200
+            },
+            {
+                "_path": "lib/python3.10/site-packages/rlPyCairo/gstate.py",
+                "path_type": "hardlink",
+                "sha256": "1ff97d5ece0d1f6183dc1de7ed61b74e28e332865cfa32d4068439b72f176665",
+                "sha256_in_prefix": "1ff97d5ece0d1f6183dc1de7ed61b74e28e332865cfa32d4068439b72f176665",
+                "size_in_bytes": 8937
+            },
+            {
+                "_path": "lib/python3.10/site-packages/rlPyCairo/pil2pict.py",
+                "path_type": "hardlink",
+                "sha256": "51104e51d8c483b6703819e76b0d8116d2244f53c70e588474382ab427161214",
+                "sha256_in_prefix": "51104e51d8c483b6703819e76b0d8116d2244f53c70e588474382ab427161214",
+                "size_in_bytes": 4494
+            },
+            {
+                "_path": "lib/python3.10/site-packages/rlpycairo-0.4.0.dist-info/INSTALLER",
+                "path_type": "hardlink",
+                "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+                "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+                "size_in_bytes": 5
+            },
+            {
+                "_path": "lib/python3.10/site-packages/rlpycairo-0.4.0.dist-info/METADATA",
+                "path_type": "hardlink",
+                "sha256": "7ce045e1d35dcf7edde27733a59fd91145936ea43bba7a349c84389dae5adbc0",
+                "sha256_in_prefix": "7ce045e1d35dcf7edde27733a59fd91145936ea43bba7a349c84389dae5adbc0",
+                "size_in_bytes": 4927
+            },
+            {
+                "_path": "lib/python3.10/site-packages/rlpycairo-0.4.0.dist-info/RECORD",
+                "path_type": "hardlink",
+                "sha256": "c62f31a196520e07d1df05ffe39fe69befa898a8bc23c2ee79fdaf5857a6e17a",
+                "sha256_in_prefix": "c62f31a196520e07d1df05ffe39fe69befa898a8bc23c2ee79fdaf5857a6e17a",
+                "size_in_bytes": 970
+            },
+            {
+                "_path": "lib/python3.10/site-packages/rlpycairo-0.4.0.dist-info/REQUESTED",
+                "path_type": "hardlink",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/rlpycairo-0.4.0.dist-info/WHEEL",
+                "path_type": "hardlink",
+                "sha256": "ff309ddcdd65ebd02bc724dbf2bcc4a0ff53a5b61792a44548d383e4ebb19d3b",
+                "sha256_in_prefix": "ff309ddcdd65ebd02bc724dbf2bcc4a0ff53a5b61792a44548d383e4ebb19d3b",
+                "size_in_bytes": 91
+            },
+            {
+                "_path": "lib/python3.10/site-packages/rlpycairo-0.4.0.dist-info/direct_url.json",
+                "path_type": "hardlink",
+                "sha256": "8e890cd36a57170bfe858d317f5439af9e8ba3c4066ffe04f3005635783f85ec",
+                "sha256_in_prefix": "8e890cd36a57170bfe858d317f5439af9e8ba3c4066ffe04f3005635783f85ec",
+                "size_in_bytes": 105
+            },
+            {
+                "_path": "lib/python3.10/site-packages/rlpycairo-0.4.0.dist-info/top_level.txt",
+                "path_type": "hardlink",
+                "sha256": "8705f2d89b0d1d5b4cd1397dc14dd3a095b1fb364904795d6004a04588057190",
+                "sha256_in_prefix": "8705f2d89b0d1d5b4cd1397dc14dd3a095b1fb364904795d6004a04588057190",
+                "size_in_bytes": 10
+            },
+            {
+                "_path": "lib/python3.10/site-packages/rlPyCairo/__pycache__/__init__.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/rlPyCairo/__pycache__/gstate.cpython-310.pyc",
+                "path_type": "pyc_file"
+            },
+            {
+                "_path": "lib/python3.10/site-packages/rlPyCairo/__pycache__/pil2pict.cpython-310.pyc",
+                "path_type": "pyc_file"
+            }
+        ],
+        "paths_version": 1
+    },
+    "platform": null,
+    "requested_spec": "",
+    "sha256": "8d993b1a7d869855a1f6358dcc3de08dbeda9263d8c852d44bfc3900701c1e6c",
+    "size": 15558,
+    "subdir": "noarch",
+    "timestamp": 1756864268,
+    "track_features": "",
+    "url": "https://conda.anaconda.org/conda-forge/noarch/rlpycairo-0.4.0-pyh6c17108_0.conda",
+    "version": "0.4.0"
+}

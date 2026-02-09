@@ -479,3 +479,60 @@
 2026-01-19 11:32:29	9m 20s	furious_brattain	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	bd13f9b8-3793-4e05-8870-bc8245173ba0	nextflow run main.nf --mode research --n_iterations 10 -profile gpu_high -resume
 2026-01-19 11:45:06	2h 6m	loquacious_noether	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	bd13f9b8-3793-4e05-8870-bc8245173ba0	nextflow run main.nf --mode research --n_iterations 10 -profile gpu_high -resume
 2026-01-19 14:08:33	4m 23s	romantic_goldberg	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	bd13f9b8-3793-4e05-8870-bc8245173ba0	nextflow run main.nf --mode research --n_iterations 10 -profile gpu_high -resume
+2026-01-26 18:19:32	53.4s	focused_mandelbrot	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	1098d647-d9a2-4d9e-b27a-91a84aa815c1	nextflow run main.nf --mode research --profiles gpu_small
+2026-01-26 18:22:53	6h 32s	silly_liskov	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research --profiles gpu_small
+2026-01-27 00:23:33	-	serene_goldwasser	-	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research --profiles gpu_small -resume
+2026-01-27 10:40:36	3h 35m 40s	fabulous_brazil	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research --profiles gpu_small -resume
+2026-01-27 15:07:54	17.5s	peaceful_ptolemy	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research --profiles gpu_small -resume
+2026-01-27 15:09:51	14.5s	pensive_salas	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research --profiles gpu_small -resume
+2026-01-27 15:11:43	1m 50s	zen_carlsson	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research --profiles gpu_small -resume
+2026-01-27 15:14:43	7.4s	condescending_curie	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small -resume
+2026-01-27 15:17:16	21m 41s	berserk_pare	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small -resume
+2026-01-27 17:35:25	5h 20m 46s	special_perlman	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research --profiles gpu_small -resume
+2026-01-27 22:56:22	1d 18h 2m	sleepy_bose	OK	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small -resume
+2026-01-29 17:19:14	6h 18m 33s	crazy_bhaskara	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-01-30 11:41:34	3m 51s	intergalactic_babbage	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-01-30 13:50:08	20h 51m 31s	furious_knuth	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-01-31 10:42:28	50s	awesome_blackwell	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-01-31 14:19:08	3h 35m 12s	distraught_gutenberg	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-01-31 18:22:57	-	determined_turing	-	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-01 11:40:00	1d 2h 35s	special_goldberg	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-02 13:43:42	5m 29s	festering_bohr	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-02 13:49:17	3m 9s	spontaneous_jepsen	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-02 13:54:10	3m 4s	exotic_austin	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-02 13:58:43	3m 7s	pensive_angela	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-02 14:03:34	6m 7s	magical_wegener	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-02 15:27:41	6m 40s	focused_rosalind	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-02 15:37:20	3m 21s	special_hypatia	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-02 16:08:57	2m 46s	peaceful_baekeland	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-02 16:14:15	3m 22s	silly_wegener	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-02 16:20:58	30m 32s	mighty_avogadro	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-02 16:53:56	1h 15m 32s	dreamy_fourier	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-02 18:11:24	54m 43s	sick_wescoff	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-02 19:14:20	9m 25s	disturbed_sammet	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-03 12:18:39	7m 20s	adoring_boltzmann	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-03 12:39:00	53m 10s	voluminous_majorana	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-03 13:36:14	2d 3h 28m 36s	voluminous_minsky	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-05 17:05:41	1m 8s	big_galileo	ERR	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-05 17:07:29	36m 58s	boring_mclean	OK	f2b0b83ba60175d4cf087e3263ab3fcb	5567270a-a7ce-48a5-a348-8b67e1dd6f4e	nextflow run main.nf --mode research -profile gpu_small --n_iterations 5 -resume
+2026-02-06 11:31:42	-	drunk_poitras	-	28f2906ef3734c1d94475250c605ae5f	812e126f-ff31-40c5-8dd3-6c31b0f2c47e	nextflow run main.nf --help
+2026-02-06 11:35:42	-	gloomy_miescher	-	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --help
+2026-02-06 11:38:14	-	nice_bell	-	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
+2026-02-06 11:41:42	-	drunk_solvay	-	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
+2026-02-06 11:42:16	-	serene_carlsson	-	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
+2026-02-06 11:43:43	-	cranky_williams	-	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
+2026-02-06 11:44:08	-	astonishing_ptolemy	-	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
+2026-02-06 11:45:16	-	admiring_torvalds	-	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
+2026-02-06 11:49:39	17.5s	awesome_sammet	ERR	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
+2026-02-06 11:54:39	7m 58s	hopeful_tesla	ERR	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
+2026-02-06 12:02:42	18m 2s	agitated_legentil	ERR	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
+2026-02-06 13:56:03	22m	fabulous_salas	ERR	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
+2026-02-06 15:59:46	16.2s	insane_franklin	ERR	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
+2026-02-06 16:00:48	12.8s	hopeful_fermi	ERR	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
+2026-02-06 16:01:33	13.1s	pedantic_woese	ERR	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
+2026-02-06 16:23:52	9m 2s	cranky_shannon	ERR	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
+2026-02-06 16:38:33	12m 41s	hopeful_saha	ERR	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --mode research -profile gpu_small -resume
+2026-02-06 16:51:27	57s	lethal_pare	ERR	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
+2026-02-06 17:02:43	43m 21s	cheesy_morse	ERR	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
+2026-02-06 17:56:56	20.2s	jolly_knuth	ERR	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
+2026-02-06 17:58:43	8m 12s	fervent_hodgkin	ERR	28f2906ef3734c1d94475250c605ae5f	831d362a-ee1c-47ca-bef9-2d4d0097f430	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume

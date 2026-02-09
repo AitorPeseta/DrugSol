@@ -1,0 +1,16 @@
+#libevent pkg-config source file
+
+prefix=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual
+exec_prefix=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual
+libdir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/lib
+includedir=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/include
+
+Name: libevent_openssl
+Description: libevent_openssl adds openssl-based TLS support to libevent
+Version: 2.1.12
+Requires: libevent
+Conflicts:
+Libs: -L${libdir} -levent_openssl
+Libs.private:   -L/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/lib/libssl.so -L/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual/lib/libcrypto.so
+Cflags: -I${includedir} 
+
