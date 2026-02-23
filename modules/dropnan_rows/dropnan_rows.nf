@@ -40,7 +40,7 @@ process dropnan_rows {
     tag "Clean Rows (${mode})"
     label 'cpu_small'
     
-    conda "${baseDir}/envs/drugsol-data.yml"
+    conda "${params.conda_env_data}"
     
     publishDir "${params.outdir}/prepare_data/${meta_id}/final", mode: 'copy', overwrite: true
 

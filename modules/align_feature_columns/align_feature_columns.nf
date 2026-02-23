@@ -45,7 +45,7 @@ process align_feature_columns {
     tag "Align Test to Train"
     label 'cpu_small'
     
-    conda "${baseDir}/envs/drugsol-data.yml"
+    conda "${params.conda_env_data}"
     
     publishDir "${params.outdir}/prepare_data/${meta_id}/aligned", mode: 'copy', overwrite: true
 

@@ -53,7 +53,7 @@ process standardize_smiles {
     tag "Standardize Structure"
     label 'cpu_medium'
     
-    conda "${baseDir}/envs/drugsol-data.yml"
+    conda "${params.conda_env_data}"
     
     publishDir "${params.outdir}/curate", mode: 'copy', overwrite: true
 

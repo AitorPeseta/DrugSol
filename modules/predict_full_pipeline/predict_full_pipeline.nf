@@ -52,7 +52,7 @@ process predict_full_pipeline {
     tag "Inference"
     label 'cpu_medium'
     
-    conda "${baseDir}/envs/drugsol-train.yml"
+    conda "${params.conda_env_train}"
 
     publishDir "${params.outdir}/predictions", mode: 'copy'
 

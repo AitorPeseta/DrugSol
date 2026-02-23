@@ -47,7 +47,7 @@ process make_fingerprints {
     tag "ECFP4 & Butina Clustering #${iter_id}"
     label 'cpu_small'
     
-    conda "${baseDir}/envs/drugsol-data.yml"
+    conda "${params.conda_env_data}"
     
     publishDir "${params.outdir}/prepare_data/iter_${iter_id}", mode: 'copy', overwrite: true
 

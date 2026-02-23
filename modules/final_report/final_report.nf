@@ -54,7 +54,7 @@ process final_report {
     tag "Generate Final Report"
     label 'cpu_small'
     
-    conda "${baseDir}/envs/drugsol-train.yml"
+    conda "${params.conda_env_train}"
     
     publishDir "${params.outdir}/final_report/${meta_id}", mode: 'copy', overwrite: true
 

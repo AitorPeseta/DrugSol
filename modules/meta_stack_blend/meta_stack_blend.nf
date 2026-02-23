@@ -50,7 +50,7 @@ process meta_stack_blend {
     tag "Ensemble Stacking & Blending"
     label 'cpu_small'
     
-    conda "${baseDir}/envs/drugsol-train.yml"
+    conda "${params.conda_env_train}"
     
     publishDir "${params.outdir}/training/${meta_id}/ensemble", mode: 'copy', overwrite: true
 

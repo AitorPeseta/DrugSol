@@ -58,6 +58,7 @@ Notes:
     - Pure graph strategy avoids feature engineering noise
 """
 
+import os
 import argparse
 import json
 import shutil
@@ -68,6 +69,12 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_squared_error, r2_score
+
+os.environ["TORCH_ALLOW_W_O_SERIALIZATION"] = "1"
+
+import torch
+if hasattr(torch.serialization, 'add_safe_globals'):
+    torch.serialization.add_safe_globals([argparse.Namespace])
 
 try:
     import optuna
@@ -93,7 +100,8 @@ def read_data(path: str) -> pd.DataFrame:
 
 def calc_metrics(y_true, y_pred) -> dict:
     """Calculate regression metrics."""
-    rmse = mean_squared_error(y_true, y_pred, squared=False)
+    mse = mean_squared_error(y_true, y_pred)
+    rmse = np.sqrt(mse)
     r2 = r2_score(y_true, y_pred)
     return {"rmse": float(rmse), "r2": float(r2), "n": int(len(y_true))}
 
@@ -103,9 +111,11 @@ def calc_metrics(y_true, y_pred) -> dict:
 # ============================================================================
 
 def run_command(cmd, check=True):
-    """Run shell command with logging."""
+    """Run shell command with logging and PyTorch security bypass."""
     print(f"[CMD] {' '.join(map(str, cmd))}")
-    subprocess.run(cmd, check=check)
+    env = os.environ.copy()
+    env["TORCH_ALLOW_W_O_SERIALIZATION"] = "1"
+    subprocess.run(cmd, check=check, env=env)
 
 
 def chemprop_train(
@@ -432,7 +442,7 @@ def main():
                         else:
                             vals = pred.iloc[:, 0].values
                         
-                        rmse = mean_squared_error(vai[args.target].values, vals, squared=False)
+                        rmse = np.sqrt(mean_squared_error(vai[args.target].values, vals))                               
                         best_rmse = rmse
                         
                         trial.report(rmse, r_ep)
@@ -492,7 +502,7 @@ def main():
         
         oof.loc[oof["fold"] == k, "y_hat"] = vals
         
-        fold_rmse = mean_squared_error(va[args.target].values, vals, squared=False)
+        fold_rmse = np.sqrt(mean_squared_error(va[args.target].values, vals))        
         print(f"[Fold {k}] RMSE: {fold_rmse:.4f}")
     
     # -------------------------------------------------------------------------

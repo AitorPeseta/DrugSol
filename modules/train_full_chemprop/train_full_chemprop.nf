@@ -41,7 +41,7 @@ process train_full_chemprop {
     tag "Train Full Chemprop"
     label 'process_gpu'
     
-    conda "${baseDir}/envs/drugsol-train.yml"
+    conda "${params.conda_env_train}"
     
     publishDir "${params.outdir}/training/${meta_id}", mode: 'copy', overwrite: true
 

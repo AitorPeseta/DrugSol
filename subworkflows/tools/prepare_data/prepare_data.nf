@@ -195,13 +195,13 @@ workflow prepare_data {
                 Mordred: Comprehensive molecular descriptor calculator
             */
             
-            // Calculate Mordred descriptors for train and test
-            calc_mordred_train(train_ch, outdir_val, script_mordred, "train")
-            calc_mordred_test(test_ch,   outdir_val, script_mordred, "test")
-
             // Calculate ChemBERTa embeddings for train and test
             calc_bert_train(train_ch, outdir_val, script_bert, "train")
             calc_bert_test(test_ch, outdir_val, script_bert, "test")
+
+            // Calculate Mordred descriptors for train and test
+            calc_mordred_train(train_ch, outdir_val, script_mordred, "train")
+            calc_mordred_test(test_ch,   outdir_val, script_mordred, "test")
 
             // Merge Mordred and ChemBERTa features
             def ch_merge_train_input = calc_mordred_train.out.join(calc_bert_train.out)
@@ -214,8 +214,8 @@ workflow prepare_data {
             merge_test(ch_merge_test_input, outdir_val, script_merge, "test")
 
             // Filter low-variance and highly-correlated features
-            filter_feat_train(calc_mordred_train.out, outdir_val, script_filter, "train")
-            filter_feat_test(calc_mordred_test.out,   outdir_val, script_filter, "test")
+            filter_feat_train(merge_train.out, outdir_val, script_filter, "train")
+            filter_feat_test(merge_test.out,   outdir_val, script_filter, "test")
 
             // Align test columns to match train columns exactly
             // Critical: Ensures model sees identical feature space

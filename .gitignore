@@ -2,8 +2,8 @@
 work/
 .nextflow/
 envs/conda_cache/
+envs/logs
 results/
-# Captures .nextflow.log, .nextflow.log.1, .nextflow.log.2, etc.
 .nextflow.log*
 trace.txt*
 report.html*

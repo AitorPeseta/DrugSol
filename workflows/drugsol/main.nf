@@ -5,27 +5,20 @@ nextflow.enable.dsl = 2
 ========================================================================================
     DrugSol - Main Workflow Entrypoint
 ========================================================================================
-    Machine learning pipeline for aqueous solubility prediction.
-    
-    Modes:
-    - research: Full training pipeline (data curation → training → validation)
-    - execution: Inference on new molecules using trained model
-    
-    Author: Aitor Olivares Perucho
-    Version: 1.0.0
-----------------------------------------------------------------------------------------
 */
 
 log.info "[DrugSol] Nextflow ${nextflow.version} | DSL2 enabled"
 
 // ============================================================================
-// PARAMETERS (all defaults defined in nextflow.config)
+// PARAMETERS
 // ============================================================================
 
-// Ensure outdir is set based on mode if not overridden
 if (!params.containsKey('outdir') || params.outdir == null) {
     params.outdir = "${baseDir}/results/${params.mode ?: 'research'}"
 }
+
+// Default for skip_env_setup to avoid warning
+params.skip_env_setup = params.skip_env_setup ?: false
 
 // ============================================================================
 // INCLUDES
@@ -52,8 +45,9 @@ def helpMessage() {
         execution   Run inference on new molecules
     
     General Options:
-        --outdir        Output directory (default: results/<mode>)
-        --help          Show this help message
+        --outdir          Output directory (default: results/<mode>)
+        --help            Show this help message
+        --skip_env_setup  Skip environment setup (default: false)
     
     Research Mode Options:
         --n_iterations  Number of CV iterations (default: 10)
@@ -70,13 +64,6 @@ def helpMessage() {
         -profile gpu_small  Consumer GPU (e.g., RTX 3070)
         -profile gpu_high   High-end GPU (e.g., A5000, A6000)
     
-    Examples:
-        # Research mode with 5 CV iterations
-        nextflow run main.nf --mode research --n_iterations 5 -profile gpu_small
-        
-        # Execution mode on new molecules
-        nextflow run main.nf --mode execution --input molecules.csv -profile standard
-    
     ==========================================================
     """.stripIndent()
 }
@@ -90,15 +77,55 @@ def printHeader() {
     ==========================================================
       D R U G S O L   P I P E L I N E
     ==========================================================
-    Mode                : ${params.mode}
-    Input Data          : ${params.input ?: 'N/A'}
-    Output Dir          : ${params.outdir}
-    ----------------------------------------------------------
-    [Execution Params]
-    Model Override      : ${params.model ?: 'Auto-detect from results'}
-    Temp Range (K)      : ${params.temperature_K_Min ?: '-'} to ${params.temperature_K_Max ?: '-'}
+    Mode         : ${params.mode}
+    Output Dir   : ${params.outdir}
+    Iterations   : ${params.n_iterations ?: 'N/A'}
     ==========================================================
     """.stripIndent()
+}
+
+// ============================================================================
+// ENVIRONMENT SETUP
+// ============================================================================
+
+def setupEnvironments() {
+    if (params.skip_env_setup) {
+        log.info "[DrugSol] Skipping environment setup (--skip_env_setup=true)"
+        return true
+    }
+    
+    def setup_script = file("${baseDir}/envs/setup_environments.sh")
+    def envs_dir = "${baseDir}/envs"
+    
+    if (!setup_script.exists()) {
+        log.warn "[DrugSol] Setup script not found: ${setup_script}"
+        return true
+    }
+    
+    // Run setup script (output goes to log file, not console)
+    def cmd = ["bash", setup_script.toString(), params.mode, envs_dir]
+    def proc = cmd.execute()
+    
+    // Capture output but don't print verbose micromamba output
+    def stdout = new StringBuilder()
+    def stderr = new StringBuilder()
+    proc.consumeProcessOutput(stdout, stderr)
+    proc.waitFor()
+    
+    // Print only our formatted output (lines starting with [DrugSol])
+    stdout.toString().eachLine { line ->
+        if (line.startsWith("[DrugSol]")) {
+            log.info line
+        }
+    }
+    
+    if (proc.exitValue() != 0) {
+        log.error "[DrugSol] Environment setup failed!"
+        stderr.toString().eachLine { line -> log.error line }
+        System.exit(1)
+    }
+    
+    return true
 }
 
 // ============================================================================
@@ -111,26 +138,10 @@ def validateExecutionEnvironment() {
     def product_dir = file("${baseDir}/results/research/final_product/drugsol_model")
     def model_card  = file("${product_dir}/model_card.json")
     
-    boolean models_exist = product_dir.isDirectory() && model_card.exists()
-    
-    if (!models_exist) {
+    if (!product_dir.isDirectory() || !model_card.exists()) {
         error """
         [ERROR] Execution mode requires a trained model.
-        
-        Reason:
-        1. No '--model' parameter was provided.
-        2. A valid 'Final Product' was not found.
-           
-           Checked Location: 
-           - ${product_dir}
-           
-           Missing Artifact:
-           - model_card.json 
-        
-        Solution:
-        - Run with '--mode research' first to generate the final product.
-        - OR provide a specific model path with '--model /path/to/model'.
-        - OR ensure '--outdir' matches the directory used in the research phase.
+        Run '--mode research' first or provide '--model /path/to/model'.
         """
     }
 }
@@ -141,28 +152,23 @@ def validateExecutionEnvironment() {
 
 workflow drugsol {
     
-    // Show help if requested
     if (params.help) {
         helpMessage()
         exit 0
     }
     
     printHeader()
+    setupEnvironments()
     
-    // Pass all parameters to subworkflows
     def run_params = Channel.value(params)
     
     if (params.mode == 'research') {
-        
         research(run_params)
-        
     } else if (params.mode == 'execution') {
-        
         validateExecutionEnvironment()
         execution(run_params)
-        
     } else {
-        error "[ERROR] Invalid mode: '${params.mode}'. Valid options: 'research', 'execution'."
+        error "[ERROR] Invalid mode: '${params.mode}'. Use 'research' or 'execution'."
     }
 }
 

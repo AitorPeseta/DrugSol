@@ -41,7 +41,7 @@ process concat_datasets {
     tag "Merge Train+Test"
     label 'cpu_small'
     
-    conda "${baseDir}/envs/drugsol-data.yml"
+    conda "${params.conda_env_data}"
 
     input:
         path train_file   // Training data parquet

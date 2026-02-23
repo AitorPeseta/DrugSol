@@ -4,7 +4,7 @@ process histograms_columns {
     tag "EDA: Histograms"
     label 'cpu_small'
     
-    conda "${baseDir}/envs/drugsol-data.yml"
+    conda "${params.conda_env_data}"
     
     publishDir "${params.outdir}/analysis/${meta_id}", mode: 'copy', overwrite: true
 

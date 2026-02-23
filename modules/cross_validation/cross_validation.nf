@@ -49,7 +49,7 @@ process cross_validation {
     tag "CV Aggregation"
     label 'cpu_small'
     
-    conda "${baseDir}/envs/drugsol-data.yml"
+    conda "${params.conda_env_data}"
     
     publishDir "${params.outdir}/cross_validation", mode: 'copy', overwrite: true
 

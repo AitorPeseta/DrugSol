@@ -40,7 +40,7 @@ process consolidate_params {
     tag "Consolidating HPs"
     label 'process_low'
     
-    conda "${baseDir}/envs/drugsol-data.yml"
+    conda "${params.conda_env_data}"
 
     input:
         path json_files, stageAs: 'input_?'  // Accepts files or directories

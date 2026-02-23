@@ -47,7 +47,7 @@ process build_final_ensemble {
     tag "Build Final Product"
     label 'cpu_small'
     
-    conda "${baseDir}/envs/drugsol-train.yml"
+    conda "${params.conda_env_train}"
 
     publishDir "${params.outdir}/final_product", mode: 'copy', overwrite: true
 

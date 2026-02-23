@@ -45,7 +45,7 @@ process train_full_gbm {
     tag "Train Full GBM"
     label 'process_gpu'
     
-    conda "${baseDir}/envs/drugsol-train.yml"
+    conda "${params.conda_env_train}"
     
     publishDir "${params.outdir}/training/${meta_id}/models_GBM", mode: 'copy', overwrite: true
 

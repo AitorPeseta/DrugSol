@@ -4,7 +4,7 @@ process predict_real_solubility {
     tag "Physiological Solubility pH ${ph_val}"
     label 'cpu_small'
     
-    conda "${baseDir}/envs/drugsol-train.yml"
+    conda "${params.conda_env_train}"
     
     publishDir "${params.outdir}/predictions", mode: 'copy', overwrite: true
 

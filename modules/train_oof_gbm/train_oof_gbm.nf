@@ -50,7 +50,7 @@ process train_oof_gbm {
     tag "Train GBM (OOF)"
     label 'process_gpu'
     
-    conda "${baseDir}/envs/drugsol-train.yml"
+    conda "${params.conda_env_train}"
     
     publishDir "${params.outdir}/training/${meta_id}", mode: 'copy', overwrite: true
 

@@ -35,7 +35,7 @@ process merge_features {
     tag "Merge Features #${iter_id} (${split_name})"
     label 'cpu_small'
     
-    conda "${baseDir}/envs/drugsol-data.yml"
+    conda "${params.conda_env_data}"
     
     publishDir "${params.outdir}/prepare_data/iter_${iter_id}", mode: 'copy', overwrite: true
 
@@ -64,6 +64,7 @@ process merge_features {
     #!/usr/bin/env bash
     set -euo pipefail
    
+    python ${script_py} \\
         --primary "${primary_file}" \\
         --secondary "${secondary_file}" \\
         --output "${split_name}_merged_features.parquet" \\
@@ -87,7 +88,7 @@ process merge_features_multi {
     tag "Merge ${file_list.size()} Feature Sets #${iter_id} (${split_name})"
     label 'cpu_small'
     
-    conda "${baseDir}/envs/drugsol-data.yml"
+    conda "${params.conda_env_data}"
     
     publishDir "${params.outdir}/prepare_data/iter_${iter_id}", mode: 'copy', overwrite: true
 

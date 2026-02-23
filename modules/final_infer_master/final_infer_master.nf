@@ -45,7 +45,7 @@ process final_infer_master {
     tag "Final Inference"
     label 'cpu_medium'
     
-    conda "${baseDir}/envs/drugsol-train.yml"
+    conda "${params.conda_env_train}"
     
     publishDir "${params.outdir}/evaluation/${meta_id}", mode: 'copy', overwrite: true
 

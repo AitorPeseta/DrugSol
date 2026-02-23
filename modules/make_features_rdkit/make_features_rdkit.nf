@@ -45,7 +45,7 @@ process make_features_rdkit {
     tag "RDKit Descriptors (${dataset_name})"
     label 'cpu_small'
     
-    conda "${baseDir}/envs/drugsol-data.yml"
+    conda "${params.conda_env_data}"
     
     publishDir "${params.outdir}/prepare_data/${meta_id}/features", mode: 'copy', overwrite: true
 

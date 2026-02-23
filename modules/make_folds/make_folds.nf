@@ -45,7 +45,7 @@ process make_folds {
     tag "Generate CV Folds"
     label 'cpu_small'
     
-    conda "${baseDir}/envs/drugsol-data.yml"
+    conda "${params.conda_env_data}"
     
     publishDir "${params.outdir}/training/${meta_id}", mode: 'copy', overwrite: true
 

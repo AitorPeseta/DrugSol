@@ -40,7 +40,7 @@ process train_oof_chemprop {
     tag "Train Chemprop (OOF)"
     label 'process_gpu'
     
-    conda "${baseDir}/envs/drugsol-train.yml"
+    conda "${params.conda_env_train}"
     
     publishDir "${params.outdir}/training/${meta_id}", mode: 'copy', overwrite: true
 
@@ -72,20 +72,7 @@ process train_oof_chemprop {
         
     """
     set -euo pipefail
-
-    # MKL library preload for compatibility
-    echo "Setting up MKL libraries from: \$CONDA_PREFIX"
-    
-    export LD_PRELOAD=\$(find "\$CONDA_PREFIX/lib" -name "libmkl_core.so*" 2>/dev/null | head -n 1)
-    
-    if [ -z "\$LD_PRELOAD" ]; then
-        export LD_PRELOAD=\$(find "\$CONDA_PREFIX/lib" -name "libmkl_intel_lp64.so*" 2>/dev/null | head -n 1)
-    fi
-    
-    if [ -n "\$LD_PRELOAD" ]; then
-        echo "LD_PRELOAD set to: \$LD_PRELOAD"
-    fi
-    
+    export TORCH_ALLOW_W_O_SERIALIZATION=1
     python ${script_py} \\
         --train "${train_file}" \\
         --folds "${folds_file}" \\

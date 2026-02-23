@@ -42,7 +42,7 @@ process filter_water {
     tag "Filter Water"
     label 'cpu_small'
     
-    conda "${baseDir}/envs/drugsol-data.yml"
+    conda "${params.conda_env_data}"
     
     publishDir "${params.outdir}/curate", mode: 'copy', overwrite: true
 

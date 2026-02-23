@@ -45,7 +45,7 @@ process make_features_mordred {
     tag "Mordred Descriptors (${dataset_name})"
     label 'cpu_medium'
     
-    conda "${baseDir}/envs/drugsol-data.yml"
+    conda "${params.conda_env_data}"
     
     publishDir "${params.outdir}/prepare_data/${meta_id}/features", mode: 'copy', overwrite: true
     

@@ -1,8 +1,0 @@
-prefix=/mnt/c/URV/TFG/DrugSol/envs/drugsol-bert-manual
-includedir=${prefix}/include
-
-Name: cairo-xlib-xcb
-Description: Xlib/XCB functions for cairo graphics library
-Version: 1.18.4
-Requires: cairo, x11-xcb
-Cflags: -I${includedir}
