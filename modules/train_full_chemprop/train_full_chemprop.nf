@@ -85,7 +85,6 @@ process train_full_chemprop {
         --best-params "${best_params_json}" \\
         --epochs ${epochs} \\
         --batch-size ${batch_size} \\
-        --gpu \\
         --weight-col ${weight_col} \\
         --save-dir models_GNN
     """

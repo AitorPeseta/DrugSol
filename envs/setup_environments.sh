@@ -97,7 +97,7 @@ ENV_BERT_PACKAGES=(
     "pyarrow"
     "tqdm"
     "rdkit=2023.09"
-    "pytorch=2.3"
+    "pytorch>=2.6"
     "cpuonly"
     "transformers"
     "accelerate"

@@ -70,7 +70,7 @@ process merge_features {
         --output "${split_name}_merged_features.parquet" \\
         --merge-col "row_uid" \\
         --how "${merge_how}" \\
-        --suffix-primary " " \\
+        --suffix-primary "" \\
         --suffix-secondary "_bert" \\
         ${validate}
     """

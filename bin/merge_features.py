@@ -84,7 +84,6 @@ def read_file(path: str) -> pd.DataFrame:
     elif path.endswith(".tsv"):
         return pd.read_csv(path, sep='\t')
     else:
-        # Try parquet first, fall back to CSV
         try:
             return pd.read_parquet(path)
         except Exception:
@@ -136,20 +135,20 @@ def merge_two_dataframes(
     if merge_col not in df_secondary.columns:
         raise ValueError(f"Merge column '{merge_col}' not found in secondary file")
     
-    # Find duplicate columns (excluding merge column)
+    # SOLUCIÓN DEL ERROR: Encontrar y eliminar duplicados en el df_secondary
     duplicates = get_duplicate_columns(df_primary, df_secondary, [merge_col])
     
     if duplicates:
-        print(f"[Merge] Found {len(duplicates)} duplicate columns: {duplicates[:5]}{'...' if len(duplicates) > 5 else ''}")
-        print(f"[Merge] Applying suffixes: primary='{suffix_primary}', secondary='{suffix_secondary}'")
+        print(f"[Merge] Found {len(duplicates)} duplicate columns (e.g., {duplicates[:5]})")
+        print(f"[Merge] Dropping duplicates from secondary file to ensure a clean merge...")
+        df_secondary = df_secondary.drop(columns=duplicates)
     
-    # Perform merge
+    # Perform clean merge without needing suffixes
     df_merged = pd.merge(
         df_primary,
         df_secondary,
         on=merge_col,
-        how=how,
-        suffixes=(suffix_primary, suffix_secondary)
+        how=how
     )
     
     return df_merged
@@ -174,7 +173,6 @@ def merge_multiple_dataframes(
     if len(file_paths) < 2:
         raise ValueError("Need at least 2 files to merge")
     
-    # Load and merge first two
     print(f"[Merge] Loading {file_paths[0]}...")
     df_result = read_file(file_paths[0])
     
@@ -182,18 +180,12 @@ def merge_multiple_dataframes(
         print(f"[Merge] Merging file {i}/{len(file_paths)}: {path}...")
         df_next = read_file(path)
         
-        # Generate unique suffix for this file
-        suffix = f"_f{i}"
-        
         df_result = merge_two_dataframes(
             df_result,
             df_next,
             merge_col=merge_col,
-            how=how,
-            suffix_primary='',
-            suffix_secondary=suffix
+            how=how
         )
-        
         print(f"[Merge] After merge {i}: {len(df_result):,} rows, {len(df_result.columns):,} columns")
     
     return df_result
@@ -244,15 +236,11 @@ def main():
     # Determine Mode and Validate Arguments
     # -------------------------------------------------------------------------
     if args.files:
-        # Multi-file mode
         mode = "multi"
         if len(args.files) < 2:
             sys.exit("[ERROR] --files requires at least 2 files")
-        print(f"[Merge] Multi-file mode: {len(args.files)} files to merge")
     elif args.primary and args.secondary:
-        # Two-file mode
         mode = "two"
-        print("[Merge] Two-file mode")
     else:
         sys.exit("[ERROR] Must specify either --primary and --secondary, or --files")
     
@@ -260,58 +248,25 @@ def main():
     # Perform Merge
     # -------------------------------------------------------------------------
     if mode == "two":
-        # Load files
         print(f"[Merge] Loading primary: {args.primary}...")
         df_primary = read_file(args.primary)
-        print(f"[Merge] Primary: {len(df_primary):,} rows, {len(df_primary.columns):,} columns")
-        
         print(f"[Merge] Loading secondary: {args.secondary}...")
         df_secondary = read_file(args.secondary)
-        print(f"[Merge] Secondary: {len(df_secondary):,} rows, {len(df_secondary.columns):,} columns")
         
-        # Store original counts for validation
         n_primary = len(df_primary)
         n_secondary = len(df_secondary)
         
-        # Merge
-        print(f"[Merge] Merging on '{args.merge_col}' with strategy '{args.how}'...")
         df_result = merge_two_dataframes(
-            df_primary,
-            df_secondary,
-            merge_col=args.merge_col,
-            how=args.how,
-            suffix_primary=args.suffix_primary,
-            suffix_secondary=args.suffix_secondary
+            df_primary, df_secondary,
+            merge_col=args.merge_col, how=args.how
         )
         
-        # Validation
         if args.validate and args.how == "inner":
-            n_result = len(df_result)
             expected = min(n_primary, n_secondary)
-            
-            if n_result < expected * 0.95:  # Allow 5% tolerance
+            if len(df_result) < expected * 0.95:
                 print(f"[WARN] Significant row loss during merge!")
-                print(f"       Primary: {n_primary:,}, Secondary: {n_secondary:,}")
-                print(f"       Result: {n_result:,} ({n_result/expected*100:.1f}% of expected)")
-                
-                # Check for ID mismatches
-                ids_primary = set(df_primary[args.merge_col])
-                ids_secondary = set(df_secondary[args.merge_col])
-                missing_in_secondary = ids_primary - ids_secondary
-                missing_in_primary = ids_secondary - ids_primary
-                
-                if missing_in_secondary:
-                    print(f"       IDs in primary but not secondary: {len(missing_in_secondary):,}")
-                if missing_in_primary:
-                    print(f"       IDs in secondary but not primary: {len(missing_in_primary):,}")
-    
     else:
-        # Multi-file mode
-        df_result = merge_multiple_dataframes(
-            args.files,
-            merge_col=args.merge_col,
-            how=args.how
-        )
+        df_result = merge_multiple_dataframes(args.files, merge_col=args.merge_col, how=args.how)
     
     # -------------------------------------------------------------------------
     # Reorder Columns (merge_col first)
@@ -332,19 +287,6 @@ def main():
     print(f"\n[Merge] Summary:")
     print(f"   -> Output rows: {len(df_result):,}")
     print(f"   -> Output columns: {len(df_result.columns):,}")
-    
-    # Count feature types if recognizable
-    mordred_cols = [c for c in df_result.columns if not c.startswith('bert_') and c != args.merge_col]
-    bert_cols = [c for c in df_result.columns if c.startswith('bert_')]
-    
-    if mordred_cols:
-        print(f"   -> Mordred/other features: {len(mordred_cols):,}")
-    if bert_cols:
-        print(f"   -> ChemBERTa embeddings: {len(bert_cols):,}")
-    
-    print(f"   -> Merge column: {args.merge_col}")
-    print(f"   -> Merge strategy: {args.how}")
-
 
 if __name__ == "__main__":
     main()

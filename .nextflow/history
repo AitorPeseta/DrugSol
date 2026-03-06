@@ -34,3 +34,17 @@
 2026-02-20 12:13:01	-	spontaneous_mercator	-	28f2906ef3734c1d94475250c605ae5f	c837ec26-bc82-458b-8d15-8ca88db6b85c	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
 2026-02-20 12:17:20	42m 30s	chaotic_colden	ERR	28f2906ef3734c1d94475250c605ae5f	c837ec26-bc82-458b-8d15-8ca88db6b85c	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
 2026-02-23 09:22:37	9m 54s	elegant_caravaggio	ERR	28f2906ef3734c1d94475250c605ae5f	c837ec26-bc82-458b-8d15-8ca88db6b85c	nextflow run main.nf --mode research -profile gpu_small --n_iterations 1 -resume
+2026-02-23 09:51:43	25m	disturbed_shannon	ERR	28f2906ef3734c1d94475250c605ae5f	aa5e4836-c901-4daf-bd26-2f18409297fb	nextflow run main.nf --mode research -profile gpu_high --n_iterations 10
+2026-02-23 10:17:10	9m 15s	determined_lichterman	ERR	28f2906ef3734c1d94475250c605ae5f	aa5e4836-c901-4daf-bd26-2f18409297fb	nextflow run main.nf --mode research -profile gpu_high --n_iterations 10 -resume
+2026-02-23 10:31:26	23h 6m 3s	suspicious_noyce	ERR	28f2906ef3734c1d94475250c605ae5f	aa5e4836-c901-4daf-bd26-2f18409297fb	nextflow run main.nf --mode research -profile gpu_high --n_iterations 10 -resume
+2026-02-24 09:37:35	11m 44s	cheeky_curie	ERR	28f2906ef3734c1d94475250c605ae5f	aa5e4836-c901-4daf-bd26-2f18409297fb	nextflow run main.nf --mode research -profile gpu_high --n_iterations 10 -resume
+2026-02-24 09:49:25	-	stupefied_jones	-	28f2906ef3734c1d94475250c605ae5f	aa5e4836-c901-4daf-bd26-2f18409297fb	nextflow run main.nf --mode research -profile gpu_high --n_iterations 10 -resume
+2026-02-24 10:31:59	7h 35m 20s	amazing_lichterman	ERR	28f2906ef3734c1d94475250c605ae5f	2f26cd96-de5a-447c-90e6-891f671cc205	nextflow run main.nf --mode research -profile gpu_high --n_iterations 10
+2026-02-24 18:07:26	16h 28m 2s	distraught_spence	ERR	28f2906ef3734c1d94475250c605ae5f	2f26cd96-de5a-447c-90e6-891f671cc205	nextflow run main.nf --mode research -profile gpu_high --n_iterations 10 -resume
+2026-02-25 10:35:34	16.1s	pedantic_northcutt	ERR	28f2906ef3734c1d94475250c605ae5f	2f26cd96-de5a-447c-90e6-891f671cc205	nextflow run main.nf --mode research -profile gpu_high --n_iterations 10 -resume
+2026-02-25 10:39:30	22h 31m 20s	elegant_yonath	ERR	28f2906ef3734c1d94475250c605ae5f	2f26cd96-de5a-447c-90e6-891f671cc205	nextflow run main.nf --mode research -profile gpu_high --n_iterations 10 -resume
+2026-02-26 16:35:19	11h 40m 40s	cranky_panini	ERR	28f2906ef3734c1d94475250c605ae5f	2f26cd96-de5a-447c-90e6-891f671cc205	nextflow run main.nf --mode research -profile gpu_high --n_iterations 10 -resume
+2026-02-27 10:29:52	6h 38m 7s	thirsty_marconi	ERR	28f2906ef3734c1d94475250c605ae5f	2f26cd96-de5a-447c-90e6-891f671cc205	nextflow run main.nf --mode research -profile gpu_high --n_iterations 10 -resume
+2026-02-27 17:10:17	12.9s	spontaneous_raman	ERR	28f2906ef3734c1d94475250c605ae5f	2f26cd96-de5a-447c-90e6-891f671cc205	nextflow run main.nf --mode research -profile gpu_high --n_iterations 10 -resume
+2026-02-27 17:13:43	3d 22h 52m 9s	peaceful_descartes	ERR	28f2906ef3734c1d94475250c605ae5f	2f26cd96-de5a-447c-90e6-891f671cc205	nextflow run main.nf --mode research -profile gpu_high --n_iterations 10 -resume
+2026-03-03 16:06:01	-	berserk_curry	-	28f2906ef3734c1d94475250c605ae5f	2f26cd96-de5a-447c-90e6-891f671cc205	nextflow run main.nf --mode research -profile gpu_high --n_iterations 10 -resume

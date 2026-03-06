@@ -45,7 +45,6 @@ Output:
     - hp/*.json: Best hyperparameters per fold
     - metrics_tree.json: Overall metrics for each model
 """
-
 import argparse
 import json
 import sys
@@ -219,7 +218,7 @@ def load_data(train_path, folds_path, id_col, target_col, weight_col=None):
 # ============================================================================
 
 def train_xgb(X_tr, y_tr, w_tr, X_va, y_va, w_va, params, use_gpu=False):
-    """Train XGBoost model with early stopping."""
+    """Train XGBoost model with early stopping and GPU fallback."""
     dtrain = xgb.DMatrix(X_tr, label=y_tr, weight=w_tr)
     dvalid = xgb.DMatrix(X_va, label=y_va, weight=w_va)
     
@@ -238,13 +237,29 @@ def train_xgb(X_tr, y_tr, w_tr, X_va, y_va, w_va, params, use_gpu=False):
     
     p.update(params)
     
-    model = xgb.train(
-        p, dtrain,
-        num_boost_round=3000,
-        evals=[(dvalid, 'valid')],
-        early_stopping_rounds=100,
-        verbose_eval=False
-    )
+    try:
+        model = xgb.train(
+            p, dtrain,
+            num_boost_round=3000,
+            evals=[(dvalid, 'valid')],
+            early_stopping_rounds=100,
+            verbose_eval=False
+        )
+    except Exception as e:
+        error_msg = str(e).lower()
+        if use_gpu and ('out of memory' in error_msg or 'memory' in error_msg):
+            print(f"[WARN] XGBoost GPU OOM falló. Cambiando a CPU para este modelo...")
+            p.update({'device': 'cpu'})
+            model = xgb.train(
+                p, dtrain,
+                num_boost_round=3000,
+                evals=[(dvalid, 'valid')],
+                early_stopping_rounds=100,
+                verbose_eval=False
+            )
+        else:
+            raise e
+            
     return model
 
 
@@ -297,9 +312,7 @@ def train_cat(X_tr, y_tr, w_tr, X_va, y_va, w_va, params, use_gpu=False):
     train_pool = cb.Pool(X_tr, y_tr, weight=w_tr)
     valid_pool = cb.Pool(X_va, y_va, weight=w_va)
     
-    # Check GPU memory before attempting GPU training
-    # CatBoost needs significant GPU memory for large feature sets
-    actual_use_gpu = use_gpu and check_gpu_memory(min_memory_mb=4000)
+    actual_use_gpu = False 
     
     if use_gpu and not actual_use_gpu:
         print("[WARN] CatBoost: Insufficient GPU memory, using CPU instead")
