@@ -20,7 +20,7 @@ Arguments:
     --target           : Target column name (default: logS)
     --hp-dir           : Hyperparameter directory or JSON file
     --save-dir         : Output directory
-    --use-gpu          : Enable GPU acceleration
+    --gpu          : Enable GPU acceleration
     --sample-weight-col: Sample weight column
 
 Usage:
@@ -28,7 +28,7 @@ Usage:
         --train final_train_gbm.parquet \\
         --target logS \\
         --hp-dir oof_gbm/hp \\
-        --use-gpu \\
+        --gpu \\
         --sample-weight-col weight \\
         --save-dir models_GBM
 
@@ -240,7 +240,7 @@ def main():
                     help="Hyperparameter directory or file")
     ap.add_argument("--save-dir", default=".",
                     help="Output directory")
-    ap.add_argument("--use-gpu", action="store_true",
+    ap.add_argument("--gpu", dest="use_gpu", action="store_true",
                     help="Enable GPU acceleration")
     ap.add_argument("--sample-weight-col", default=None,
                     help="Sample weight column")

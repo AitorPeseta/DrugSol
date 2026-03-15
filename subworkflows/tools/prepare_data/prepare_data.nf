@@ -49,8 +49,6 @@ include { stratified_split }            from '../../../modules/stratified_split/
 // -------------------------------------------------------------------------------------
 // 3. Descriptor Calculation (Aliased for train/test distinction in DAG visualization)
 // -------------------------------------------------------------------------------------
-include { make_embeddings_chemberta as calc_bert_train } from '../../../modules/make_embeddings_chemberta/make_embeddings_chemberta.nf'
-include { make_embeddings_chemberta as calc_bert_test  } from '../../../modules/make_embeddings_chemberta/make_embeddings_chemberta.nf'
 include { make_features_mordred as calc_mordred_train  } from '../../../modules/make_features_mordred/make_features_mordred.nf'
 include { make_features_mordred as calc_mordred_test   } from '../../../modules/make_features_mordred/make_features_mordred.nf'
 include { make_features_rdkit   as calc_rdkit_train    } from '../../../modules/make_features_rdkit/make_features_rdkit.nf'
@@ -59,8 +57,6 @@ include { make_features_rdkit   as calc_rdkit_test     } from '../../../modules/
 // -------------------------------------------------------------------------------------
 // 4. Feature Processing (Filtering, Alignment, Cleanup)
 // -------------------------------------------------------------------------------------
-include { merge_features as merge_train                     } from '../../../modules/merge_features/merge_features.nf'
-include { merge_features as merge_test                      } from '../../../modules/merge_features/merge_features.nf'
 include { filter_features       as filter_feat_train        } from '../../../modules/filter_features/filter_features.nf'
 include { filter_features       as filter_feat_test         } from '../../../modules/filter_features/filter_features.nf'
 include { align_feature_columns as align_mordred            } from '../../../modules/align_feature_columns/align_feature_columns.nf'
@@ -114,10 +110,8 @@ workflow prepare_data {
         def script_fp      = file("${baseDir}/bin/make_fingerprints.py")
         def script_balance = file("${baseDir}/bin/balance_dataset.py")
         def script_split   = file("${baseDir}/bin/stratified_split.py")
-        def script_bert    = file("${baseDir}/bin/make_embeddings_chemberta.py")
         def script_mordred = file("${baseDir}/bin/make_features_mordred.py")
         def script_rdkit   = file("${baseDir}/bin/make_features_rdkit.py")
-        def script_merge   = file("${baseDir}/bin/merge_features.py")
         def script_filter  = file("${baseDir}/bin/filter_features.py")
         def script_align   = file("${baseDir}/bin/align_feature_columns.py")
         def script_drop    = file("${baseDir}/bin/dropnan_rows.py")
@@ -194,28 +188,13 @@ workflow prepare_data {
             ============================================================================
                 Mordred: Comprehensive molecular descriptor calculator
             */
-            
-            // Calculate ChemBERTa embeddings for train and test
-            calc_bert_train(train_ch, outdir_val, script_bert, "train")
-            calc_bert_test(test_ch, outdir_val, script_bert, "test")
-
             // Calculate Mordred descriptors for train and test
             calc_mordred_train(train_ch, outdir_val, script_mordred, "train")
             calc_mordred_test(test_ch,   outdir_val, script_mordred, "test")
 
-            // Merge Mordred and ChemBERTa features
-            def ch_merge_train_input = calc_mordred_train.out.join(calc_bert_train.out)
-                .map { iter_id, mordred_file, bert_file -> tuple(iter_id, mordred_file, bert_file) }
-
-            def ch_merge_test_input = calc_mordred_test.out.join(calc_bert_test.out)
-                .map { iter_id, mordred_file, bert_file -> tuple(iter_id, mordred_file, bert_file) }
-
-            merge_train(ch_merge_train_input, outdir_val, script_merge, "train")
-            merge_test(ch_merge_test_input, outdir_val, script_merge, "test")
-
             // Filter low-variance and highly-correlated features
-            filter_feat_train(merge_train.out, outdir_val, script_filter, "train")
-            filter_feat_test(merge_test.out,   outdir_val, script_filter, "test")
+            filter_feat_train(calc_mordred_train.out, outdir_val, script_filter, "train")
+            filter_feat_test(calc_mordred_test.out,   outdir_val, script_filter, "test")
 
             // Align test columns to match train columns exactly
             // Critical: Ensures model sees identical feature space
@@ -268,29 +247,21 @@ workflow prepare_data {
             // -----------------------------------------------------------------------
             // Stage 1: Physical Feature Engineering
             // -----------------------------------------------------------------------
-            engineer_features(ch_filtered_data, outdir_val, script_eng)
+            def ch_eng_input = ch_filtered_data.map { file -> tuple("test", file) }
+            engineer_features(ch_eng_input, outdir_val, script_eng)
             def ch_rich_data = engineer_features.out
 
             // -----------------------------------------------------------------------
             // Stage 2: Molecular Fingerprints
             // -----------------------------------------------------------------------
-            make_fingerprints(ch_rich_data, outdir_val, script_fp, fingerprint_method)
-            def ch_ready_to_process = make_fingerprints.out
-
-            // Wrap input as test data with ID
-            def ch_input_test = ch_ready_to_process.map { file -> tuple("test", file) }  
+            make_fingerprints(ch_rich_data, outdir_val, script_fp, 'cluster_ecfp4_0p7')
+            def ch_input_test = make_fingerprints.out
             
             // -----------------------------------------------------------------------
             // Stage 3: Descriptor Calculation
             // -----------------------------------------------------------------------
             calc_mordred_test(ch_input_test, outdir_val, script_mordred, "test")
-            calc_bert_test(test_ch, outdir_val, script_bert, "test")
             calc_rdkit_test(ch_input_test,   outdir_val, script_rdkit,   "test")
-            
-            def ch_merge_test_input = calc_mordred_test.out.join(calc_bert_test.out)
-                .map { iter_id, mordred_file, bert_file -> tuple(iter_id, mordred_file, bert_file) }
-            
-            merge_test(ch_merge_test_input, outdir_val, script_merge, "test")
             // -----------------------------------------------------------------------
             // Stage 4: Feature Filtering
             // -----------------------------------------------------------------------

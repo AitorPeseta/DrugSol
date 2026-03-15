@@ -62,7 +62,7 @@ process train_full_gbm {
         // Configurable Parameters
         // ---------------------------------------------------------------------------
         def weight_col = params.full_gbm_weight_col ?: 'weight'
-        def use_gpu = params.full_gbm_use_gpu != false ? '--use-gpu' : ''
+        def use_gpu = params.full_gbm_use_gpu != false ? '--gpu' : ''
         def weight_arg = weight_col ? "--sample-weight-col ${weight_col}" : ''
         
     """

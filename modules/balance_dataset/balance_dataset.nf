@@ -39,20 +39,20 @@ nextflow.enable.dsl = 2
 */
 
 process balance_dataset {
-    tag "Balance Iter #${iter_id}"
+    tag "Balance Iter #${meta_id}"
     label 'cpu_small'
     
     conda "${params.conda_env_data}"
 
-    publishDir "${params.outdir}/prepare_data/iter_${iter_id}", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/prepare_data/${meta_id}/balance", mode: 'copy', overwrite: true
 
     input:
-        tuple val(iter_id), path(input_parquet)  // Curated dataset
+        tuple val(meta_id), path(input_parquet)  // Curated dataset
         path script_py                            // Python script: balance_dataset.py
         val seed_base                             // Base random seed
 
     output:
-        tuple val(iter_id), path("balanced_${iter_id}.parquet"), emit: balanced_data
+        tuple val(meta_id), path("balanced_${meta_id}.parquet"), emit: balanced_data
 
     script:
         // ---------------------------------------------------------------------------
@@ -65,11 +65,11 @@ process balance_dataset {
         def bin_size = params.balance_bin_size ?: 0.2
         
     """
-    CURRENT_SEED=\$(( ${seed_base} + ${iter_id} ))
+    CURRENT_SEED=\$(( ${seed_base} + ${meta_id} ))
 
     python ${script_py} \\
         --input "${input_parquet}" \\
-        --output "balanced_${iter_id}.parquet" \\
+        --output "balanced_${meta_id}.parquet" \\
         --limit ${limit_ambient} \\
         --bin-size ${bin_size} \\
         --seed \$CURRENT_SEED

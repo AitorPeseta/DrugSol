@@ -61,6 +61,7 @@ process train_full_chemprop {
         def weight_col = params.full_chemprop_weight_col ?: 'weight'
         def epochs = params.full_chemprop_epochs ?: 50
         def batch_size = params.full_chemprop_batch_size ?: 50
+        def use_gpu = params.full_chemprop_use_gpu != false ? '--gpu' : ''
         
     """
     set -euo pipefail
@@ -83,6 +84,7 @@ process train_full_chemprop {
         --smiles-col "smiles_neutral" \\
         --target "logS" \\
         --best-params "${best_params_json}" \\
+        ${use_gpu} \\
         --epochs ${epochs} \\
         --batch-size ${batch_size} \\
         --weight-col ${weight_col} \\

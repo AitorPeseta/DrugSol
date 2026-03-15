@@ -1,14 +1,16 @@
 # --- Nextflow & Temporary Files ---
-work/
+work/*
 .nextflow/
-envs/conda_cache/
-envs/logs
-results/
+envs/conda_cache/*
+envs/logs/*
+results/*
 .nextflow.log*
 trace.txt*
 report.html*
 timeline.html*
 dag.png*
+resources/train_rdkit_featured.parquet
+resources/train_features_mordred_filtered.parquet
 
 # --- Python & Jupyter ---
 __pycache__/

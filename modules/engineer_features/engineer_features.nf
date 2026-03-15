@@ -43,20 +43,20 @@ nextflow.enable.dsl = 2
 */
 
 process engineer_features {
-    tag "Physics & Chemistry #${iter_id}"
+    tag "Physics & Chemistry #${meta_id}"
     label 'cpu_small'
     
     conda "${params.conda_env_data}"
     
-    publishDir "${params.outdir}/prepare_data/iter_${iter_id}", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/prepare_data/${meta_id}/engineer", mode: 'copy', overwrite: true
 
     input:
-        tuple val(iter_id), path(input_parquet)  // Input parquet with standardized SMILES
+        tuple val(meta_id), path(input_parquet)  // Input parquet with standardized SMILES
         val  outdir_val                          // Output directory (for logging)
         path script_py                           // Python script: engineer_features.py
 
     output:
-        tuple val(iter_id), path("engineered_features.parquet"), emit: out
+        tuple val(meta_id), path("engineered_features.parquet"), emit: out
 
     script:
         // ---------------------------------------------------------------------------

@@ -20,7 +20,7 @@ Arguments:
     --target             : Target column name (default: logS)
     --id-col             : Row identifier column (default: row_uid)
     --sample-weight-col  : Sample weight column (default: None)
-    --use-gpu            : Enable GPU acceleration
+    --gpu            : Enable GPU acceleration
     --save-dir           : Output directory (default: ./oof_gbm)
     --tune-trials        : Number of Optuna trials (0 = no tuning)
     --inner-splits       : Inner CV splits for tuning (default: 3)
@@ -34,7 +34,7 @@ Usage:
         --target logS \\
         --id-col row_uid \\
         --sample-weight-col weight \\
-        --use-gpu \\
+        --gpu \\
         --tune-trials 50 \\
         --save-dir ./oof_gbm
 
@@ -122,7 +122,7 @@ def parse_args():
                     help="Sample weight column")
     
     # Compute settings
-    ap.add_argument("--use-gpu", action="store_true",
+    ap.add_argument("--gpu", dest="use_gpu", action="store_true",
                     help="Enable GPU acceleration")
     ap.add_argument("--save-dir", default="./oof_gbm",
                     help="Output directory")

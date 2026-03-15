@@ -44,21 +44,21 @@ nextflow.enable.dsl = 2
 */
 
 process make_fingerprints {
-    tag "ECFP4 & Butina Clustering #${iter_id}"
+    tag "ECFP4 & Butina Clustering #${meta_id}"
     label 'cpu_small'
     
     conda "${params.conda_env_data}"
     
-    publishDir "${params.outdir}/prepare_data/iter_${iter_id}", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/prepare_data/${meta_id}/fingerprints", mode: 'copy', overwrite: true
 
     input:
-        tuple val(iter_id), path(input_file)  // Input parquet with standardized SMILES
+        tuple val(meta_id), path(input_file)  // Input parquet with standardized SMILES
         val  outdir_val                       // Output directory (for logging)
         path script_py                        // Python script: make_fingerprints.py
         val  name_prefix                      // Output file prefix (e.g., "cluster_ecfp4_0p7")
 
     output:
-        tuple val(iter_id), path("${name_prefix}_fingerprint.parquet"), emit: out
+        tuple val(meta_id), path("${name_prefix}_fingerprint.parquet"), emit: out
 
     script:
         // ---------------------------------------------------------------------------

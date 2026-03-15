@@ -75,7 +75,7 @@ process train_oof_gbm {
         def weight_arg = weight_col ? "--sample-weight-col ${weight_col}" : ''
         
         // GPU acceleration
-        def use_gpu = params.gbm_use_gpu != false ? '--use-gpu' : ''
+        def use_gpu = params.gbm_use_gpu != false ? '--gpu' : ''
         
         // Optuna tuning settings
         def tune_trials = params.gbm_tune_trials ?: 50

@@ -40,21 +40,21 @@ nextflow.enable.dsl = 2
 */
 
 process stratified_split {
-    tag "Split Iter #${iter_id}"
+    tag "Split Iter #${meta_id}"
     label 'cpu_small'
     
     conda "${params.conda_env_data}"
     
-    publishDir "${params.outdir}/prepare_data/iter_${iter_id}", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/prepare_data/${meta_id}/split", mode: 'copy', overwrite: true
 
     input:
-        tuple val(iter_id), path(balanced_file)  // Balanced dataset with clusters
+        tuple val(meta_id), path(balanced_file)  // Balanced dataset with clusters
         val  outdir_base                          // Output directory (for logging)
         path script_py                            // Python script: stratified_split.py
         val seed_fixed                            // Random seed for splitting
 
     output:
-        tuple val(iter_id), path("train.parquet"), path("test.parquet"), emit: splits
+        tuple val(meta_id), path("train.parquet"), path("test.parquet"), emit: splits
 
     script:
         // ---------------------------------------------------------------------------

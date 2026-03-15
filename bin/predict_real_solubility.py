@@ -1,33 +1,29 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Predict Real Solubility: pH-Dependent Solubility Correction
-============================================================
+predict_real_solubility.py
+==========================
+pH-Dependent Solubility Correction using Thermodynamic Principles.
 
 Calculates effective solubility at physiological pH (default 7.4) from the
 model's intrinsic solubility prediction using thermodynamic corrections
 based on ionization state.
 
 Thermodynamic Correction:
-    The model predicts Sw (experimental solubility at saturation pH).
-    To get solubility at a different pH, we need to account for ionization:
-    
+The model predicts Sw (experimental solubility at saturation pH).
+To get solubility at a different pH, we need to account for ionization:
+
     1. Calculate pH_sat (pH at saturation, where Sw was measured)
     2. Calculate S0 (intrinsic solubility of neutral form)
     3. Calculate fraction of neutral species at target pH
     4. Seff = S0 / f_neutral
-    
-    For zwitterions: The "neutral" form is the dipolar species (+/-)
+
+For zwitterions: The "neutral" form is the dipolar species (+/-)
 
 Henderson-Hasselbalch Equations:
-    Acid: fraction_neutral = 1 / (1 + 10^(pH - pKa))
-    Base: fraction_neutral = 1 / (1 + 10^(pKa - pH))
-    Zwitterion: fraction_neutral = 1 / (1 + 10^(pKa_acid - pH) + 10^(pH - pKa_base))
-
-Arguments:
-    --input  : CSV with 'smiles' and 'predicted_logS' columns
-    --output : Output CSV filename
-    --ph     : Target pH (default: 7.4)
+    Acid:       f_neutral = 1 / (1 + 10^(pH - pKa))
+    Base:       f_neutral = 1 / (1 + 10^(pKa - pH))
+    Zwitterion: f_neutral = 1 / (1 + 10^(pKa_acid - pH) + 10^(pH - pKa_base))
 
 Usage:
     python predict_real_solubility.py \\
@@ -35,13 +31,21 @@ Usage:
         --output predictions_pH7.4.csv \\
         --ph 7.4
 
-Output:
-    CSV with additional columns: pka_acids, pka_bases, logSeff_pH{X}
+Arguments:
+    --input  : str
+        CSV with 'smiles' and 'predicted_logS' columns
+    --output : str
+        Output CSV filename
+    --ph     : float, default=7.4
+        Target pH for solubility calculation
 
-Notes:
-    - Requires external pKa API (xundrug.cn)
-    - API failures return original prediction unchanged
-    - Progress bar shown via tqdm
+Output:
+    CSV with additional columns:
+    - pka_acids: List of acidic pKa values
+    - pka_bases: List of basic pKa values
+    - pH_sat_calculated: Estimated saturation pH
+    - logSeff_pH{X}: Effective solubility at target pH
+
 """
 
 import argparse
@@ -60,7 +64,7 @@ from tqdm import tqdm
 
 API_URL = 'http://xundrug.cn:5001/modules/upload0/'
 API_TOKEN = 'O05DriqqQLlry9kmpCwms2IJLC0MuLQ7'
-KW = 1.0e-14  # Water dissociation constant
+KW = 1.0e-14  # Water dissociation constant at 25C
 
 
 # ============================================================================
@@ -69,14 +73,24 @@ KW = 1.0e-14  # Water dissociation constant
 
 def get_pka_from_api(smiles: str, retries: int = 3) -> tuple:
     """
-    Query pKa prediction API.
+    Query pKa prediction API (MolGpKa).
     
-    Args:
-        smiles: SMILES string
-        retries: Number of retry attempts
+    Parameters
+    ----------
+    smiles : str
+        SMILES string of the molecule
+    retries : int, default=3
+        Number of retry attempts on failure
     
-    Returns:
-        Tuple of (acid_pkas, base_pkas) lists
+    Returns
+    -------
+    tuple
+        (acid_pkas: list, base_pkas: list)
+        
+    Notes
+    -----
+    Uses MolGpKa API hosted at xundrug.cn.
+    Returns empty lists on API failure.
     """
     if not smiles or pd.isna(smiles):
         return [], []
@@ -108,8 +122,24 @@ def net_charge(pH: float, acid_pkas: list, base_pkas: list, Sw: float) -> float:
     """
     Calculate net charge for finding saturation pH.
     
-    Used with root-finding to determine the pH at which the molecule
-    reaches its measured solubility (Sw).
+    Used with root-finding (Brent's method) to determine the pH at which
+    the molecule reaches its measured solubility (Sw).
+    
+    Parameters
+    ----------
+    pH : float
+        pH value to evaluate
+    acid_pkas : list
+        List of acidic pKa values
+    base_pkas : list
+        List of basic pKa values
+    Sw : float
+        Measured solubility in mol/L
+        
+    Returns
+    -------
+    float
+        Net charge at given pH (zero at saturation pH)
     """
     h_conc = 10**(-pH)
     if h_conc == 0:
@@ -118,12 +148,12 @@ def net_charge(pH: float, acid_pkas: list, base_pkas: list, Sw: float) -> float:
     oh_conc = KW / h_conc
     charge = h_conc - oh_conc
     
-    # Contribution from acidic groups
+    # Contribution from acidic groups (deprotonated = negative)
     for pka in acid_pkas:
         den = 1.0 + 10**(pka - pH)
         charge -= Sw * (1.0 / den)
     
-    # Contribution from basic groups
+    # Contribution from basic groups (protonated = positive)
     for pka in base_pkas:
         den = 1.0 + 10**(pH - pka)
         charge += Sw * (1.0 / den)
@@ -136,10 +166,24 @@ def get_neutral_fraction(pH: float, acid_pkas: list, base_pkas: list) -> float:
     Calculate fraction of neutral/zwitterionic species at given pH.
     
     Handles different molecule types:
-    - Simple acids
-    - Simple bases
-    - Zwitterions (pKa_acid < pKa_base)
+    - Simple acids: HA <-> H+ + A-
+    - Simple bases: BH+ <-> H+ + B
+    - Zwitterions (pKa_acid < pKa_base): H3N+-R-COO-
     - Regular ampholytes (pKa_base < pKa_acid)
+    
+    Parameters
+    ----------
+    pH : float
+        Solution pH
+    acid_pkas : list
+        Acidic pKa values (lower = stronger acid)
+    base_pkas : list
+        Basic pKa values (higher = stronger base)
+        
+    Returns
+    -------
+    float
+        Fraction of neutral species (0-1)
     """
     if not acid_pkas and not base_pkas:
         return 1.0
@@ -175,12 +219,18 @@ def process_molecule(row: pd.Series, target_ph: float) -> dict:
     """
     Calculate effective solubility at target pH for a single molecule.
     
-    Args:
-        row: DataFrame row with 'predicted_logS' and 'smiles'
-        target_ph: Target pH for solubility calculation
+    Parameters
+    ----------
+    row : pd.Series
+        DataFrame row with 'predicted_logS' and 'smiles'
+    target_ph : float
+        Target pH for solubility calculation
     
-    Returns:
-        Dictionary with pKa values and calculated logSeff
+    Returns
+    -------
+    dict
+        Dictionary with pKa values and calculated logSeff,
+        or None on processing error
     """
     try:
         log_sw = float(row['predicted_logS'])
@@ -189,7 +239,7 @@ def process_molecule(row: pd.Series, target_ph: float) -> dict:
     except Exception:
         return None
     
-    # Get pKa values
+    # Get pKa values from API
     acid_pkas, base_pkas = get_pka_from_api(smiles)
     
     # If no ionizable groups, solubility unchanged
@@ -204,13 +254,13 @@ def process_molecule(row: pd.Series, target_ph: float) -> dict:
     try:
         ph_sat = brentq(net_charge, -2, 16, args=(acid_pkas, base_pkas, sw_molar))
     except Exception:
-        ph_sat = 7.0
+        ph_sat = 7.0  # Fallback to neutral pH
     
     # Calculate intrinsic solubility S0 (mathematical bridge)
     f_neutral_sat = get_neutral_fraction(ph_sat, acid_pkas, base_pkas)
     s0_molar = sw_molar * f_neutral_sat
     
-    # Numerical protection
+    # Numerical protection against underflow
     if s0_molar < 1e-15:
         s0_molar = 1e-15
     
@@ -238,14 +288,15 @@ def main():
     """Main entry point for physiological solubility calculation."""
     
     ap = argparse.ArgumentParser(
-        description="Calculate effective solubility at target pH."
+        description="Calculate effective solubility at target pH using "
+                    "Henderson-Hasselbalch thermodynamic corrections."
     )
     ap.add_argument("--input", required=True,
-                    help="CSV with 'predicted_logS' column")
+                    help="CSV with 'predicted_logS' and 'smiles' columns")
     ap.add_argument("--output", required=True,
                     help="Output CSV filename")
     ap.add_argument("--ph", type=float, default=7.4,
-                    help="Target pH (default: 7.4)")
+                    help="Target pH (default: 7.4 for physiological)")
     
     args = ap.parse_args()
     
@@ -253,13 +304,13 @@ def main():
     df = pd.read_csv(args.input)
     print(f"[Thermo] Calculating solubility at pH {args.ph} for {len(df):,} molecules...")
     
-    # Process each molecule
+    # Process each molecule with progress bar
     results = []
-    for idx, row in tqdm(df.iterrows(), total=len(df)):
+    for idx, row in tqdm(df.iterrows(), total=len(df), desc="Processing"):
         res = process_molecule(row, args.ph)
         results.append(res if res else {})
     
-    # Combine results
+    # Combine results with original data
     res_df = pd.DataFrame(results)
     final_df = pd.concat([df, res_df], axis=1)
     
@@ -272,7 +323,7 @@ def main():
     
     final_df = final_df[cols]
     
-    # Save
+    # Save results
     final_df.to_csv(args.output, index=False)
     print(f"[Thermo] Done. Saved to {args.output}")
 

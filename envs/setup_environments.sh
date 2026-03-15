@@ -76,11 +76,13 @@ ENV_TRAIN_PACKAGES=(
     "tqdm"
     "scipy"
     "joblib"
+    "matplotlib"
+    "seaborn"
 )
 ENV_TRAIN_CHANNELS="-c conda-forge"
 # Install PyTorch, xgboost, lightgbm, chemprop, catboost via pip for better compatibility
 ENV_TRAIN_PIP=(
-    "torch==1.13.1+cpu"
+    "torch==1.13.1+cu117"
     "xgboost"
     "lightgbm"
     "catboost"
@@ -165,7 +167,7 @@ install_pip_with_index() {
     log_info "Installing pip packages with extra index: ${packages[*]}"
     LD_LIBRARY_PATH="${env_path}/lib:${LD_LIBRARY_PATH:-}" \
     micromamba run -p "${env_path}" pip install --quiet \
-        --extra-index-url https://download.pytorch.org/whl/cpu \
+        --extra-index-url https://download.pytorch.org/whl/cu117 \
         "${packages[@]}" >> "${LOG_FILE}" 2>&1
     log_ok "Pip packages installed"
 }

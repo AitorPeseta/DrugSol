@@ -64,6 +64,7 @@ process train_oof_chemprop {
         // Training settings
         def epochs = params.chemprop_epochs ?: 50
         def batch_size = params.chemprop_batch_size ?: 32
+        def use_gpu = params.chemprop_use_gpu != false ? '--gpu' : ''
         
         // Optuna tuning
         def tune_trials = params.chemprop_tune_trials ?: 20
@@ -79,6 +80,7 @@ process train_oof_chemprop {
         --smiles-col "smiles_neutral" \\
         --id-col "row_uid" \\
         --target "logS" \\
+        ${use_gpu} \\
         --weight-col ${weight_col} \\
         --epochs ${epochs} \\
         --batch-size ${batch_size} \\
